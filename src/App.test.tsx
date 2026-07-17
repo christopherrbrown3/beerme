@@ -12,6 +12,10 @@ const authState = vi.hoisted(() => ({
   isConfigured: true,
 }));
 
+const groupsState = vi.hoisted(() => ({
+  data: [] as unknown[],
+}));
+
 vi.mock('./hooks/AuthProvider', () => ({
   AuthProvider: ({ children }: PropsWithChildren) => children,
 }));
@@ -23,6 +27,25 @@ vi.mock('./hooks/useAuth', () => ({
     isLoading: false,
     isConfigured: authState.isConfigured,
     signOut: vi.fn(),
+  }),
+}));
+
+vi.mock('./hooks/useGroups', () => ({
+  useGroups: () => ({
+    data: groupsState.data,
+    isLoading: false,
+    isError: false,
+    refetch: vi.fn(),
+  }),
+  useCreateGroup: () => ({
+    isPending: false,
+    isError: false,
+    mutateAsync: vi.fn(),
+  }),
+  useJoinGroup: () => ({
+    isPending: false,
+    isError: false,
+    mutateAsync: vi.fn(),
   }),
 }));
 
@@ -40,6 +63,7 @@ describe('BeerMe app shell', () => {
   beforeEach(() => {
     authState.user = { id: 'user-1', email: 'friend@example.com' };
     authState.isConfigured = true;
+    groupsState.data = [];
   });
 
   it('renders the groups home as the default route', () => {
@@ -47,7 +71,7 @@ describe('BeerMe app shell', () => {
 
     expect(screen.getByRole('heading', { name: 'Good friends. Clear tabs.' })).toBeInTheDocument();
     expect(screen.getByRole('navigation', { name: 'Primary navigation' })).toBeInTheDocument();
-    expect(screen.getByText('Group creation arrives in Milestone 3.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Create your first group' })).toBeInTheDocument();
   });
 
   it('moves between primary routes without losing the app shell', async () => {
@@ -60,6 +84,37 @@ describe('BeerMe app shell', () => {
 
     await user.click(screen.getByRole('link', { name: 'Profile' }));
     expect(screen.getByRole('heading', { name: 'Profile' })).toBeInTheDocument();
+  });
+
+  it('opens the create-group flow from the empty dashboard', async () => {
+    const user = userEvent.setup();
+    renderApp();
+
+    await user.click(screen.getByRole('button', { name: 'Create your first group' }));
+
+    expect(screen.getByRole('dialog', { name: 'Create a group' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Group name')).toBeInTheDocument();
+  });
+
+  it('renders real group summaries from the dashboard query', () => {
+    groupsState.data = [
+      {
+        id: 'group-1',
+        name: 'Friday Crew',
+        description: 'Neighborhood regulars',
+        ownerId: 'user-1',
+        inviteToken: '123e4567-e89b-42d3-a456-426614174000',
+        createdAt: '2026-07-17T00:00:00.000Z',
+        memberCount: 4,
+        role: 'owner',
+        currency: { name: 'Beer', plural: 'Beers', symbol: '🍺' },
+      },
+    ];
+    renderApp();
+
+    expect(screen.getByRole('heading', { name: 'Friday Crew' })).toBeInTheDocument();
+    expect(screen.getByText('4 members')).toBeInTheDocument();
+    expect(screen.getByText('Owner')).toBeInTheDocument();
   });
 
   it('renders a useful not-found route', () => {

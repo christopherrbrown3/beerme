@@ -49,6 +49,14 @@ Beer is the default unit, but balances are designed to stay unit-agnostic so gro
 - Database-triggered profiles with immutable usernames
 - User-owned profile reads and display-name updates enforced by RLS
 
+### Groups
+
+- Create groups with an automatic owner membership
+- Join by pasting an invite link or opening a protected `/join/:token` route
+- Responsive home dashboard with member counts, roles, and optimistic creation
+- Future-ready group currency fields defaulted to Beer without exposing configuration UI
+- Membership, group, and shared-profile access enforced with recursive-safe RLS helpers
+
 ## How it works
 
 ```text
@@ -147,7 +155,7 @@ supabase/
 
 - [x] Project foundation and installable app shell
 - [x] Authentication and user profiles
-- [ ] Groups, membership, and the home dashboard
+- [x] Groups, membership, and the home dashboard
 - [ ] Append-only transaction ledger and reversals
 - [ ] Unit-agnostic balance engine
 - [ ] People dashboard and quick transaction flows

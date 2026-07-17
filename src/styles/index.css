@@ -885,6 +885,300 @@ a:focus-visible {
   height: 19rem;
 }
 
+.groups-hero {
+  margin-bottom: 2.5rem;
+}
+
+.groups-hero .page-intro {
+  margin-bottom: 1.25rem;
+}
+
+.groups-actions {
+  display: flex;
+  gap: 0.65rem;
+  align-items: center;
+}
+
+.groups-actions .primary-button,
+.groups-actions .secondary-button {
+  margin: 0;
+}
+
+.groups-grid {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.group-card {
+  position: relative;
+  min-height: 14rem;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(230, 161, 31, 0.16), transparent 9rem),
+    color-mix(in srgb, var(--paper) 94%, transparent);
+  border: 1px solid var(--border);
+  border-radius: 1.35rem;
+  box-shadow: var(--shadow);
+}
+
+.group-card::after {
+  content: '';
+  position: absolute;
+  right: -1.5rem;
+  bottom: -2.2rem;
+  width: 7rem;
+  height: 7rem;
+  border: 1px solid rgba(230, 161, 31, 0.16);
+  border-radius: 999px;
+}
+
+.group-card--saving {
+  opacity: 0.72;
+}
+
+.group-card__topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.group-card__symbol {
+  width: 3rem;
+  height: 3rem;
+  display: grid;
+  place-items: center;
+  background: var(--amber-soft);
+  border-radius: 0.95rem 0.95rem 0.95rem 0.35rem;
+  font-size: 1.35rem;
+}
+
+.role-pill {
+  min-height: 1.7rem;
+  padding: 0.25rem 0.55rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+  color: #6a470d;
+  background: #fff0ca;
+  border: 1px solid #edd29a;
+  border-radius: 999px;
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.group-card h3 {
+  margin: 1.25rem 0 0;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.65rem;
+  letter-spacing: -0.04em;
+}
+
+.group-card__description {
+  margin: 0.45rem 0 1.25rem;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+
+.group-card__footer {
+  position: relative;
+  z-index: 1;
+  margin-top: auto;
+  padding-top: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  color: var(--muted);
+  border-top: 1px solid var(--border);
+  font-size: 0.7rem;
+  font-weight: 750;
+}
+
+.group-card__footer span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.groups-error {
+  padding: 1.5rem;
+  color: #742a23;
+  background: #fae4df;
+  border: 1px solid #e9b7ad;
+  border-radius: 1.25rem;
+}
+
+.groups-error h2,
+.groups-error p {
+  margin: 0;
+}
+
+.groups-error p {
+  margin-top: 0.4rem;
+  font-size: 0.82rem;
+}
+
+.groups-grid--loading span {
+  height: 14rem;
+  border-radius: 1.35rem;
+  background: linear-gradient(90deg, rgba(255, 250, 240, 0.5), white, rgba(255, 250, 240, 0.5));
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.4s linear infinite;
+}
+
+.dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  padding: 1rem;
+  display: grid;
+  place-items: end center;
+  background: rgba(23, 21, 18, 0.7);
+  backdrop-filter: blur(8px);
+}
+
+.dialog-backdrop__dismiss {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  background: transparent;
+  border: 0;
+}
+
+.dialog-card {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 32rem);
+  padding: 1.5rem;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid rgba(255, 255, 255, 0.38);
+  border-radius: 1.5rem 1.5rem max(1.5rem, env(safe-area-inset-bottom))
+    max(1.5rem, env(safe-area-inset-bottom));
+  box-shadow: 0 25px 80px rgba(0, 0, 0, 0.38);
+}
+
+.dialog-card__close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 2.6rem;
+  height: 2.6rem;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  background: rgba(76, 61, 38, 0.06);
+  border: 0;
+  border-radius: 0.75rem;
+  cursor: pointer;
+}
+
+.dialog-card h2 {
+  max-width: calc(100% - 3rem);
+  margin: 0;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 2rem;
+  letter-spacing: -0.045em;
+}
+
+.dialog-card__description {
+  margin: 0.7rem 0 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+
+.dialog-form {
+  margin-top: 1.4rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.form-field textarea {
+  width: 100%;
+  padding: 0.75rem 0.9rem;
+  resize: vertical;
+  color: var(--ink);
+  background: white;
+  border: 1px solid rgba(76, 61, 38, 0.2);
+  border-radius: 0.8rem;
+  outline: none;
+}
+
+.form-field textarea:focus {
+  border-color: var(--amber-dark);
+  box-shadow: 0 0 0 3px rgba(230, 161, 31, 0.16);
+}
+
+.optional-label {
+  margin-left: 0.35rem;
+  color: var(--muted);
+  font-size: 0.65rem;
+  font-weight: 600;
+}
+
+.dialog-form__submit {
+  width: 100%;
+  margin: 0.2rem 0 0;
+}
+
+.join-page {
+  min-height: 100dvh;
+  padding: max(2rem, env(safe-area-inset-top)) 1.25rem max(2rem, env(safe-area-inset-bottom));
+  display: grid;
+  place-content: center;
+  gap: 1.5rem;
+  color: white;
+  background:
+    radial-gradient(circle at 80% 0%, rgba(230, 161, 31, 0.25), transparent 28rem), var(--charcoal);
+}
+
+.join-card {
+  width: min(100%, 32rem);
+  padding: 2rem;
+  color: var(--ink);
+  text-align: center;
+  background: var(--paper);
+  border-radius: 1.5rem;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.34);
+}
+
+.join-card__icon {
+  width: 4.5rem;
+  height: 4.5rem;
+  margin: 0 auto 1.35rem;
+  display: grid;
+  place-items: center;
+  color: #6a470d;
+  background: var(--amber-soft);
+  border-radius: 1.4rem 1.4rem 1.4rem 0.5rem;
+}
+
+.join-card__icon--error {
+  color: #742a23;
+  background: #fae4df;
+}
+
+.join-card h1 {
+  margin: 0;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 2rem;
+  letter-spacing: -0.045em;
+}
+
+.join-card > p:not(.eyebrow) {
+  margin: 0.7rem 0 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
 @keyframes skeleton-shimmer {
   to {
     background-position: -200% 0;
@@ -933,6 +1227,30 @@ a:focus-visible {
   .profile-identity,
   .profile-panel {
     padding: 1.5rem;
+  }
+
+  .groups-hero {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 2rem;
+  }
+
+  .groups-hero .page-intro {
+    margin-bottom: 0;
+  }
+
+  .groups-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dialog-backdrop {
+    place-items: center;
+  }
+
+  .dialog-card {
+    padding: 2rem;
+    border-radius: 1.5rem;
   }
 }
 

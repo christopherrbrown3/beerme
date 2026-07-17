@@ -21,3 +21,12 @@ test('the app exposes installable PWA metadata', async ({ page, request }) => {
   const manifest = (await manifestResponse.json()) as { name: string; display: string };
   expect(manifest).toMatchObject({ name: 'BeerMe', display: 'standalone' });
 });
+
+test('a protected invite preserves its destination through login', async ({ page }) => {
+  const token = '123e4567-e89b-42d3-a456-426614174000';
+  await page.goto(`/join/${token}`);
+
+  await expect(page).toHaveURL(/\/auth\/login\?next=/);
+  expect(decodeURIComponent(page.url())).toContain(`/join/${token}`);
+  await expect(page.getByRole('heading', { name: 'Sign in to your crew.' })).toBeVisible();
+});

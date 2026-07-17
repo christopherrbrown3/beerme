@@ -6,6 +6,7 @@ import { PublicOnlyRoute } from './components/auth/PublicOnlyRoute';
 import { AppLayout } from './components/layout/AppLayout';
 import { ActivityPage } from './pages/ActivityPage';
 import { GroupsPage } from './pages/GroupsPage';
+import { JoinGroupPage } from './pages/JoinGroupPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { CheckEmailPage } from './pages/auth/CheckEmailPage';
@@ -23,6 +24,7 @@ export function App() {
         </Route>
       </Route>
       <Route element={<ProtectedRoute />}>
+        <Route path="join/:token" element={<JoinGroupPage />} />
         <Route element={<AppLayout />}>
           <Route index element={<GroupsPage />} />
           <Route path="activity" element={<ActivityPage />} />
