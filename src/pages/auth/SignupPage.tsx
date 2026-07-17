@@ -17,7 +17,6 @@ export function SignupPage() {
   const { isConfigured } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
   const [displayName, setDisplayName] = useState('');
@@ -42,22 +41,12 @@ export function SignupPage() {
     setIsSubmitting(true);
 
     try {
-      const { session } = await signUpWithPassword({
-        email,
+      await signUpWithPassword({
         password,
         username,
         displayName,
-        nextPath,
       });
-
-      if (session) {
-        await navigate(nextPath, { replace: true });
-      } else {
-        await navigate(`/auth/check-email${nextSearch}`, {
-          replace: true,
-          state: { email: email.trim() },
-        });
-      }
+      await navigate(nextPath, { replace: true });
     } catch (submitError) {
       setError(getFriendlyAuthError(submitError));
     } finally {
@@ -119,15 +108,6 @@ export function SignupPage() {
             required
           />
         </div>
-        <FormField
-          label="Email"
-          name="email"
-          type="email"
-          autoComplete="email"
-          value={email}
-          onChange={(event) => setEmail(event.target.value)}
-          required
-        />
         <FormField
           label="Password"
           name="password"

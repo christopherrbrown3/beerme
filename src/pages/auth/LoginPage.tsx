@@ -5,6 +5,7 @@ import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-do
 import { FormField } from '../../components/ui/FormField';
 import { useAuth } from '../../hooks/useAuth';
 import { getFriendlyAuthError, signInWithPassword } from '../../services/authService';
+import { normalizeUsername, validateUsername } from '../../utils/profileValidation';
 import { getSafeNextPath } from '../../utils/redirect';
 
 export function LoginPage() {
@@ -12,8 +13,9 @@ export function LoginPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [usernameError, setUsernameError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const nextPath = getSafeNextPath(searchParams.get('next'));
@@ -24,11 +26,14 @@ export function LoginPage() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const nextUsernameError = validateUsername(username);
+    setUsernameError(nextUsernameError);
     setError(null);
+    if (nextUsernameError) return;
     setIsSubmitting(true);
 
     try {
-      await signInWithPassword(email, password);
+      await signInWithPassword(username, password);
       await navigate(nextPath, { replace: true });
     } catch (submitError) {
       setError(getFriendlyAuthError(submitError));
@@ -62,12 +67,20 @@ export function LoginPage() {
 
       <form className="auth-form" onSubmit={(event) => void handleSubmit(event)}>
         <FormField
-          label="Email"
-          name="email"
-          type="email"
-          autoComplete="email"
-          value={email}
-          onChange={(event) => setEmail(event.target.value)}
+          label="Username"
+          name="username"
+          type="text"
+          autoComplete="username"
+          value={username}
+          onChange={(event) => {
+            setUsername(normalizeUsername(event.target.value));
+            if (usernameError) setUsernameError(validateUsername(event.target.value));
+          }}
+          onBlur={() => setUsernameError(validateUsername(username))}
+          error={usernameError}
+          minLength={3}
+          maxLength={24}
+          pattern="[a-z0-9_]{3,24}"
           required
         />
         <FormField

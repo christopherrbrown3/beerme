@@ -10,7 +10,6 @@ import { GroupLedgerPage } from './pages/GroupLedgerPage';
 import { JoinGroupPage } from './pages/JoinGroupPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { ProfilePage } from './pages/ProfilePage';
-import { CheckEmailPage } from './pages/auth/CheckEmailPage';
 import { LoginPage } from './pages/auth/LoginPage';
 import { SignupPage } from './pages/auth/SignupPage';
 
@@ -21,7 +20,6 @@ export function App() {
         <Route path="auth" element={<AuthLayout />}>
           <Route path="login" element={<LoginPage />} />
           <Route path="signup" element={<SignupPage />} />
-          <Route path="check-email" element={<CheckEmailPage />} />
         </Route>
       </Route>
       <Route element={<ProtectedRoute />}>

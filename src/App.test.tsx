@@ -8,7 +8,7 @@ import { App } from './App';
 import { AppProviders } from './lib/AppProviders';
 
 const authState = vi.hoisted(() => ({
-  user: { id: 'user-1', email: 'friend@example.com' } as { id: string; email: string } | null,
+  user: { id: 'user-1' } as { id: string } | null,
   isConfigured: true,
 }));
 
@@ -136,7 +136,7 @@ function renderApp(initialPath = '/') {
 
 describe('BeerMe app shell', () => {
   beforeEach(() => {
-    authState.user = { id: 'user-1', email: 'friend@example.com' };
+    authState.user = { id: 'user-1' };
     authState.isConfigured = true;
     groupsState.data = [];
     activityState.data = [];

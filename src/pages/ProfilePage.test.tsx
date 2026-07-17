@@ -12,7 +12,7 @@ const actions = vi.hoisted(() => ({
 
 vi.mock('../hooks/useAuth', () => ({
   useAuth: () => ({
-    user: { id: 'user-1', email: 'friend@example.com' },
+    user: { id: 'user-1' },
     signOut: actions.signOut,
   }),
 }));

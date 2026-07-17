@@ -54,7 +54,7 @@ BeerMe treats the ledger as the source of truth:
 GitHub Pages ── static React PWA
                        │
                        └── Supabase
-                           ├── Auth
+                           ├── Username/password Auth
                            ├── PostgreSQL + Row Level Security
                            └── Realtime Postgres Changes
 ```
@@ -104,7 +104,9 @@ supabase link --project-ref your-project-ref
 supabase db push
 ```
 
-For the current immediate-access signup experience, disable **Confirm email** in Supabase Authentication. Configure these Auth URLs:
+BeerMe collects only a username, display name, and password. Supabase Auth requires an email-shaped login identifier internally, so BeerMe deterministically derives a non-deliverable address under the reserved `.invalid` domain. No real email address is requested, stored, or sent.
+
+Disable **Confirm email** in Supabase Authentication and configure these Auth URLs:
 
 - Site URL: `https://beerme.christopherbrown.ai`
 - Redirect URL: `https://beerme.christopherbrown.ai/**`

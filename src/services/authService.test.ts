@@ -1,59 +1,62 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { getFriendlyAuthError, signUpWithPassword } from './authService';
+import {
+  getFriendlyAuthError,
+  getInternalAuthIdentifier,
+  signInWithPassword,
+  signUpWithPassword,
+} from './authService';
 
 const authClient = vi.hoisted(() => ({
   rpc: vi.fn(),
+  signInWithPassword: vi.fn(),
   signUp: vi.fn(),
 }));
 
 vi.mock('../lib/supabase', () => ({
   getSupabaseClient: () => ({
     rpc: authClient.rpc,
-    auth: { signUp: authClient.signUp },
+    auth: {
+      signInWithPassword: authClient.signInWithPassword,
+      signUp: authClient.signUp,
+    },
   }),
 }));
 
 describe('signUpWithPassword', () => {
   beforeEach(() => {
     authClient.rpc.mockReset();
+    authClient.signInWithPassword.mockReset();
     authClient.signUp.mockReset();
     authClient.rpc.mockResolvedValue({ data: true, error: null });
     authClient.signUp.mockResolvedValue({ data: { user: {}, session: null }, error: null });
   });
 
-  it('carries a safe invite destination into the confirmation callback', async () => {
+  it('creates an account with a non-deliverable username identifier', async () => {
     await signUpWithPassword({
-      email: ' friend@example.com ',
       password: 'long-enough-password',
       username: ' Friend_1 ',
       displayName: ' Friendly Person ',
-      nextPath: '/join/123e4567-e89b-42d3-a456-426614174000',
     });
 
     expect(authClient.signUp).toHaveBeenCalledWith({
-      email: 'friend@example.com',
+      email: 'friend_1@users.beerme.invalid',
       password: 'long-enough-password',
       options: {
         data: { username: 'friend_1', display_name: 'Friendly Person' },
-        emailRedirectTo:
-          'http://localhost:3000/auth/login?next=%2Fjoin%2F123e4567-e89b-42d3-a456-426614174000',
       },
     });
   });
 
-  it('cannot embed an external confirmation destination', async () => {
-    await signUpWithPassword({
-      email: 'friend@example.com',
-      password: 'long-enough-password',
-      username: 'friend_1',
-      displayName: 'Friendly Person',
-      nextPath: '//example.com/steal',
-    });
+  it('uses the same normalized identifier for login', async () => {
+    authClient.signInWithPassword.mockResolvedValue({ data: { session: {} }, error: null });
+    await signInWithPassword(' FRIEND_1 ', 'long-enough-password');
 
-    expect(authClient.signUp.mock.calls[0]?.[0].options.emailRedirectTo).toBe(
-      'http://localhost:3000/auth/login?next=%2F',
-    );
+    expect(getInternalAuthIdentifier(' FRIEND_1 ')).toBe('friend_1@users.beerme.invalid');
+    expect(authClient.signInWithPassword).toHaveBeenCalledWith({
+      email: 'friend_1@users.beerme.invalid',
+      password: 'long-enough-password',
+    });
   });
 });
 
@@ -64,18 +67,12 @@ describe('getFriendlyAuthError', () => {
     );
   });
 
-  it('explains provider email rate limits', () => {
+  it('explains provider rate limits without mentioning delivery', () => {
     expect(getFriendlyAuthError({ message: 'email rate limit exceeded', status: 429 })).toBe(
-      'BeerMe has sent too many confirmation emails. Please try again later.',
+      'Too many attempts. Please try again in a moment.',
     );
     expect(getFriendlyAuthError({ message: 'Too many requests', status: 429 })).toBe(
-      'BeerMe has sent too many confirmation emails. Please try again later.',
-    );
-  });
-
-  it('explains unauthorized recipients on the default email provider', () => {
-    expect(getFriendlyAuthError({ message: 'Email address not authorized' })).toBe(
-      'Email delivery is not configured for public signups yet. Please contact the BeerMe owner.',
+      'Too many attempts. Please try again in a moment.',
     );
   });
 
@@ -87,7 +84,7 @@ describe('getFriendlyAuthError', () => {
 
   it('keeps existing login and password guidance', () => {
     expect(getFriendlyAuthError({ message: 'Invalid login credentials' })).toBe(
-      'That email and password combination didn’t work.',
+      'That username and password combination didn’t work.',
     );
     expect(getFriendlyAuthError({ message: 'Password should be at least 8 characters' })).toBe(
       'Use a stronger password with at least 8 characters.',

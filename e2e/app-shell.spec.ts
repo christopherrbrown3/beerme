@@ -5,9 +5,12 @@ test('signed-out visitors can move between login and signup', async ({ page }) =
 
   await expect(page).toHaveURL(/\/auth\/login/);
   await expect(page.getByRole('heading', { name: 'Sign in to your crew.' })).toBeVisible();
+  await expect(page.getByLabel('Username')).toBeVisible();
+  await expect(page.locator('input[type="email"]')).toHaveCount(0);
   await page.getByRole('link', { name: 'Create an account' }).click();
   await expect(page.getByRole('heading', { name: 'Create your BeerMe identity.' })).toBeVisible();
   await expect(page.getByLabel('Username')).toHaveAttribute('maxlength', '24');
+  await expect(page.locator('input[type="email"]')).toHaveCount(0);
 });
 
 test('the app exposes installable PWA metadata', async ({ page, request }) => {

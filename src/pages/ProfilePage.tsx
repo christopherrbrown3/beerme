@@ -1,4 +1,4 @@
-import { AtSign, CalendarDays, LogOut, Save, ShieldCheck, UserRound } from 'lucide-react';
+import { AtSign, CalendarDays, LogOut, Save, UserRound } from 'lucide-react';
 import { type FormEvent, useState } from 'react';
 
 import { PageIntro } from '../components/ui/PageIntro';
@@ -8,7 +8,6 @@ import { type Profile } from '../types/database';
 import { validateDisplayName } from '../utils/profileValidation';
 
 export function ProfilePage() {
-  const { user } = useAuth();
   const profileQuery = useProfile();
 
   return (
@@ -34,11 +33,7 @@ export function ProfilePage() {
       )}
 
       {profileQuery.data && (
-        <ProfileDetails
-          key={profileQuery.data.display_name}
-          profile={profileQuery.data}
-          email={user?.email}
-        />
+        <ProfileDetails key={profileQuery.data.display_name} profile={profileQuery.data} />
       )}
     </div>
   );
@@ -46,10 +41,9 @@ export function ProfilePage() {
 
 type ProfileDetailsProps = {
   profile: Profile;
-  email?: string;
 };
 
-function ProfileDetails({ profile, email }: ProfileDetailsProps) {
+function ProfileDetails({ profile }: ProfileDetailsProps) {
   const { signOut } = useAuth();
   const updateProfile = useUpdateDisplayName();
   const [displayName, setDisplayName] = useState(profile.display_name);
@@ -161,12 +155,6 @@ function ProfileDetails({ profile, email }: ProfileDetailsProps) {
                 year: 'numeric',
               }).format(new Date(profile.created_at))}
             </dd>
-          </div>
-          <div>
-            <dt>
-              <ShieldCheck size={17} aria-hidden="true" /> Email
-            </dt>
-            <dd>{email}</dd>
           </div>
         </dl>
       </section>
