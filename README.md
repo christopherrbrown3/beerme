@@ -89,6 +89,13 @@ Beer is the default unit, but balances are designed to stay unit-agnostic so gro
 - Accessible cell labels, hover details, and keyboard-reachable transaction actions
 - Any non-diagonal cell opens a preselected transaction in that exact direction
 
+### Activity timeline
+
+- Cross-group feed derived from group, membership, and immutable transaction history
+- Group creation, member joins, transaction creation, and reversal events
+- Newest-first ordering, friendly timestamps, notes, and direct group links
+- Transaction and membership Realtime refresh with no duplicate activity table
+
 ## How it works
 
 ```text
@@ -194,7 +201,7 @@ supabase/
 - [x] Unit-agnostic balance engine
 - [x] People dashboard and quick transaction flows
 - [x] Interactive relationship matrix
-- [ ] Activity history
+- [x] Activity history
 - [ ] Invite links, sharing, and QR codes
 - [ ] Native-feeling polish, performance, and accessibility pass
 

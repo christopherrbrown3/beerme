@@ -1815,6 +1815,94 @@ a:focus-visible {
   background: #efaaa0;
 }
 
+.activity-feed .section-heading {
+  margin-bottom: 0.9rem;
+}
+
+.activity-list {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.activity-card {
+  padding: 1rem;
+  display: grid;
+  grid-template-columns: 2.8rem 1fr;
+  gap: 0.8rem;
+  background: color-mix(in srgb, var(--paper) 94%, transparent);
+  border: 1px solid var(--border);
+  border-radius: 1.15rem;
+  box-shadow: 0 10px 30px rgba(64, 48, 22, 0.06);
+}
+
+.activity-card__icon {
+  width: 2.8rem;
+  height: 2.8rem;
+  display: grid;
+  place-items: center;
+  color: #70410b;
+  background: var(--amber-soft);
+  border-radius: 0.85rem 0.85rem 0.85rem 0.32rem;
+}
+
+.activity-card--member_joined .activity-card__icon,
+.activity-card--group_created .activity-card__icon {
+  color: #214c36;
+  background: var(--green-soft);
+}
+
+.activity-card--transaction_reversed .activity-card__icon {
+  color: var(--muted);
+  background: rgba(76, 61, 38, 0.08);
+}
+
+.activity-card__body {
+  min-width: 0;
+}
+
+.activity-card__body > p {
+  margin: 0;
+  color: var(--ink);
+  font-size: 0.82rem;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.activity-card__detail {
+  margin-top: 0.25rem;
+  display: block;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.72rem;
+  line-height: 1.45;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.activity-card__meta {
+  margin-top: 0.55rem;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--muted);
+  font-size: 0.62rem;
+}
+
+.activity-card__meta a {
+  color: var(--amber-dark);
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.activity-list--loading span {
+  height: 6.1rem;
+  display: block;
+  background: linear-gradient(90deg, rgba(255, 250, 240, 0.5), white, rgba(255, 250, 240, 0.5));
+  background-size: 200% 100%;
+  border-radius: 1.15rem;
+  animation: skeleton-shimmer 1.4s linear infinite;
+}
+
 .transaction-list {
   display: grid;
   gap: 0.75rem;

@@ -16,6 +16,10 @@ const groupsState = vi.hoisted(() => ({
   data: [] as unknown[],
 }));
 
+const activityState = vi.hoisted(() => ({
+  data: [] as unknown[],
+}));
+
 const ledgerState = vi.hoisted(() => ({
   group: {
     id: 'group-1',
@@ -110,6 +114,16 @@ vi.mock('./hooks/useGroupLedger', () => ({
   useReverseTransaction: () => ({ isPending: false, isError: false, mutateAsync: vi.fn() }),
 }));
 
+vi.mock('./hooks/useActivity', () => ({
+  useActivity: () => ({
+    data: activityState.data,
+    isLoading: false,
+    isError: false,
+    refetch: vi.fn(),
+  }),
+  useActivityRealtime: vi.fn(),
+}));
+
 function renderApp(initialPath = '/') {
   return render(
     <MemoryRouter initialEntries={[initialPath]}>
@@ -125,6 +139,7 @@ describe('BeerMe app shell', () => {
     authState.user = { id: 'user-1', email: 'friend@example.com' };
     authState.isConfigured = true;
     groupsState.data = [];
+    activityState.data = [];
   });
 
   it('renders the groups home as the default route', () => {
@@ -145,6 +160,31 @@ describe('BeerMe app shell', () => {
 
     await user.click(screen.getByRole('link', { name: 'Profile' }));
     expect(screen.getByRole('heading', { name: 'Profile' })).toBeInTheDocument();
+  });
+
+  it('renders newest activity with a link to its group', () => {
+    activityState.data = [
+      {
+        id: 'transaction-created:transaction-1',
+        type: 'transaction_created',
+        groupId: 'group-1',
+        groupName: 'Friday Crew',
+        groupSymbol: '🍺',
+        actor: { id: 'user-1', username: 'chris', displayName: 'Chris' },
+        occurredAt: new Date().toISOString(),
+        title: 'Alex owes Chris 2 Beers',
+        detail: 'Trivia night',
+      },
+    ];
+
+    renderApp('/activity');
+
+    expect(screen.getByRole('heading', { name: 'Your timeline' })).toBeInTheDocument();
+    expect(screen.getByText('Alex owes Chris 2 Beers')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Friday Crew' })).toHaveAttribute(
+      'href',
+      '/groups/group-1',
+    );
   });
 
   it('opens the create-group flow from the empty dashboard', async () => {

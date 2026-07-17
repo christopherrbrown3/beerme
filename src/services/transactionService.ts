@@ -58,11 +58,22 @@ function mapTransaction(row: TransactionRow): LedgerEntry {
 }
 
 export async function getTransactions(groupId: string): Promise<LedgerEntry[]> {
-  const { data, error } = await getSupabaseClient()
+  return queryTransactions(groupId);
+}
+
+export async function getAllTransactions(): Promise<LedgerEntry[]> {
+  return queryTransactions();
+}
+
+async function queryTransactions(groupId?: string): Promise<LedgerEntry[]> {
+  let query = getSupabaseClient()
     .from('transactions')
     .select(TRANSACTION_SELECT)
-    .eq('group_id', groupId)
     .order('created_at', { ascending: false });
+
+  if (groupId) query = query.eq('group_id', groupId);
+
+  const { data, error } = await query;
 
   if (error) throw error;
   return (data as unknown as TransactionRow[]).map(mapTransaction);
