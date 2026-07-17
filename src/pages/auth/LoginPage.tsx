@@ -5,10 +5,7 @@ import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-do
 import { FormField } from '../../components/ui/FormField';
 import { useAuth } from '../../hooks/useAuth';
 import { getFriendlyAuthError, signInWithPassword } from '../../services/authService';
-
-function getSafeNextPath(value: string | null) {
-  return value?.startsWith('/') && !value.startsWith('//') ? value : '/';
-}
+import { getSafeNextPath } from '../../utils/redirect';
 
 export function LoginPage() {
   const { isConfigured } = useAuth();
