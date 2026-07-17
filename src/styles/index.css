@@ -992,10 +992,6 @@ a:active {
   text-decoration: none;
 }
 
-.group-card__link[aria-disabled='true'] {
-  pointer-events: none;
-}
-
 .group-card--saving {
   opacity: 0.72;
 }

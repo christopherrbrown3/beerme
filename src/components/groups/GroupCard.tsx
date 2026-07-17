@@ -11,11 +11,53 @@ type GroupCardProps = {
 };
 
 export function GroupCard({ group }: GroupCardProps) {
+  const isSaving = group.id.startsWith('optimistic-');
+  const cardDetails = (
+    <>
+      <h3>{group.name}</h3>
+      <p className="group-card__description">
+        {group.description || 'The crew is assembled. The story starts here.'}
+      </p>
+      <div
+        className={
+          group.currentUserBalance > 0
+            ? 'group-card__balance group-card__balance--owed'
+            : group.currentUserBalance < 0
+              ? 'group-card__balance group-card__balance--owes'
+              : 'group-card__balance'
+        }
+      >
+        <span>
+          {group.currentUserBalance > 0
+            ? 'You are owed'
+            : group.currentUserBalance < 0
+              ? 'You owe'
+              : 'All square'}
+        </span>
+        {group.currentUserBalance !== 0 && (
+          <strong>{formatUnitQuantity(Math.abs(group.currentUserBalance), group.currency)}</strong>
+        )}
+      </div>
+      <div className="group-card__footer">
+        <span>
+          <UsersRound size={16} aria-hidden="true" />
+          {group.memberCount} {group.memberCount === 1 ? 'member' : 'members'}
+        </span>
+        <span>
+          {isSaving
+            ? 'Saving…'
+            : group.lastActivityAt
+              ? formatFriendlyTimestamp(group.lastActivityAt)
+              : 'No activity yet'}
+          {!isSaving && <ArrowUpRight size={15} aria-hidden="true" />}
+        </span>
+      </div>
+    </>
+  );
+
   return (
     <motion.article
-      className={
-        group.id.startsWith('optimistic-') ? 'group-card group-card--saving' : 'group-card'
-      }
+      className={isSaving ? 'group-card group-card--saving' : 'group-card'}
       layout
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
@@ -31,52 +73,15 @@ export function GroupCard({ group }: GroupCardProps) {
           </span>
         )}
       </div>
-      <Link
-        className="group-card__link"
-        to={group.id.startsWith('optimistic-') ? '#' : `/groups/${group.id}`}
-        aria-disabled={group.id.startsWith('optimistic-')}
-      >
-        <h3>{group.name}</h3>
-        <p className="group-card__description">
-          {group.description || 'The crew is assembled. The story starts here.'}
-        </p>
-        <div
-          className={
-            group.currentUserBalance > 0
-              ? 'group-card__balance group-card__balance--owed'
-              : group.currentUserBalance < 0
-                ? 'group-card__balance group-card__balance--owes'
-                : 'group-card__balance'
-          }
-        >
-          <span>
-            {group.currentUserBalance > 0
-              ? 'You are owed'
-              : group.currentUserBalance < 0
-                ? 'You owe'
-                : 'All square'}
-          </span>
-          {group.currentUserBalance !== 0 && (
-            <strong>
-              {formatUnitQuantity(Math.abs(group.currentUserBalance), group.currency)}
-            </strong>
-          )}
+      {isSaving ? (
+        <div className="group-card__link" aria-live="polite">
+          {cardDetails}
         </div>
-        <div className="group-card__footer">
-          <span>
-            <UsersRound size={16} aria-hidden="true" />
-            {group.memberCount} {group.memberCount === 1 ? 'member' : 'members'}
-          </span>
-          <span>
-            {group.id.startsWith('optimistic-')
-              ? 'Saving…'
-              : group.lastActivityAt
-                ? formatFriendlyTimestamp(group.lastActivityAt)
-                : 'No activity yet'}
-            {!group.id.startsWith('optimistic-') && <ArrowUpRight size={15} aria-hidden="true" />}
-          </span>
-        </div>
-      </Link>
+      ) : (
+        <Link className="group-card__link" to={`/groups/${group.id}`}>
+          {cardDetails}
+        </Link>
+      )}
     </motion.article>
   );
 }
