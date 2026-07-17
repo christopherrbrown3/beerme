@@ -2,6 +2,7 @@ import { Outlet } from 'react-router-dom';
 
 import { BeerMeMark } from '../brand/BeerMeMark';
 import { BottomNavigation } from './BottomNavigation';
+import { NetworkStatus } from './NetworkStatus';
 import { UpdatePrompt } from './UpdatePrompt';
 
 export function AppLayout() {
@@ -20,6 +21,7 @@ export function AppLayout() {
         <Outlet />
       </main>
       <BottomNavigation />
+      <NetworkStatus />
       <UpdatePrompt />
     </div>
   );

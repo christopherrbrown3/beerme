@@ -49,6 +49,7 @@ body {
 button,
 a {
   -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 button,
@@ -59,9 +60,17 @@ select {
 }
 
 button:focus-visible,
-a:focus-visible {
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
   outline: 3px solid color-mix(in srgb, var(--amber) 75%, white);
   outline-offset: 3px;
+}
+
+button:not(:disabled):active,
+a:active {
+  transform: scale(0.98);
 }
 
 .sr-only {
@@ -430,6 +439,44 @@ a:focus-visible {
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 1rem;
   box-shadow: 0 15px 40px rgba(23, 21, 18, 0.35);
+}
+
+.network-toast {
+  position: fixed;
+  right: 1rem;
+  bottom: calc(6.2rem + env(safe-area-inset-bottom));
+  left: 1rem;
+  z-index: 29;
+  max-width: 30rem;
+  margin: 0 auto;
+  padding: 0.9rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: white;
+  background: #5b312b;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 1rem;
+  box-shadow: 0 16px 45px rgba(23, 21, 18, 0.25);
+}
+
+.network-toast svg {
+  flex: 0 0 auto;
+}
+
+.network-toast div {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.network-toast strong {
+  font-size: 0.8rem;
+}
+
+.network-toast span {
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 0.7rem;
+  line-height: 1.4;
 }
 
 .update-toast strong {
@@ -2258,6 +2305,19 @@ a:focus-visible {
 
   .page {
     padding-bottom: 4rem;
+  }
+}
+
+@media (display-mode: standalone) {
+  body {
+    overscroll-behavior-y: none;
+    user-select: none;
+  }
+
+  input,
+  textarea,
+  select {
+    user-select: text;
   }
 }
 

@@ -1,5 +1,4 @@
 import { Check, Copy, Share2 } from 'lucide-react';
-import QRCode from 'qrcode';
 import { useEffect, useRef, useState } from 'react';
 
 import { type GroupDetails } from '../../types/groups';
@@ -21,12 +20,15 @@ export function InviteGroupDialog({ group, onClose }: InviteGroupDialogProps) {
 
   useEffect(() => {
     let active = true;
-    void QRCode.toDataURL(inviteUrl, {
-      width: 512,
-      margin: 2,
-      errorCorrectionLevel: 'M',
-      color: { dark: '#171512', light: '#fffaf0' },
-    })
+    void import('qrcode')
+      .then(({ default: QRCode }) =>
+        QRCode.toDataURL(inviteUrl, {
+          width: 512,
+          margin: 2,
+          errorCorrectionLevel: 'M',
+          color: { dark: '#171512', light: '#fffaf0' },
+        }),
+      )
       .then((value) => {
         if (active) setQrCode(value);
       })

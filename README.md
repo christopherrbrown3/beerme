@@ -96,6 +96,14 @@ Beer is the default unit, but balances are designed to stay unit-agnostic so gro
 - Newest-first ordering, friendly timestamps, notes, and direct group links
 - Transaction and membership Realtime refresh with no duplicate activity table
 
+### Invites and native polish
+
+- On-device QR code generation keeps protected invite tokens away from third-party QR services
+- Native share sheets where available, plus resilient clipboard and manual-copy fallbacks
+- Focus-trapped dialogs with focus restoration, unique accessible labels, and scroll locking
+- Connection-state feedback, safe-area-aware standalone behavior, and reduced-motion support
+- Deferred QR code loading keeps invitation-only code out of the initial application bundle
+
 ## How it works
 
 ```text
@@ -203,7 +211,7 @@ supabase/
 - [x] Interactive relationship matrix
 - [x] Activity history
 - [x] Invite links, sharing, and QR codes
-- [ ] Native-feeling polish, performance, and accessibility pass
+- [x] Native-feeling polish, performance, and accessibility pass
 
 ## Product principles
 
