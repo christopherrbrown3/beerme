@@ -21,8 +21,13 @@ export function useUpdateDisplayName() {
 
   return useMutation({
     mutationFn: (displayName: string) => updateDisplayName(user!.id, displayName),
-    onSuccess: (profile) => {
+    onSuccess: async (profile) => {
       queryClient.setQueryData(profileQueryKey(profile.id), profile);
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['group'] }),
+        queryClient.invalidateQueries({ queryKey: ['transactions'] }),
+        queryClient.invalidateQueries({ queryKey: ['activity'] }),
+      ]);
     },
   });
 }
