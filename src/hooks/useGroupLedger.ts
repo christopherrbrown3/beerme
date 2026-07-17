@@ -54,6 +54,19 @@ export function useLedgerRealtime(groupId: string) {
           void queryClient.invalidateQueries({ queryKey: ['groups'] });
         },
       )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'memberships',
+          filter: `group_id=eq.${groupId}`,
+        },
+        () => {
+          void queryClient.invalidateQueries({ queryKey: groupQueryKey(groupId) });
+          void queryClient.invalidateQueries({ queryKey: ['groups'] });
+        },
+      )
       .subscribe();
 
     return () => {

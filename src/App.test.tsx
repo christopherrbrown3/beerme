@@ -90,6 +90,7 @@ vi.mock('./hooks/useGroups', () => ({
     isError: false,
     mutateAsync: vi.fn(),
   }),
+  useGroupsRealtime: vi.fn(),
   useJoinGroup: () => ({
     isPending: false,
     isError: false,
