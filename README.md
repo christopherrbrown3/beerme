@@ -1,76 +1,117 @@
+<div align="center">
+  <img src="public/favicon.svg" width="88" height="88" alt="BeerMe logo" />
+
 # BeerMe
 
-BeerMe is a mobile-first progressive web app for tracking friendly, informal IOUs. It is a ledger—not a spreadsheet and not a financial product. The default unit is beer, while the core architecture will remain unit-agnostic for future group currencies.
+### Good friends. Clear tabs.
 
-Production target: [beerme.christopherbrown.ai](https://beerme.christopherbrown.ai)
+A fast, friendly way for groups to remember the little things they owe each other—without turning friendship into accounting.
 
-## Current status
+[**Try BeerMe →**](https://beerme.christopherbrown.ai)
 
-Milestone 2 — Authentication is complete.
+[![CI](https://github.com/christopherrbrown3/beerme/actions/workflows/ci.yml/badge.svg)](https://github.com/christopherrbrown3/beerme/actions/workflows/ci.yml)
+[![Deploy](https://github.com/christopherrbrown3/beerme/actions/workflows/deploy.yml/badge.svg)](https://github.com/christopherrbrown3/beerme/actions/workflows/deploy.yml)
 
-- React 19, strict TypeScript, and Vite
-- React Router application shell with Groups, Activity, Profile, and not-found routes
-- Responsive craft-brewery visual theme with mobile bottom navigation and desktop rail navigation
-- Framer Motion with reduced-motion support
-- TanStack Query provider ready for data integration
-- Installable PWA manifest, icons, offline shell, and update prompt
-- GitHub Pages SPA fallback and deployment workflow
-- ESLint, Prettier, Vitest, Testing Library, and Playwright
-- CI checks for formatting, linting, types, unit tests, builds, and mobile/desktop browser tests
-- Supabase email/password signup, login, session persistence, and logout
-- Protected application routes with safe post-login continuation
-- Profile creation through an authenticated database trigger
-- Immutable, unique usernames and editable display names
-- Profile ownership enforced with PostgreSQL Row Level Security
-- Shared browser/database profile validation and friendly auth errors
+</div>
 
-Group data and transaction behavior are intentionally reserved for later milestones.
+## What is BeerMe?
 
-## Requirements
+BeerMe is a mobile-first progressive web app for informal IOUs between friends. Chris buys Alex three beers; Alex buys Chris one later; BeerMe shows that Alex owes Chris two while preserving both moments in the ledger.
 
-- Node.js 22 or newer
-- npm 10 or newer
+It is intentionally not a payment app or a spreadsheet. The experience is designed for the five-second interaction at the table: tap a friend, record the round, and get back to the conversation.
 
-## Local setup
+Beer is the default unit, but balances are designed to stay unit-agnostic so groups can eventually track coffee, cookies, tacos, favors, or anything else worth returning.
 
-```bash
-npm install
+## Highlights
+
+- **Built for a phone** — large touch targets, bottom navigation, safe-area support, and installable PWA behavior
+- **Ledger-first** — activity is append-only; future corrections reverse transactions instead of rewriting history
+- **Private by default** — Supabase Auth and PostgreSQL Row Level Security enforce access in the database
+- **Human identity** — immutable unique usernames plus editable display names
+- **Fast everywhere** — static GitHub Pages hosting, direct Supabase access, offline shell, and split vendor bundles
+- **Accessible motion** — visible focus states, semantic controls, screen-reader labels, and reduced-motion support
+- **Quality gated** — strict TypeScript, ESLint, Prettier, Vitest, Playwright, and GitHub Actions
+
+## Shipped so far
+
+### Foundation
+
+- Responsive craft-brewery visual system
+- Groups, Activity, and Profile application shell
+- Installable PWA manifest, app icons, offline shell, and update prompt
+- GitHub Pages deployment at the custom production domain
+
+### Authentication
+
+- Email/password signup, login, persistent sessions, and logout
+- Protected routes with safe post-login continuation
+- Confirmation-email flow
+- Database-triggered profiles with immutable usernames
+- User-owned profile reads and display-name updates enforced by RLS
+
+## How it works
+
+```text
+React PWA on GitHub Pages
+          │
+          ├── Supabase Auth ── email/password sessions
+          │
+          └── PostgreSQL ───── profiles, groups, memberships, ledger
+                    │
+                    └── Row Level Security at every boundary
 ```
 
-Copy the local environment template and fill it with the project URL and publishable key from Supabase:
+There is no custom application server. Vite compiles the React source into static files, GitHub Pages serves them, and the browser communicates directly with Supabase using its publishable key. Elevated database credentials never enter the frontend bundle.
+
+## Technology
+
+| Area     | Stack                                                                   |
+| -------- | ----------------------------------------------------------------------- |
+| UI       | React 19, TypeScript, React Router, Tailwind CSS, Framer Motion, Lucide |
+| Data     | Supabase, PostgreSQL, TanStack Query                                    |
+| Security | Supabase Auth, Row Level Security, database constraints and triggers    |
+| Testing  | Vitest, Testing Library, Playwright                                     |
+| Delivery | Vite, GitHub Actions, GitHub Pages, PWA service worker                  |
+
+## Local development
+
+Requirements: Node.js 22+ and npm 10+.
 
 ```bash
+git clone https://github.com/christopherrbrown3/beerme.git
+cd beerme
+npm install
 cp .env.example .env.local
 npm run dev
 ```
 
-Vite prints the local development URL, usually `http://localhost:5173`.
+Add the Supabase project URL and publishable key to `.env.local`:
 
-Do not open the repository’s `index.html` directly. It is a Vite source entry point, so TypeScript and dependencies must be compiled first. To preview the same static files GitHub Pages receives:
-
-```bash
-npm run build
-npm run preview
+```dotenv
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=your-publishable-key
 ```
 
-The completed `dist/` directory is fully static. At runtime, the browser communicates directly with Supabase; no custom application server is required.
+Vite prints the local URL, usually `http://localhost:5173`.
 
-## Supabase
+> Opening the repository’s `index.html` directly will not run the app. It is a Vite source entry point. Use `npm run dev`, or run `npm run build && npm run preview` to preview the same static `dist/` output deployed to GitHub Pages.
 
-Database changes are versioned in `supabase/migrations/`. Apply pending migrations with the Supabase CLI:
+## Database development
+
+Database changes are append-only migrations under `supabase/migrations/`.
 
 ```bash
 supabase link --project-ref your-project-ref
 supabase db push
 ```
 
-Configure these values under **Authentication → URL Configuration** in the Supabase dashboard:
+Auth URL configuration in Supabase should include:
 
 - Site URL: `https://beerme.christopherbrown.ai`
 - Redirect URL: `https://beerme.christopherbrown.ai/**`
 - Redirect URL: `http://localhost:5173/**`
 
-Only the Supabase publishable key belongs in the browser. Never expose a secret or service-role key in Vite environment variables.
+Only the publishable key belongs in a browser environment. Secret and service-role keys bypass RLS and must never be exposed through `VITE_*` variables.
 
 ## Quality checks
 
@@ -80,46 +121,41 @@ npm run lint
 npm run typecheck
 npm test
 npm run build
-```
-
-Run browser tests after installing Chromium once:
-
-```bash
-npx playwright install chromium
 npm run test:e2e
 ```
 
-Other useful commands:
+Install the Playwright browser once with `npx playwright install chromium`.
 
-```bash
-npm run format
-npm run test:watch
-npm run test:coverage
-npm run preview
+## Project structure
+
+```text
+src/
+├── components/   Reusable layout, auth, brand, and UI pieces
+├── hooks/        Session state and query-backed domain hooks
+├── lib/          Application providers and Supabase infrastructure
+├── pages/        Route-level screens
+├── services/     Typed Supabase operations
+├── styles/       Theme and responsive application styles
+├── types/        Database and domain contracts
+└── utils/        Shared, unit-tested business rules
+
+supabase/
+└── migrations/   Versioned schema, trigger, function, and RLS changes
 ```
 
-## Deployment
+## Roadmap
 
-Pushes to `main` build and publish `dist/` through GitHub Pages at `beerme.christopherbrown.ai`. The Supabase project URL and publishable key are stored as GitHub Actions repository variables and injected only during the static build.
+- [x] Project foundation and installable app shell
+- [x] Authentication and user profiles
+- [ ] Groups, membership, and the home dashboard
+- [ ] Append-only transaction ledger and reversals
+- [ ] Unit-agnostic balance engine
+- [ ] People dashboard and quick transaction flows
+- [ ] Interactive relationship matrix
+- [ ] Activity history
+- [ ] Invite links, sharing, and QR codes
+- [ ] Native-feeling polish, performance, and accessibility pass
 
-The committed `public/404.html` preserves deep links when GitHub Pages initially serves its 404 fallback. The service worker provides the offline application shell after the first successful visit.
+## Product principles
 
-## Architecture
-
-Application code lives under `src/` and is organized by responsibility:
-
-- `components/` — reusable brand, layout, and UI primitives
-- `pages/` — route-level screens
-- `hooks/` — authentication context and query-backed profile state
-- `services/` — Supabase auth and profile operations
-- `lib/` — shared application providers and Supabase infrastructure
-- `types/` — generated-style database contracts
-- `utils/` — unit-tested, shared profile validation
-- `styles/` — global theme and responsive shell styles
-- `test/` — shared unit-test setup
-
-The `supabase/` directory holds local CLI configuration and append-only database migrations. Browser code never receives elevated database credentials.
-
-## Next milestone
-
-Milestone 3 — Groups: create and join groups, enforce membership access, and replace the home empty state with the user’s real groups.
+BeerMe should always feel fast, fun, understandable, and trustworthy. History is never silently changed. Displayed balances are always calculated from the ledger. Security is enforced in PostgreSQL—not inferred from what the interface happens to show.
