@@ -3,6 +3,7 @@ import { type FormEvent, useState } from 'react';
 
 import { useAddTransaction } from '../../hooks/useGroupLedger';
 import { type GroupDetails } from '../../types/groups';
+import { type TransactionParties } from '../../types/transactions';
 import {
   validateTransactionNote,
   validateTransactionParties,
@@ -12,18 +13,25 @@ import { Dialog } from '../ui/Dialog';
 
 type AddTransactionDialogProps = {
   group: GroupDetails;
+  initialParties?: TransactionParties;
   onClose: () => void;
 };
 
-export function AddTransactionDialog({ group, onClose }: AddTransactionDialogProps) {
+export function AddTransactionDialog({
+  group,
+  initialParties,
+  onClose,
+}: AddTransactionDialogProps) {
   const addTransaction = useAddTransaction(group);
-  const [debtorUserId, setDebtorUserId] = useState('');
-  const [creditorUserId, setCreditorUserId] = useState('');
+  const [debtorUserId, setDebtorUserId] = useState(initialParties?.debtorUserId ?? '');
+  const [creditorUserId, setCreditorUserId] = useState(initialParties?.creditorUserId ?? '');
   const [quantity, setQuantity] = useState(1);
   const [note, setNote] = useState('');
   const [partiesError, setPartiesError] = useState<string | null>(null);
   const [quantityError, setQuantityError] = useState<string | null>(null);
   const [noteError, setNoteError] = useState<string | null>(null);
+  const debtor = group.members.find((member) => member.userId === debtorUserId);
+  const creditor = group.members.find((member) => member.userId === creditorUserId);
 
   function changeQuantity(nextQuantity: number) {
     const boundedQuantity = Math.min(99, Math.max(1, nextQuantity));
@@ -63,50 +71,58 @@ export function AddTransactionDialog({ group, onClose }: AddTransactionDialogPro
       onClose={onClose}
     >
       <form className="dialog-form" onSubmit={(event) => void handleSubmit(event)}>
-        <div className="transaction-parties">
-          <label className="form-field" htmlFor="transaction-debtor">
-            <span className="form-field__label">Who owes?</span>
-            <select
-              id="transaction-debtor"
-              value={debtorUserId}
-              onChange={(event) => {
-                setDebtorUserId(event.target.value);
-                if (partiesError)
-                  setPartiesError(validateTransactionParties(event.target.value, creditorUserId));
-              }}
-              aria-invalid={Boolean(partiesError)}
-              required
-            >
-              <option value="">Choose a person</option>
-              {group.members.map((member) => (
-                <option key={member.userId} value={member.userId}>
-                  {member.displayName}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="form-field" htmlFor="transaction-creditor">
-            <span className="form-field__label">Who is owed?</span>
-            <select
-              id="transaction-creditor"
-              value={creditorUserId}
-              onChange={(event) => {
-                setCreditorUserId(event.target.value);
-                if (partiesError)
-                  setPartiesError(validateTransactionParties(debtorUserId, event.target.value));
-              }}
-              aria-invalid={Boolean(partiesError)}
-              required
-            >
-              <option value="">Choose a person</option>
-              {group.members.map((member) => (
-                <option key={member.userId} value={member.userId}>
-                  {member.displayName}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
+        {initialParties && debtor && creditor ? (
+          <div className="quick-transaction-parties" aria-label="Transaction direction">
+            <span>{debtor.displayName}</span>
+            <strong>owes</strong>
+            <span>{creditor.displayName}</span>
+          </div>
+        ) : (
+          <div className="transaction-parties">
+            <label className="form-field" htmlFor="transaction-debtor">
+              <span className="form-field__label">Who owes?</span>
+              <select
+                id="transaction-debtor"
+                value={debtorUserId}
+                onChange={(event) => {
+                  setDebtorUserId(event.target.value);
+                  if (partiesError)
+                    setPartiesError(validateTransactionParties(event.target.value, creditorUserId));
+                }}
+                aria-invalid={Boolean(partiesError)}
+                required
+              >
+                <option value="">Choose a person</option>
+                {group.members.map((member) => (
+                  <option key={member.userId} value={member.userId}>
+                    {member.displayName}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="form-field" htmlFor="transaction-creditor">
+              <span className="form-field__label">Who is owed?</span>
+              <select
+                id="transaction-creditor"
+                value={creditorUserId}
+                onChange={(event) => {
+                  setCreditorUserId(event.target.value);
+                  if (partiesError)
+                    setPartiesError(validateTransactionParties(debtorUserId, event.target.value));
+                }}
+                aria-invalid={Boolean(partiesError)}
+                required
+              >
+                <option value="">Choose a person</option>
+                {group.members.map((member) => (
+                  <option key={member.userId} value={member.userId}>
+                    {member.displayName}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+        )}
         {partiesError && <p className="form-error">{partiesError}</p>}
 
         <fieldset className="quantity-field">

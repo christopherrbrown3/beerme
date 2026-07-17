@@ -25,3 +25,8 @@ export type CreateTransactionInput = {
   quantity: number;
   note: string;
 };
+
+export type TransactionParties = {
+  debtorUserId: string;
+  creditorUserId: string;
+};

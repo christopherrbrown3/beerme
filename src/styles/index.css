@@ -911,7 +911,7 @@ a:focus-visible {
 
 .group-card {
   position: relative;
-  min-height: 14rem;
+  min-height: 16rem;
   padding: 1.25rem;
   display: flex;
   flex-direction: column;
@@ -998,6 +998,35 @@ a:focus-visible {
   line-height: 1.55;
 }
 
+.group-card__balance {
+  margin: 0 0 1rem;
+  padding: 0.7rem 0.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  color: var(--muted);
+  background: rgba(76, 61, 38, 0.06);
+  border-radius: 0.8rem;
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
+.group-card__balance--owed {
+  color: #214c36;
+  background: var(--green-soft);
+}
+
+.group-card__balance--owes {
+  color: #70410b;
+  background: var(--amber-soft);
+}
+
+.group-card__balance strong {
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
 .group-card__footer {
   position: relative;
   z-index: 1;
@@ -1038,7 +1067,7 @@ a:focus-visible {
 }
 
 .groups-grid--loading span {
-  height: 14rem;
+  height: 16rem;
   border-radius: 1.35rem;
   background: linear-gradient(90deg, rgba(255, 250, 240, 0.5), white, rgba(255, 250, 240, 0.5));
   background-size: 200% 100%;
@@ -1259,6 +1288,33 @@ a:focus-visible {
   line-height: 1.5;
 }
 
+.quick-transaction-parties {
+  padding: 0.9rem;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 0.6rem;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  text-align: center;
+}
+
+.quick-transaction-parties span {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 0.8rem;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.quick-transaction-parties strong {
+  color: var(--amber-dark);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+}
+
 .back-link {
   margin-bottom: 1.5rem;
   display: inline-flex;
@@ -1294,6 +1350,64 @@ a:focus-visible {
 .group-ledger-header__actions .primary-button,
 .group-ledger-header__actions .secondary-button {
   margin: 0;
+}
+
+.balance-summary {
+  margin-top: 1.5rem;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.7rem;
+}
+
+.balance-summary__card {
+  min-width: 0;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  background: color-mix(in srgb, var(--paper) 94%, transparent);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  box-shadow: 0 10px 30px rgba(64, 48, 22, 0.05);
+}
+
+.balance-summary__icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border-radius: 0.8rem;
+}
+
+.balance-summary__card--owed .balance-summary__icon {
+  color: #214c36;
+  background: var(--green-soft);
+}
+
+.balance-summary__card--owes .balance-summary__icon {
+  color: #74430b;
+  background: var(--amber-soft);
+}
+
+.balance-summary__card p,
+.balance-summary__card strong {
+  overflow-wrap: anywhere;
+}
+
+.balance-summary__card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.65rem;
+  font-weight: 750;
+}
+
+.balance-summary__card strong {
+  margin-top: 0.15rem;
+  display: block;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.08rem;
+  letter-spacing: -0.035em;
 }
 
 .group-facts {
@@ -1353,6 +1467,148 @@ a:focus-visible {
 
 .ledger-heading {
   margin-bottom: 0.9rem;
+}
+
+.people-heading {
+  margin-bottom: 0.9rem;
+}
+
+.people-grid {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.person-card {
+  padding: 1rem;
+  background: color-mix(in srgb, var(--paper) 94%, transparent);
+  border: 1px solid var(--border);
+  border-radius: 1.15rem;
+  box-shadow: 0 10px 30px rgba(64, 48, 22, 0.06);
+}
+
+.person-card--you {
+  background: rgba(255, 250, 240, 0.52);
+  box-shadow: none;
+}
+
+.person-card__identity {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.person-card__avatar {
+  width: 2.85rem;
+  height: 2.85rem;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  color: #70410b;
+  background: linear-gradient(145deg, #f7cf77, #edaa2a);
+  border-radius: 0.9rem 0.9rem 0.9rem 0.32rem;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+
+.person-card__identity > div {
+  min-width: 0;
+  flex: 1;
+}
+
+.person-card__identity h3,
+.person-card__identity p {
+  margin: 0;
+}
+
+.person-card__identity h3 {
+  overflow: hidden;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.1rem;
+  letter-spacing: -0.03em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.person-card__identity h3 span {
+  color: var(--muted);
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.62rem;
+  letter-spacing: 0;
+}
+
+.person-card__identity p {
+  margin-top: 0.15rem;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.67rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.person-card__balance {
+  margin-top: 0.9rem;
+  padding: 0.85rem;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 0.1rem 0.8rem;
+  border-radius: 0.9rem;
+}
+
+.person-card__balance--owed {
+  color: #214c36;
+  background: var(--green-soft);
+}
+
+.person-card__balance--owes {
+  color: #70410b;
+  background: var(--amber-soft);
+}
+
+.person-card__balance--even {
+  color: var(--muted);
+  background: rgba(76, 61, 38, 0.06);
+}
+
+.person-card__balance p,
+.person-card__balance span {
+  margin: 0;
+  font-size: 0.69rem;
+}
+
+.person-card__balance p {
+  font-weight: 800;
+}
+
+.person-card__balance > strong {
+  grid-row: 1 / 3;
+  grid-column: 2;
+  max-width: 10rem;
+  overflow: hidden;
+  font-size: 1.05rem;
+  letter-spacing: 0.08em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.person-card__balance span {
+  opacity: 0.75;
+}
+
+.person-card__actions {
+  margin-top: 0.75rem;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.person-card__actions .secondary-button {
+  min-height: 2.7rem;
+  margin: 0;
+  padding-inline: 0.55rem;
+  background: rgba(255, 255, 255, 0.45);
+  font-size: 0.7rem;
 }
 
 .transaction-list {
@@ -1598,6 +1854,18 @@ a:focus-visible {
   }
 
   .groups-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .balance-summary__card {
+    padding: 1.2rem;
+  }
+
+  .balance-summary__card strong {
+    font-size: 1.35rem;
+  }
+
+  .people-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 

@@ -49,7 +49,10 @@ export function useLedgerRealtime(groupId: string) {
           table: 'transactions',
           filter: `group_id=eq.${groupId}`,
         },
-        () => void queryClient.invalidateQueries({ queryKey: transactionsQueryKey(groupId) }),
+        () => {
+          void queryClient.invalidateQueries({ queryKey: transactionsQueryKey(groupId) });
+          void queryClient.invalidateQueries({ queryKey: ['groups'] });
+        },
       )
       .subscribe();
 
@@ -111,6 +114,7 @@ export function useAddTransaction(group: GroupDetails) {
       queryClient.setQueryData<LedgerEntry[]>(queryKey, (entries = []) =>
         entries.map((entry) => (entry.id === context.optimisticId ? created : entry)),
       );
+      void queryClient.invalidateQueries({ queryKey: ['groups'] });
     },
   });
 }
@@ -144,6 +148,9 @@ export function useReverseTransaction(groupId: string) {
     },
     onError: (_error, _transactionId, context) =>
       queryClient.setQueryData(queryKey, context?.previous),
-    onSettled: () => void queryClient.invalidateQueries({ queryKey }),
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey });
+      void queryClient.invalidateQueries({ queryKey: ['groups'] });
+    },
   });
 }

@@ -1,6 +1,6 @@
 import { type MembershipRole } from './database';
 
-export type GroupSummary = {
+type GroupBase = {
   id: string;
   name: string;
   description: string | null;
@@ -16,6 +16,11 @@ export type GroupSummary = {
   };
 };
 
+export type GroupSummary = GroupBase & {
+  currentUserBalance: number;
+  lastActivityAt: string | null;
+};
+
 export type CreateGroupInput = {
   name: string;
   description: string;
@@ -29,6 +34,6 @@ export type GroupMember = {
   displayName: string;
 };
 
-export type GroupDetails = GroupSummary & {
+export type GroupDetails = GroupBase & {
   members: GroupMember[];
 };

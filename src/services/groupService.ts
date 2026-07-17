@@ -5,6 +5,7 @@ import {
   type GroupMember,
   type GroupSummary,
 } from '../types/groups';
+import { calculateUserBalance } from '../utils/balances';
 import { normalizeGroupDescription, normalizeGroupName } from '../utils/groupValidation';
 
 type GroupWithCount = {
@@ -18,9 +19,16 @@ type GroupWithCount = {
   currency_symbol: string;
   created_at: string;
   memberships: { count: number }[];
+  transactions: Array<{
+    debtor_user_id: string;
+    creditor_user_id: string;
+    quantity: number;
+    created_at: string;
+    reversed_at: string | null;
+  }>;
 };
 
-type GroupDetailsRow = Omit<GroupWithCount, 'memberships'> & {
+type GroupDetailsRow = Omit<GroupWithCount, 'memberships' | 'transactions'> & {
   memberships: Array<{
     user_id: string;
     role: GroupMember['role'];
@@ -38,7 +46,12 @@ export async function getGroups(userId: string): Promise<GroupSummary[]> {
     supabase
       .from('groups')
       .select(
-        'id, name, description, owner_id, invite_token, currency_name, currency_plural, currency_symbol, created_at, memberships(count)',
+        `
+          id, name, description, owner_id, invite_token,
+          currency_name, currency_plural, currency_symbol, created_at,
+          memberships(count),
+          transactions(debtor_user_id, creditor_user_id, quantity, created_at, reversed_at)
+        `,
       )
       .order('created_at', { ascending: false }),
     supabase.from('memberships').select('group_id, role').eq('user_id', userId),
@@ -51,21 +64,40 @@ export async function getGroups(userId: string): Promise<GroupSummary[]> {
     membershipResult.data.map((membership) => [membership.group_id, membership.role]),
   );
 
-  return (groupsResult.data as GroupWithCount[]).map((group) => ({
-    id: group.id,
-    name: group.name,
-    description: group.description,
-    ownerId: group.owner_id,
-    inviteToken: group.invite_token,
-    createdAt: group.created_at,
-    memberCount: group.memberships[0]?.count ?? 0,
-    role: roles.get(group.id) ?? 'member',
-    currency: {
-      name: group.currency_name,
-      plural: group.currency_plural,
-      symbol: group.currency_symbol,
-    },
-  }));
+  return (groupsResult.data as GroupWithCount[]).map((group) => {
+    const balanceEntries = group.transactions.map((transaction) => ({
+      debtor: { id: transaction.debtor_user_id },
+      creditor: { id: transaction.creditor_user_id },
+      quantity: Number(transaction.quantity),
+      reversedAt: transaction.reversed_at,
+    }));
+    const activityDates = group.transactions.flatMap((transaction) =>
+      transaction.reversed_at
+        ? [transaction.created_at, transaction.reversed_at]
+        : [transaction.created_at],
+    );
+
+    return {
+      id: group.id,
+      name: group.name,
+      description: group.description,
+      ownerId: group.owner_id,
+      inviteToken: group.invite_token,
+      createdAt: group.created_at,
+      memberCount: group.memberships[0]?.count ?? 0,
+      role: roles.get(group.id) ?? 'member',
+      currentUserBalance: calculateUserBalance(balanceEntries, userId).net,
+      lastActivityAt:
+        activityDates.length > 0
+          ? activityDates.reduce((latest, current) => (current > latest ? current : latest))
+          : null,
+      currency: {
+        name: group.currency_name,
+        plural: group.currency_plural,
+        symbol: group.currency_symbol,
+      },
+    };
+  });
 }
 
 export async function createGroup(userId: string, input: CreateGroupInput): Promise<GroupSummary> {
@@ -90,6 +122,8 @@ export async function createGroup(userId: string, input: CreateGroupInput): Prom
     createdAt: data.created_at,
     memberCount: 1,
     role: 'owner',
+    currentUserBalance: 0,
+    lastActivityAt: null,
     currency: {
       name: data.currency_name,
       plural: data.currency_plural,

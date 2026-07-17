@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type PropsWithChildren } from 'react';
 import { MemoryRouter } from 'react-router-dom';
@@ -169,6 +169,8 @@ describe('BeerMe app shell', () => {
         memberCount: 4,
         role: 'owner',
         currency: { name: 'Beer', plural: 'Beers', symbol: '🍺' },
+        currentUserBalance: 2,
+        lastActivityAt: '2026-07-17T00:00:00.000Z',
       },
     ];
     renderApp();
@@ -176,18 +178,32 @@ describe('BeerMe app shell', () => {
     expect(screen.getByRole('heading', { name: 'Friday Crew' })).toBeInTheDocument();
     expect(screen.getByText('4 members')).toBeInTheDocument();
     expect(screen.getByText('Owner')).toBeInTheDocument();
+    expect(screen.getByText('You are owed')).toBeInTheDocument();
+    expect(screen.getByText('2 Beers')).toBeInTheDocument();
   });
 
-  it('renders a group transaction ledger without balance UI', () => {
+  it('renders the group dashboard, quick transaction flow, and history', async () => {
+    const user = userEvent.setup();
     renderApp('/groups/group-1');
 
     expect(screen.getByRole('heading', { name: 'Friday Crew' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Transaction history' })).toBeInTheDocument();
-    expect(screen.getByText('Alex')).toBeInTheDocument();
-    expect(screen.getByText('Chris')).toBeInTheDocument();
-    expect(screen.getByText('2 Beers')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'People' })).toBeInTheDocument();
+    const summary = screen.getByRole('region', { name: 'Your group balance' });
+    expect(within(summary).getByText('You are owed')).toBeInTheDocument();
+    expect(within(summary).getByText('2 Beers')).toBeInTheDocument();
+    expect(screen.getByText('Alex owes you')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Add transaction' })).toBeInTheDocument();
-    expect(screen.queryByText(/you owe/i)).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'I owe Alex' }));
+    const dialog = screen.getByRole('dialog', { name: 'Add to the ledger' });
+    expect(within(dialog).getByLabelText('Transaction direction')).toHaveTextContent(
+      'ChrisowesAlex',
+    );
+
+    await user.click(within(dialog).getByRole('button', { name: 'Close dialog' }));
+    await user.click(screen.getByRole('button', { name: 'History' }));
+    expect(screen.getByRole('heading', { name: 'Transaction history' })).toBeInTheDocument();
+    expect(screen.getByText(/Trivia night/)).toBeInTheDocument();
   });
 
   it('renders a useful not-found route', () => {

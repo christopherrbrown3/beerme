@@ -42,6 +42,8 @@ export function useCreateGroup() {
           createdAt: new Date().toISOString(),
           memberCount: 1,
           role: 'owner',
+          currentUserBalance: 0,
+          lastActivityAt: null,
           currency: { name: 'Beer', plural: 'Beers', symbol: '🍺' },
         },
         ...groups,

@@ -3,6 +3,8 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 
 import { type GroupSummary } from '../../types/groups';
+import { formatFriendlyTimestamp } from '../../utils/date';
+import { formatUnitQuantity } from '../../utils/unitPresentation';
 
 type GroupCardProps = {
   group: GroupSummary;
@@ -38,13 +40,39 @@ export function GroupCard({ group }: GroupCardProps) {
         <p className="group-card__description">
           {group.description || 'The crew is assembled. The story starts here.'}
         </p>
+        <div
+          className={
+            group.currentUserBalance > 0
+              ? 'group-card__balance group-card__balance--owed'
+              : group.currentUserBalance < 0
+                ? 'group-card__balance group-card__balance--owes'
+                : 'group-card__balance'
+          }
+        >
+          <span>
+            {group.currentUserBalance > 0
+              ? 'You are owed'
+              : group.currentUserBalance < 0
+                ? 'You owe'
+                : 'All square'}
+          </span>
+          {group.currentUserBalance !== 0 && (
+            <strong>
+              {formatUnitQuantity(Math.abs(group.currentUserBalance), group.currency)}
+            </strong>
+          )}
+        </div>
         <div className="group-card__footer">
           <span>
             <UsersRound size={16} aria-hidden="true" />
             {group.memberCount} {group.memberCount === 1 ? 'member' : 'members'}
           </span>
           <span>
-            {group.id.startsWith('optimistic-') ? 'Saving…' : 'Open ledger'}
+            {group.id.startsWith('optimistic-')
+              ? 'Saving…'
+              : group.lastActivityAt
+                ? formatFriendlyTimestamp(group.lastActivityAt)
+                : 'No activity yet'}
             {!group.id.startsWith('optimistic-') && <ArrowUpRight size={15} aria-hidden="true" />}
           </span>
         </div>

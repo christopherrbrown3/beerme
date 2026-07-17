@@ -73,6 +73,14 @@ Beer is the default unit, but balances are designed to stay unit-agnostic so gro
 - Explicit sign convention: positive net means a member is owed; negative net means they owe
 - Decimal-safe scaled arithmetic with zero-sum group invariants
 
+### Group dashboard
+
+- At-a-glance “you are owed” and “you owe” totals calculated from ledger history
+- People cards with pairwise relationship balances and bounded unit-symbol displays
+- One-tap “they owe me” and “I owe them” flows with preselected transaction direction
+- People and History views sharing optimistic updates and live Realtime refresh
+- Home cards with each member’s net position and friendly latest-activity timestamps
+
 ## How it works
 
 ```text
@@ -174,7 +182,7 @@ supabase/
 - [x] Groups, membership, and the home dashboard
 - [x] Append-only transaction ledger and reversals
 - [x] Unit-agnostic balance engine
-- [ ] People dashboard and quick transaction flows
+- [x] People dashboard and quick transaction flows
 - [ ] Interactive relationship matrix
 - [ ] Activity history
 - [ ] Invite links, sharing, and QR codes

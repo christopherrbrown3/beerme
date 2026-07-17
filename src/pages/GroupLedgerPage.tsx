@@ -6,17 +6,25 @@ import { Link, useParams } from 'react-router-dom';
 import { AddTransactionDialog } from '../components/transactions/AddTransactionDialog';
 import { ReverseTransactionDialog } from '../components/transactions/ReverseTransactionDialog';
 import { TransactionCard } from '../components/transactions/TransactionCard';
+import { GroupSummary } from '../components/groups/GroupSummary';
+import { PeopleView } from '../components/groups/PeopleView';
 import { EmptyState } from '../components/ui/EmptyState';
 import { useGroupDetails, useLedgerRealtime, useTransactions } from '../hooks/useGroupLedger';
 import { useAuth } from '../hooks/useAuth';
-import { type LedgerEntry } from '../types/transactions';
+import { type GroupDetails } from '../types/groups';
+import { type LedgerEntry, type TransactionParties } from '../types/transactions';
+
+type GroupView = 'people' | 'history';
 
 export function GroupLedgerPage() {
   const { groupId = '' } = useParams();
   const { user } = useAuth();
   const groupQuery = useGroupDetails(groupId);
   const transactionsQuery = useTransactions(groupId);
-  const [isAdding, setIsAdding] = useState(false);
+  const [view, setView] = useState<GroupView>('people');
+  const [transactionDialog, setTransactionDialog] = useState<TransactionParties | 'generic' | null>(
+    null,
+  );
   const [reversingEntry, setReversingEntry] = useState<LedgerEntry | null>(null);
   const [inviteCopied, setInviteCopied] = useState(false);
   useLedgerRealtime(groupId);
@@ -38,6 +46,7 @@ export function GroupLedgerPage() {
   }
 
   const group = groupQuery.data;
+  const transactions = transactionsQuery.data ?? [];
 
   async function copyInvite() {
     const inviteUrl = `${window.location.origin}/join/${group.inviteToken}`;
@@ -66,11 +75,22 @@ export function GroupLedgerPage() {
           <button className="secondary-button" type="button" onClick={() => void copyInvite()}>
             <Copy size={16} aria-hidden="true" /> {inviteCopied ? 'Copied' : 'Invite'}
           </button>
-          <button className="primary-button" type="button" onClick={() => setIsAdding(true)}>
+          <button
+            className="primary-button"
+            type="button"
+            onClick={() => setTransactionDialog('generic')}
+          >
             <Plus size={18} aria-hidden="true" /> Add transaction
           </button>
         </div>
       </header>
+
+      <GroupSummary
+        group={group}
+        transactions={transactions}
+        currentUserId={user!.id}
+        isLoading={transactionsQuery.isLoading || transactionsQuery.isError}
+      />
 
       <div className="group-facts" aria-label="Group details">
         <span>
@@ -83,29 +103,26 @@ export function GroupLedgerPage() {
       </div>
 
       <nav className="group-tabs" aria-label="Group views">
-        <button type="button" disabled>
-          People <span>Coming next</span>
+        <button
+          className={view === 'people' ? 'group-tabs__active' : undefined}
+          type="button"
+          aria-current={view === 'people' ? 'page' : undefined}
+          onClick={() => setView('people')}
+        >
+          People
         </button>
         <button type="button" disabled>
           Matrix <span>Coming later</span>
         </button>
-        <button className="group-tabs__active" type="button" aria-current="page">
+        <button
+          className={view === 'history' ? 'group-tabs__active' : undefined}
+          type="button"
+          aria-current={view === 'history' ? 'page' : undefined}
+          onClick={() => setView('history')}
+        >
           History
         </button>
       </nav>
-
-      <div className="section-heading ledger-heading">
-        <div>
-          <p className="eyebrow">Newest first</p>
-          <h2>Transaction history</h2>
-        </div>
-        <span
-          className="count-pill"
-          aria-label={`${transactionsQuery.data?.length ?? 0} transactions`}
-        >
-          {transactionsQuery.data?.length ?? 0}
-        </span>
-      </div>
 
       {transactionsQuery.isLoading && <TransactionSkeleton />}
 
@@ -123,32 +140,32 @@ export function GroupLedgerPage() {
         </section>
       )}
 
-      {transactionsQuery.data?.length === 0 && (
-        <EmptyState icon={Clock3} eyebrow="A clean slate" title="No transactions yet">
-          <p>Add the first friendly IOU. History will stay here—even if an entry is reversed.</p>
-          <button className="primary-button" type="button" onClick={() => setIsAdding(true)}>
-            <Plus size={18} aria-hidden="true" /> Add the first transaction
-          </button>
-        </EmptyState>
+      {!transactionsQuery.isLoading && !transactionsQuery.isError && view === 'people' && (
+        <PeopleView
+          group={group}
+          transactions={transactions}
+          currentUserId={user!.id}
+          onAddTransaction={setTransactionDialog}
+        />
       )}
 
-      {transactionsQuery.data && transactionsQuery.data.length > 0 && (
-        <div className="transaction-list">
-          <AnimatePresence initial={false}>
-            {transactionsQuery.data.map((entry) => (
-              <TransactionCard
-                key={entry.id}
-                entry={entry}
-                group={group}
-                currentUserId={user!.id}
-                onReverse={setReversingEntry}
-              />
-            ))}
-          </AnimatePresence>
-        </div>
+      {!transactionsQuery.isLoading && !transactionsQuery.isError && view === 'history' && (
+        <HistoryView
+          group={group}
+          transactions={transactions}
+          currentUserId={user!.id}
+          onAddTransaction={() => setTransactionDialog('generic')}
+          onReverse={setReversingEntry}
+        />
       )}
 
-      {isAdding && <AddTransactionDialog group={group} onClose={() => setIsAdding(false)} />}
+      {transactionDialog && (
+        <AddTransactionDialog
+          group={group}
+          initialParties={transactionDialog === 'generic' ? undefined : transactionDialog}
+          onClose={() => setTransactionDialog(null)}
+        />
+      )}
       {reversingEntry && (
         <ReverseTransactionDialog
           group={group}
@@ -157,6 +174,59 @@ export function GroupLedgerPage() {
         />
       )}
     </div>
+  );
+}
+
+type HistoryViewProps = {
+  group: GroupDetails;
+  transactions: LedgerEntry[];
+  currentUserId: string;
+  onAddTransaction: () => void;
+  onReverse: (entry: LedgerEntry) => void;
+};
+
+function HistoryView({
+  group,
+  transactions,
+  currentUserId,
+  onAddTransaction,
+  onReverse,
+}: HistoryViewProps) {
+  return (
+    <>
+      <div className="section-heading ledger-heading">
+        <div>
+          <p className="eyebrow">Newest first</p>
+          <h2>Transaction history</h2>
+        </div>
+        <span className="count-pill" aria-label={`${transactions.length} transactions`}>
+          {transactions.length}
+        </span>
+      </div>
+
+      {transactions.length === 0 ? (
+        <EmptyState icon={Clock3} eyebrow="A clean slate" title="No transactions yet">
+          <p>Add the first friendly IOU. History will stay here—even if an entry is reversed.</p>
+          <button className="primary-button" type="button" onClick={onAddTransaction}>
+            <Plus size={18} aria-hidden="true" /> Add the first transaction
+          </button>
+        </EmptyState>
+      ) : (
+        <div className="transaction-list">
+          <AnimatePresence initial={false}>
+            {transactions.map((entry) => (
+              <TransactionCard
+                key={entry.id}
+                entry={entry}
+                group={group}
+                currentUserId={currentUserId}
+                onReverse={onReverse}
+              />
+            ))}
+          </AnimatePresence>
+        </div>
+      )}
+    </>
   );
 }
 
