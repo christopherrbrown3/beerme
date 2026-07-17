@@ -8,13 +8,14 @@ import { ReverseTransactionDialog } from '../components/transactions/ReverseTran
 import { TransactionCard } from '../components/transactions/TransactionCard';
 import { GroupSummary } from '../components/groups/GroupSummary';
 import { PeopleView } from '../components/groups/PeopleView';
+import { RelationshipMatrix } from '../components/groups/RelationshipMatrix';
 import { EmptyState } from '../components/ui/EmptyState';
 import { useGroupDetails, useLedgerRealtime, useTransactions } from '../hooks/useGroupLedger';
 import { useAuth } from '../hooks/useAuth';
 import { type GroupDetails } from '../types/groups';
 import { type LedgerEntry, type TransactionParties } from '../types/transactions';
 
-type GroupView = 'people' | 'history';
+type GroupView = 'people' | 'matrix' | 'history';
 
 export function GroupLedgerPage() {
   const { groupId = '' } = useParams();
@@ -111,8 +112,13 @@ export function GroupLedgerPage() {
         >
           People
         </button>
-        <button type="button" disabled>
-          Matrix <span>Coming later</span>
+        <button
+          className={view === 'matrix' ? 'group-tabs__active' : undefined}
+          type="button"
+          aria-current={view === 'matrix' ? 'page' : undefined}
+          onClick={() => setView('matrix')}
+        >
+          Matrix
         </button>
         <button
           className={view === 'history' ? 'group-tabs__active' : undefined}
@@ -156,6 +162,15 @@ export function GroupLedgerPage() {
           currentUserId={user!.id}
           onAddTransaction={() => setTransactionDialog('generic')}
           onReverse={setReversingEntry}
+        />
+      )}
+
+      {!transactionsQuery.isLoading && !transactionsQuery.isError && view === 'matrix' && (
+        <RelationshipMatrix
+          group={group}
+          transactions={transactions}
+          currentUserId={user!.id}
+          onAddTransaction={setTransactionDialog}
         />
       )}
 

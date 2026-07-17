@@ -201,6 +201,16 @@ describe('BeerMe app shell', () => {
     );
 
     await user.click(within(dialog).getByRole('button', { name: 'Close dialog' }));
+
+    await user.click(screen.getByRole('button', { name: 'Matrix' }));
+    expect(screen.getByRole('heading', { name: 'Relationship matrix' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Alex owes You 2 Beers' }));
+    const matrixDialog = screen.getByRole('dialog', { name: 'Add to the ledger' });
+    expect(within(matrixDialog).getByLabelText('Transaction direction')).toHaveTextContent(
+      'AlexowesChris',
+    );
+    await user.click(within(matrixDialog).getByRole('button', { name: 'Close dialog' }));
+
     await user.click(screen.getByRole('button', { name: 'History' }));
     expect(screen.getByRole('heading', { name: 'Transaction history' })).toBeInTheDocument();
     expect(screen.getByText(/Trivia night/)).toBeInTheDocument();

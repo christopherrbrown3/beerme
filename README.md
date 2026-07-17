@@ -81,6 +81,14 @@ Beer is the default unit, but balances are designed to stay unit-agnostic so gro
 - People and History views sharing optimistic updates and live Realtime refresh
 - Home cards with each member’s net position and friendly latest-activity timestamps
 
+### Relationship matrix
+
+- Directional row-owes-column view calculated entirely from immutable ledger history
+- Sticky member headers and horizontal scrolling for large groups and small screens
+- Animated unit-aware cells with even, low, medium, and high balance heat levels
+- Accessible cell labels, hover details, and keyboard-reachable transaction actions
+- Any non-diagonal cell opens a preselected transaction in that exact direction
+
 ## How it works
 
 ```text
@@ -185,7 +193,7 @@ supabase/
 - [x] Append-only transaction ledger and reversals
 - [x] Unit-agnostic balance engine
 - [x] People dashboard and quick transaction flows
-- [ ] Interactive relationship matrix
+- [x] Interactive relationship matrix
 - [ ] Activity history
 - [ ] Invite links, sharing, and QR codes
 - [ ] Native-feeling polish, performance, and accessibility pass
