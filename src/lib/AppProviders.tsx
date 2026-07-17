@@ -1,23 +1,13 @@
-import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query';
+import { QueryClientProvider, useQueryClient } from '@tanstack/react-query';
 import { MotionConfig } from 'framer-motion';
 import { type PropsWithChildren, useLayoutEffect, useRef, useState } from 'react';
 
 import { AuthProvider } from '../hooks/AuthProvider';
 import { useAuth } from '../hooks/useAuth';
+import { createAppQueryClient } from './queryClient';
 
 export function AppProviders({ children }: PropsWithChildren) {
-  const [queryClient] = useState(
-    () =>
-      new QueryClient({
-        defaultOptions: {
-          queries: {
-            staleTime: 30_000,
-            retry: 1,
-            refetchOnWindowFocus: false,
-          },
-        },
-      }),
-  );
+  const [queryClient] = useState(createAppQueryClient);
 
   return (
     <QueryClientProvider client={queryClient}>
