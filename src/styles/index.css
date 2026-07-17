@@ -1452,12 +1452,43 @@ a:active {
 .group-ledger-header__actions {
   margin-top: 1.25rem;
   display: flex;
+  flex-wrap: wrap;
   gap: 0.65rem;
 }
 
 .group-ledger-header__actions .primary-button,
 .group-ledger-header__actions .secondary-button {
   margin: 0;
+}
+
+.group-danger-zone {
+  margin-top: 2.5rem;
+  padding: 1.1rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  background: rgba(139, 48, 38, 0.045);
+  border: 1px solid rgba(139, 48, 38, 0.16);
+  border-radius: 1rem;
+}
+
+.group-danger-zone h2 {
+  margin: 0;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.2rem;
+}
+
+.group-danger-zone p:last-child {
+  margin: 0.35rem 0 0;
+  color: var(--muted);
+  font-size: 0.76rem;
+  line-height: 1.5;
+}
+
+.group-danger-zone .danger-button {
+  flex: 0 0 auto;
 }
 
 .balance-summary {

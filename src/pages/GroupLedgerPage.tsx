@@ -1,5 +1,5 @@
 import { AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Clock3, Copy, Plus, Settings2, UsersRound } from 'lucide-react';
+import { ArrowLeft, Clock3, Copy, LogOut, Plus, Settings2, Trash2, UsersRound } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 
@@ -8,6 +8,7 @@ import { ReverseTransactionDialog } from '../components/transactions/ReverseTran
 import { TransactionCard } from '../components/transactions/TransactionCard';
 import { GroupSummary } from '../components/groups/GroupSummary';
 import { GroupCurrencyDialog } from '../components/groups/GroupCurrencyDialog';
+import { GroupMembershipDialog } from '../components/groups/GroupMembershipDialog';
 import { InviteGroupDialog } from '../components/groups/InviteGroupDialog';
 import { PeopleView } from '../components/groups/PeopleView';
 import { RelationshipMatrix } from '../components/groups/RelationshipMatrix';
@@ -31,6 +32,7 @@ export function GroupLedgerPage() {
   const [reversingEntry, setReversingEntry] = useState<LedgerEntry | null>(null);
   const [isInviting, setIsInviting] = useState(false);
   const [isEditingCurrency, setIsEditingCurrency] = useState(false);
+  const [isManagingMembership, setIsManagingMembership] = useState(false);
   if (groupQuery.isLoading) return <GroupLedgerSkeleton />;
 
   if (groupQuery.isError || !groupQuery.data) {
@@ -173,6 +175,32 @@ export function GroupLedgerPage() {
         />
       )}
 
+      <section className="group-danger-zone" aria-labelledby="group-membership-heading">
+        <div>
+          <p className="eyebrow">Membership</p>
+          <h2 id="group-membership-heading">
+            {group.role === 'owner' ? 'Close out this group' : 'Ready to move on?'}
+          </h2>
+          <p>
+            {group.role === 'owner'
+              ? 'Deleting a group permanently removes its ledger for everyone.'
+              : 'Leaving removes your access without changing the ledger for other members.'}
+          </p>
+        </div>
+        <button
+          className="danger-button"
+          type="button"
+          onClick={() => setIsManagingMembership(true)}
+        >
+          {group.role === 'owner' ? (
+            <Trash2 size={17} aria-hidden="true" />
+          ) : (
+            <LogOut size={17} aria-hidden="true" />
+          )}
+          {group.role === 'owner' ? 'Delete group' : 'Leave group'}
+        </button>
+      </section>
+
       {transactionDialog && (
         <AddTransactionDialog
           group={group}
@@ -190,6 +218,9 @@ export function GroupLedgerPage() {
       {isInviting && <InviteGroupDialog group={group} onClose={() => setIsInviting(false)} />}
       {isEditingCurrency && (
         <GroupCurrencyDialog group={group} onClose={() => setIsEditingCurrency(false)} />
+      )}
+      {isManagingMembership && (
+        <GroupMembershipDialog group={group} onClose={() => setIsManagingMembership(false)} />
       )}
     </div>
   );

@@ -170,6 +170,14 @@ export type Database = {
         Args: { token: string };
         Returns: string;
       };
+      leave_group: {
+        Args: { target_group_id: string };
+        Returns: undefined;
+      };
+      delete_group: {
+        Args: { target_group_id: string };
+        Returns: undefined;
+      };
       reverse_transaction: {
         Args: { transaction_id: string };
         Returns: Database['public']['Tables']['transactions']['Row'];

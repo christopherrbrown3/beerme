@@ -1,6 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { getGroupDetails, updateGroupCurrency } from '../services/groupService';
+import {
+  deleteGroup,
+  getGroupDetails,
+  leaveGroup,
+  updateGroupCurrency,
+} from '../services/groupService';
 import {
   addTransaction,
   getTransactions,
@@ -45,6 +50,30 @@ export function useUpdateGroupCurrency(groupId: string) {
       void queryClient.invalidateQueries({ queryKey: ['activity'] });
     },
   });
+}
+
+function useRemoveGroupMutation(groupId: string, mutationFn: (groupId: string) => Promise<void>) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () => mutationFn(groupId),
+    onSuccess: async () => {
+      queryClient.removeQueries({ queryKey: groupQueryKey(groupId), exact: true });
+      queryClient.removeQueries({ queryKey: transactionsQueryKey(groupId), exact: true });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['groups'] }),
+        queryClient.invalidateQueries({ queryKey: ['activity'] }),
+      ]);
+    },
+  });
+}
+
+export function useLeaveGroup(groupId: string) {
+  return useRemoveGroupMutation(groupId, leaveGroup);
+}
+
+export function useDeleteGroup(groupId: string) {
+  return useRemoveGroupMutation(groupId, deleteGroup);
 }
 
 type AddTransactionContext = {

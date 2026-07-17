@@ -229,3 +229,13 @@ export async function updateGroupCurrency(groupId: string, currency: GroupCurren
     symbol: data.currency_symbol,
   } satisfies GroupCurrency;
 }
+
+export async function leaveGroup(groupId: string) {
+  const { error } = await getSupabaseClient().rpc('leave_group', { target_group_id: groupId });
+  if (error) throw error;
+}
+
+export async function deleteGroup(groupId: string) {
+  const { error } = await getSupabaseClient().rpc('delete_group', { target_group_id: groupId });
+  if (error) throw error;
+}
