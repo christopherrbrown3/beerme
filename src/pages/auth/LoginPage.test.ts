@@ -98,4 +98,12 @@ describe('restoreStoredRedirect', () => {
 
     expect(history.replaceState).toHaveBeenCalledWith(null, '', '/');
   });
+
+  it('restores the query handoff when the storage object itself is unavailable', () => {
+    const history = { replaceState: vi.fn() };
+
+    restoreStoredRedirect(null, history, origin, '?redirect=%2Factivity');
+
+    expect(history.replaceState).toHaveBeenCalledWith(null, '', '/activity');
+  });
 });

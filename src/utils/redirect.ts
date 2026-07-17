@@ -11,17 +11,19 @@ export function getSafeNextPath(value: string | null, origin = window.location.o
 }
 
 export function restoreStoredRedirect(
-  storage: Pick<Storage, 'getItem' | 'removeItem'>,
+  storage: Pick<Storage, 'getItem' | 'removeItem'> | null,
   history: Pick<History, 'replaceState'>,
   origin = window.location.origin,
   search = window.location.search,
 ) {
   let storedPath: string | null = null;
-  try {
-    storedPath = storage.getItem('beerme:redirect');
-    if (storedPath !== null) storage.removeItem('beerme:redirect');
-  } catch {
-    // Storage may be unavailable under restrictive browser privacy settings.
+  if (storage) {
+    try {
+      storedPath = storage.getItem('beerme:redirect');
+      if (storedPath !== null) storage.removeItem('beerme:redirect');
+    } catch {
+      // Storage may be unavailable under restrictive browser privacy settings.
+    }
   }
 
   const fallbackPath = new URLSearchParams(search).get('redirect');

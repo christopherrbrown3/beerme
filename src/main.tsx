@@ -7,7 +7,13 @@ import { AppProviders } from './lib/AppProviders';
 import './styles/index.css';
 import { restoreStoredRedirect } from './utils/redirect';
 
-restoreStoredRedirect(window.sessionStorage, window.history);
+let redirectStorage: Storage | null = null;
+try {
+  redirectStorage = window.sessionStorage;
+} catch {
+  // The Pages bridge has a query fallback for browsers that block Web Storage.
+}
+restoreStoredRedirect(redirectStorage, window.history);
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
