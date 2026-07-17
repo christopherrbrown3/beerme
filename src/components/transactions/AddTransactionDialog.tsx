@@ -90,6 +90,7 @@ export function AddTransactionDialog({
                     setPartiesError(validateTransactionParties(event.target.value, creditorUserId));
                 }}
                 aria-invalid={Boolean(partiesError)}
+                aria-describedby={partiesError ? 'transaction-parties-error' : undefined}
                 required
               >
                 <option value="">Choose a person</option>
@@ -111,6 +112,7 @@ export function AddTransactionDialog({
                     setPartiesError(validateTransactionParties(debtorUserId, event.target.value));
                 }}
                 aria-invalid={Boolean(partiesError)}
+                aria-describedby={partiesError ? 'transaction-parties-error' : undefined}
                 required
               >
                 <option value="">Choose a person</option>
@@ -123,7 +125,11 @@ export function AddTransactionDialog({
             </label>
           </div>
         )}
-        {partiesError && <p className="form-error">{partiesError}</p>}
+        {partiesError && (
+          <p id="transaction-parties-error" className="form-error" role="alert">
+            {partiesError}
+          </p>
+        )}
 
         <fieldset className="quantity-field">
           <legend>How many {group.currency.plural.toLowerCase()}?</legend>
@@ -152,6 +158,7 @@ export function AddTransactionDialog({
                   setQuantityError(validateTransactionQuantity(nextQuantity));
                 }}
                 aria-invalid={Boolean(quantityError)}
+                aria-describedby={quantityError ? 'transaction-quantity-error' : undefined}
               />
             </label>
             <button
@@ -163,7 +170,11 @@ export function AddTransactionDialog({
               <Plus size={18} aria-hidden="true" />
             </button>
           </div>
-          {quantityError && <p className="form-error">{quantityError}</p>}
+          {quantityError && (
+            <p id="transaction-quantity-error" className="form-error" role="alert">
+              {quantityError}
+            </p>
+          )}
         </fieldset>
 
         <label className="form-field" htmlFor="transaction-note">
@@ -178,11 +189,14 @@ export function AddTransactionDialog({
               if (noteError) setNoteError(validateTransactionNote(event.target.value));
             }}
             aria-invalid={Boolean(noteError)}
+            aria-describedby="transaction-note-description"
             maxLength={280}
             rows={3}
             placeholder="A round at trivia night"
           />
           <span
+            id="transaction-note-description"
+            role={noteError ? 'alert' : undefined}
             className={
               noteError ? 'form-field__message form-field__message--error' : 'form-field__message'
             }
