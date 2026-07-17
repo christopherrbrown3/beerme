@@ -7,11 +7,10 @@ import { GroupCard } from '../components/groups/GroupCard';
 import { JoinGroupDialog } from '../components/groups/JoinGroupDialog';
 import { EmptyState } from '../components/ui/EmptyState';
 import { PageIntro } from '../components/ui/PageIntro';
-import { useGroups, useGroupsRealtime } from '../hooks/useGroups';
+import { useGroups } from '../hooks/useGroups';
 
 export function GroupsPage() {
   const groupsQuery = useGroups();
-  useGroupsRealtime();
   const [dialog, setDialog] = useState<'create' | 'join' | null>(null);
 
   return (

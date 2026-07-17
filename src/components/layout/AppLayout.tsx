@@ -1,11 +1,14 @@
 import { Outlet } from 'react-router-dom';
 
+import { useAppRealtime } from '../../hooks/useAppRealtime';
 import { BeerMeMark } from '../brand/BeerMeMark';
 import { BottomNavigation } from './BottomNavigation';
 import { NetworkStatus } from './NetworkStatus';
 import { UpdatePrompt } from './UpdatePrompt';
 
 export function AppLayout() {
+  useAppRealtime();
+
   return (
     <div className="app-shell">
       <a className="skip-link" href="#main-content">

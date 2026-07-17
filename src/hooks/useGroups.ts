@@ -1,7 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect } from 'react';
 
-import { getSupabaseClient } from '../lib/supabase';
 import { createGroup, getGroups, joinGroup } from '../services/groupService';
 import { type CreateGroupInput, type GroupSummary } from '../types/groups';
 import { useAuth } from './useAuth';
@@ -15,27 +13,6 @@ export function useGroups() {
     queryKey: groupsQueryKey(user!.id),
     queryFn: () => getGroups(user!.id),
   });
-}
-
-export function useGroupsRealtime() {
-  const queryClient = useQueryClient();
-
-  useEffect(() => {
-    const supabase = getSupabaseClient();
-    const channel = supabase
-      .channel('groups-memberships')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'memberships' }, () => {
-        void queryClient.invalidateQueries({ queryKey: ['groups'] });
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions' }, () => {
-        void queryClient.invalidateQueries({ queryKey: ['groups'] });
-      })
-      .subscribe();
-
-    return () => {
-      void supabase.removeChannel(channel);
-    };
-  }, [queryClient]);
 }
 
 type CreateGroupContext = {

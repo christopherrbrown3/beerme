@@ -90,7 +90,6 @@ vi.mock('./hooks/useGroups', () => ({
     isError: false,
     mutateAsync: vi.fn(),
   }),
-  useGroupsRealtime: vi.fn(),
   useJoinGroup: () => ({
     isPending: false,
     isError: false,
@@ -110,7 +109,6 @@ vi.mock('./hooks/useGroupLedger', () => ({
     isError: false,
     refetch: vi.fn(),
   }),
-  useLedgerRealtime: vi.fn(),
   useAddTransaction: () => ({ isPending: false, isError: false, mutateAsync: vi.fn() }),
   useReverseTransaction: () => ({ isPending: false, isError: false, mutateAsync: vi.fn() }),
 }));
@@ -122,8 +120,9 @@ vi.mock('./hooks/useActivity', () => ({
     isError: false,
     refetch: vi.fn(),
   }),
-  useActivityRealtime: vi.fn(),
 }));
+
+vi.mock('./hooks/useAppRealtime', () => ({ useAppRealtime: vi.fn() }));
 
 function renderApp(initialPath = '/') {
   return render(

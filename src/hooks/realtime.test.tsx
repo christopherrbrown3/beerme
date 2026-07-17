@@ -3,8 +3,7 @@ import { act, renderHook } from '@testing-library/react';
 import { type PropsWithChildren } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { useLedgerRealtime } from './useGroupLedger';
-import { useGroupsRealtime } from './useGroups';
+import { useAppRealtime } from './useAppRealtime';
 
 type RealtimeConfig = { table: string; filter?: string };
 
@@ -19,10 +18,6 @@ vi.mock('../lib/supabase', () => ({
     channel: realtime.channel,
     removeChannel: realtime.removeChannel,
   }),
-}));
-
-vi.mock('./useAuth', () => ({
-  useAuth: () => ({ user: { id: 'user-1' } }),
 }));
 
 function createChannel() {
@@ -41,7 +36,7 @@ function createChannel() {
   return channel;
 }
 
-describe('membership Realtime hooks', () => {
+describe('app Realtime hook', () => {
   let queryClient: QueryClient;
   let invalidateQueries: ReturnType<typeof vi.spyOn>;
 
@@ -58,32 +53,32 @@ describe('membership Realtime hooks', () => {
     return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
   }
 
-  it('refreshes dashboard summaries when membership or transaction data changes', () => {
-    const { unmount } = renderHook(() => useGroupsRealtime(), { wrapper });
+  it('invalidates every transaction-backed query family', () => {
+    const { unmount } = renderHook(() => useAppRealtime(), { wrapper });
     const membership = realtime.handlers.find(({ config }) => config.table === 'memberships');
     const transaction = realtime.handlers.find(({ config }) => config.table === 'transactions');
     expect(membership).toBeDefined();
     expect(transaction).toBeDefined();
 
-    act(() => membership!.callback());
-    expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ['groups'] });
-    invalidateQueries.mockClear();
-
     act(() => transaction!.callback());
     expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ['groups'] });
+    expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ['group'] });
+    expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ['transactions'] });
+    expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ['activity'] });
 
     unmount();
     expect(realtime.removeChannel).toHaveBeenCalledOnce();
   });
 
-  it('refreshes the affected ledger and summaries when a member joins', () => {
-    const { unmount } = renderHook(() => useLedgerRealtime('group-1'), { wrapper });
+  it('invalidates every membership-backed query family', () => {
+    const { unmount } = renderHook(() => useAppRealtime(), { wrapper });
     const membership = realtime.handlers.find(({ config }) => config.table === 'memberships');
-    expect(membership?.config.filter).toBe('group_id=eq.group-1');
+    expect(membership).toBeDefined();
 
     act(() => membership!.callback());
-    expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ['group', 'group-1'] });
     expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ['groups'] });
+    expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ['group'] });
+    expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ['activity'] });
 
     unmount();
     expect(realtime.removeChannel).toHaveBeenCalledOnce();

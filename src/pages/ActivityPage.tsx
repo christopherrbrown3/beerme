@@ -3,11 +3,10 @@ import { Sparkles } from 'lucide-react';
 import { ActivityCard } from '../components/activity/ActivityCard';
 import { EmptyState } from '../components/ui/EmptyState';
 import { PageIntro } from '../components/ui/PageIntro';
-import { useActivity, useActivityRealtime } from '../hooks/useActivity';
+import { useActivity } from '../hooks/useActivity';
 
 export function ActivityPage() {
   const activityQuery = useActivity();
-  useActivityRealtime();
 
   return (
     <div className="page page--activity">

@@ -1,7 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect } from 'react';
 
-import { getSupabaseClient } from '../lib/supabase';
 import { getGroupDetails } from '../services/groupService';
 import {
   addTransaction,
@@ -32,47 +30,6 @@ export function useTransactions(groupId: string) {
     queryFn: () => getTransactions(groupId),
     enabled: Boolean(groupId),
   });
-}
-
-export function useLedgerRealtime(groupId: string) {
-  const queryClient = useQueryClient();
-
-  useEffect(() => {
-    const supabase = getSupabaseClient();
-    const channel = supabase
-      .channel(`transactions:${groupId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'transactions',
-          filter: `group_id=eq.${groupId}`,
-        },
-        () => {
-          void queryClient.invalidateQueries({ queryKey: transactionsQueryKey(groupId) });
-          void queryClient.invalidateQueries({ queryKey: ['groups'] });
-        },
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'memberships',
-          filter: `group_id=eq.${groupId}`,
-        },
-        () => {
-          void queryClient.invalidateQueries({ queryKey: groupQueryKey(groupId) });
-          void queryClient.invalidateQueries({ queryKey: ['groups'] });
-        },
-      )
-      .subscribe();
-
-    return () => {
-      void supabase.removeChannel(channel);
-    };
-  }, [groupId, queryClient]);
 }
 
 type AddTransactionContext = {

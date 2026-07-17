@@ -11,7 +11,7 @@ import { InviteGroupDialog } from '../components/groups/InviteGroupDialog';
 import { PeopleView } from '../components/groups/PeopleView';
 import { RelationshipMatrix } from '../components/groups/RelationshipMatrix';
 import { EmptyState } from '../components/ui/EmptyState';
-import { useGroupDetails, useLedgerRealtime, useTransactions } from '../hooks/useGroupLedger';
+import { useGroupDetails, useTransactions } from '../hooks/useGroupLedger';
 import { useAuth } from '../hooks/useAuth';
 import { type GroupDetails } from '../types/groups';
 import { type LedgerEntry, type TransactionParties } from '../types/transactions';
@@ -29,8 +29,6 @@ export function GroupLedgerPage() {
   );
   const [reversingEntry, setReversingEntry] = useState<LedgerEntry | null>(null);
   const [isInviting, setIsInviting] = useState(false);
-  useLedgerRealtime(groupId);
-
   if (groupQuery.isLoading) return <GroupLedgerSkeleton />;
 
   if (groupQuery.isError || !groupQuery.data) {
