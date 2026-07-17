@@ -2186,6 +2186,18 @@ a:active {
   line-height: 1.6;
 }
 
+.join-card__actions {
+  margin-top: 1.25rem;
+  display: flex;
+  justify-content: center;
+  gap: 0.65rem;
+}
+
+.join-card__actions .primary-button,
+.join-card__actions .secondary-button {
+  margin: 0;
+}
+
 @keyframes skeleton-shimmer {
   to {
     background-position: -200% 0;
