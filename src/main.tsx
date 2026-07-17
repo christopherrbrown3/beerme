@@ -5,13 +5,9 @@ import { BrowserRouter } from 'react-router-dom';
 import { App } from './App';
 import { AppProviders } from './lib/AppProviders';
 import './styles/index.css';
+import { restoreStoredRedirect } from './utils/redirect';
 
-const redirectPath = window.sessionStorage.getItem('beerme:redirect');
-
-if (redirectPath) {
-  window.sessionStorage.removeItem('beerme:redirect');
-  window.history.replaceState(null, '', redirectPath);
-}
+restoreStoredRedirect(window.sessionStorage, window.history);
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

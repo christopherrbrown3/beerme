@@ -9,3 +9,15 @@ export function getSafeNextPath(value: string | null, origin = window.location.o
     return '/';
   }
 }
+
+export function restoreStoredRedirect(
+  storage: Pick<Storage, 'getItem' | 'removeItem'>,
+  history: Pick<History, 'replaceState'>,
+  origin = window.location.origin,
+) {
+  const storedPath = storage.getItem('beerme:redirect');
+  if (storedPath === null) return;
+
+  storage.removeItem('beerme:redirect');
+  history.replaceState(null, '', getSafeNextPath(storedPath, origin));
+}

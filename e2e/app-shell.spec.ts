@@ -30,3 +30,13 @@ test('a protected invite preserves its destination through login', async ({ page
   expect(decodeURIComponent(page.url())).toContain(`/join/${token}`);
   await expect(page.getByRole('heading', { name: 'Sign in to your crew.' })).toBeVisible();
 });
+
+test('an unsafe stored Pages redirect cannot prevent app startup', async ({ page }) => {
+  await page.goto('/');
+  await page.evaluate(() => sessionStorage.setItem('beerme:redirect', '//example.com/steal'));
+  await page.reload();
+
+  await expect(page).toHaveURL(/\/auth\/login(?:\?next=%2F)?$/);
+  await expect(page.getByRole('heading', { name: 'Sign in to your crew.' })).toBeVisible();
+  expect(await page.evaluate(() => sessionStorage.getItem('beerme:redirect'))).toBeNull();
+});
