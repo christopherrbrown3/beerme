@@ -20,3 +20,15 @@ export type CreateGroupInput = {
   name: string;
   description: string;
 };
+
+export type GroupMember = {
+  userId: string;
+  role: MembershipRole;
+  joinedAt: string;
+  username: string;
+  displayName: string;
+};
+
+export type GroupDetails = GroupSummary & {
+  members: GroupMember[];
+};

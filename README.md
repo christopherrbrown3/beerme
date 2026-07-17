@@ -25,7 +25,7 @@ Beer is the default unit, but balances are designed to stay unit-agnostic so gro
 ## Highlights
 
 - **Built for a phone** — large touch targets, bottom navigation, safe-area support, and installable PWA behavior
-- **Ledger-first** — activity is append-only; future corrections reverse transactions instead of rewriting history
+- **Ledger-first** — activity is append-only; corrections reverse transactions instead of rewriting history
 - **Private by default** — Supabase Auth and PostgreSQL Row Level Security enforce access in the database
 - **Human identity** — immutable unique usernames plus editable display names
 - **Fast everywhere** — static GitHub Pages hosting, direct Supabase access, offline shell, and split vendor bundles
@@ -56,6 +56,14 @@ Beer is the default unit, but balances are designed to stay unit-agnostic so gro
 - Responsive home dashboard with member counts, roles, and optimistic creation
 - Future-ready group currency fields defaulted to Beer without exposing configuration UI
 - Membership, group, and shared-profile access enforced with recursive-safe RLS helpers
+
+### Transaction ledger
+
+- Newest-first group history with friendly timestamps and optional notes
+- Optimistic transaction creation with centralized unit-aware display text
+- Reversals preserve and visibly mark the original entry instead of deleting it
+- Live group updates through Supabase Realtime Postgres Changes
+- Database-enforced membership access, valid participants, quantity limits, immutable history, and creator/owner reversal authorization
 
 ## How it works
 
@@ -138,8 +146,8 @@ Install the Playwright browser once with `npx playwright install chromium`.
 
 ```text
 src/
-├── components/   Reusable layout, auth, brand, and UI pieces
-├── hooks/        Session state and query-backed domain hooks
+├── components/   Reusable layout, auth, group, transaction, and UI pieces
+├── hooks/        Session state, query-backed domain hooks, and realtime sync
 ├── lib/          Application providers and Supabase infrastructure
 ├── pages/        Route-level screens
 ├── services/     Typed Supabase operations
@@ -156,7 +164,7 @@ supabase/
 - [x] Project foundation and installable app shell
 - [x] Authentication and user profiles
 - [x] Groups, membership, and the home dashboard
-- [ ] Append-only transaction ledger and reversals
+- [x] Append-only transaction ledger and reversals
 - [ ] Unit-agnostic balance engine
 - [ ] People dashboard and quick transaction flows
 - [ ] Interactive relationship matrix

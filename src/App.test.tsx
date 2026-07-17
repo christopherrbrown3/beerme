@@ -16,6 +16,50 @@ const groupsState = vi.hoisted(() => ({
   data: [] as unknown[],
 }));
 
+const ledgerState = vi.hoisted(() => ({
+  group: {
+    id: 'group-1',
+    name: 'Friday Crew',
+    description: 'Neighborhood regulars',
+    ownerId: 'user-1',
+    inviteToken: '123e4567-e89b-42d3-a456-426614174000',
+    createdAt: '2026-07-17T00:00:00.000Z',
+    memberCount: 2,
+    role: 'owner' as const,
+    currency: { name: 'Beer', plural: 'Beers', symbol: '🍺' },
+    members: [
+      {
+        userId: 'user-1',
+        role: 'owner' as const,
+        joinedAt: '2026-07-17T00:00:00.000Z',
+        username: 'chris',
+        displayName: 'Chris',
+      },
+      {
+        userId: 'user-2',
+        role: 'member' as const,
+        joinedAt: '2026-07-17T00:00:00.000Z',
+        username: 'alex',
+        displayName: 'Alex',
+      },
+    ],
+  },
+  transactions: [
+    {
+      id: 'transaction-1',
+      groupId: 'group-1',
+      debtor: { id: 'user-2', username: 'alex', displayName: 'Alex' },
+      creditor: { id: 'user-1', username: 'chris', displayName: 'Chris' },
+      quantity: 2,
+      note: 'Trivia night',
+      createdBy: { id: 'user-1', username: 'chris', displayName: 'Chris' },
+      createdAt: '2026-07-17T00:00:00.000Z',
+      reversedAt: null,
+      reversedBy: null,
+    },
+  ],
+}));
+
 vi.mock('./hooks/AuthProvider', () => ({
   AuthProvider: ({ children }: PropsWithChildren) => children,
 }));
@@ -47,6 +91,23 @@ vi.mock('./hooks/useGroups', () => ({
     isError: false,
     mutateAsync: vi.fn(),
   }),
+}));
+
+vi.mock('./hooks/useGroupLedger', () => ({
+  useGroupDetails: () => ({
+    data: ledgerState.group,
+    isLoading: false,
+    isError: false,
+  }),
+  useTransactions: () => ({
+    data: ledgerState.transactions,
+    isLoading: false,
+    isError: false,
+    refetch: vi.fn(),
+  }),
+  useLedgerRealtime: vi.fn(),
+  useAddTransaction: () => ({ isPending: false, isError: false, mutateAsync: vi.fn() }),
+  useReverseTransaction: () => ({ isPending: false, isError: false, mutateAsync: vi.fn() }),
 }));
 
 function renderApp(initialPath = '/') {
@@ -115,6 +176,18 @@ describe('BeerMe app shell', () => {
     expect(screen.getByRole('heading', { name: 'Friday Crew' })).toBeInTheDocument();
     expect(screen.getByText('4 members')).toBeInTheDocument();
     expect(screen.getByText('Owner')).toBeInTheDocument();
+  });
+
+  it('renders a group transaction ledger without balance UI', () => {
+    renderApp('/groups/group-1');
+
+    expect(screen.getByRole('heading', { name: 'Friday Crew' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Transaction history' })).toBeInTheDocument();
+    expect(screen.getByText('Alex')).toBeInTheDocument();
+    expect(screen.getByText('Chris')).toBeInTheDocument();
+    expect(screen.getByText('2 Beers')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Add transaction' })).toBeInTheDocument();
+    expect(screen.queryByText(/you owe/i)).not.toBeInTheDocument();
   });
 
   it('renders a useful not-found route', () => {

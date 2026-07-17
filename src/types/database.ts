@@ -89,6 +89,73 @@ export type Database = {
           },
         ];
       };
+      transactions: {
+        Row: {
+          id: string;
+          group_id: string;
+          debtor_user_id: string;
+          creditor_user_id: string;
+          quantity: number;
+          note: string | null;
+          created_by: string;
+          created_at: string;
+          reversed_at: string | null;
+          reversed_by: string | null;
+        };
+        Insert: {
+          id?: string;
+          group_id: string;
+          debtor_user_id: string;
+          creditor_user_id: string;
+          quantity: number;
+          note?: string | null;
+          created_by: string;
+          created_at?: string;
+          reversed_at?: string | null;
+          reversed_by?: string | null;
+        };
+        Update: {
+          reversed_at?: string | null;
+          reversed_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'transactions_group_id_fkey';
+            columns: ['group_id'];
+            isOneToOne: false;
+            referencedRelation: 'groups';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'transactions_debtor_user_id_fkey';
+            columns: ['debtor_user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'transactions_creditor_user_id_fkey';
+            columns: ['creditor_user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'transactions_created_by_fkey';
+            columns: ['created_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'transactions_reversed_by_fkey';
+            columns: ['reversed_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -99,6 +166,10 @@ export type Database = {
       join_group: {
         Args: { token: string };
         Returns: string;
+      };
+      reverse_transaction: {
+        Args: { transaction_id: string };
+        Returns: Database['public']['Tables']['transactions']['Row'];
       };
     };
     Enums: {

@@ -1,5 +1,10 @@
 import { getSupabaseClient } from '../lib/supabase';
-import { type CreateGroupInput, type GroupSummary } from '../types/groups';
+import {
+  type CreateGroupInput,
+  type GroupDetails,
+  type GroupMember,
+  type GroupSummary,
+} from '../types/groups';
 import { normalizeGroupDescription, normalizeGroupName } from '../utils/groupValidation';
 
 type GroupWithCount = {
@@ -13,6 +18,18 @@ type GroupWithCount = {
   currency_symbol: string;
   created_at: string;
   memberships: { count: number }[];
+};
+
+type GroupDetailsRow = Omit<GroupWithCount, 'memberships'> & {
+  memberships: Array<{
+    user_id: string;
+    role: GroupMember['role'];
+    joined_at: string;
+    profile: {
+      username: string;
+      display_name: string;
+    };
+  }>;
 };
 
 export async function getGroups(userId: string): Promise<GroupSummary[]> {
@@ -78,6 +95,56 @@ export async function createGroup(userId: string, input: CreateGroupInput): Prom
       plural: data.currency_plural,
       symbol: data.currency_symbol,
     },
+  };
+}
+
+export async function getGroupDetails(groupId: string, userId: string): Promise<GroupDetails> {
+  const { data, error } = await getSupabaseClient()
+    .from('groups')
+    .select(
+      `
+        id, name, description, owner_id, invite_token,
+        currency_name, currency_plural, currency_symbol, created_at,
+        memberships (
+          user_id, role, joined_at,
+          profile:profiles!memberships_user_id_fkey (username, display_name)
+        )
+      `,
+    )
+    .eq('id', groupId)
+    .single();
+
+  if (error) throw error;
+
+  const group = data as unknown as GroupDetailsRow;
+  const members = group.memberships
+    .map((membership) => ({
+      userId: membership.user_id,
+      role: membership.role,
+      joinedAt: membership.joined_at,
+      username: membership.profile.username,
+      displayName: membership.profile.display_name,
+    }))
+    .sort((a, b) => {
+      if (a.role !== b.role) return a.role === 'owner' ? -1 : 1;
+      return a.displayName.localeCompare(b.displayName);
+    });
+
+  return {
+    id: group.id,
+    name: group.name,
+    description: group.description,
+    ownerId: group.owner_id,
+    inviteToken: group.invite_token,
+    createdAt: group.created_at,
+    memberCount: members.length,
+    role: members.find((member) => member.userId === userId)?.role ?? 'member',
+    currency: {
+      name: group.currency_name,
+      plural: group.currency_plural,
+      symbol: group.currency_symbol,
+    },
+    members,
   };
 }
 

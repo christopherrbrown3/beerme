@@ -18,7 +18,7 @@ export function JoinGroupPage() {
 
     void joinGroup
       .mutateAsync(token)
-      .then(() => navigate('/', { replace: true }))
+      .then((groupId) => navigate(`/groups/${groupId}`, { replace: true }))
       .catch(() => undefined);
   }, [joinGroup, navigate, token]);
 

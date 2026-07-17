@@ -1,5 +1,6 @@
-import { Crown, UsersRound } from 'lucide-react';
+import { ArrowUpRight, Crown, UsersRound } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
 
 import { type GroupSummary } from '../../types/groups';
 
@@ -28,17 +29,26 @@ export function GroupCard({ group }: GroupCardProps) {
           </span>
         )}
       </div>
-      <h3>{group.name}</h3>
-      <p className="group-card__description">
-        {group.description || 'The crew is assembled. The story starts here.'}
-      </p>
-      <div className="group-card__footer">
-        <span>
-          <UsersRound size={16} aria-hidden="true" />
-          {group.memberCount} {group.memberCount === 1 ? 'member' : 'members'}
-        </span>
-        <span>{group.id.startsWith('optimistic-') ? 'Saving…' : 'All square'}</span>
-      </div>
+      <Link
+        className="group-card__link"
+        to={group.id.startsWith('optimistic-') ? '#' : `/groups/${group.id}`}
+        aria-disabled={group.id.startsWith('optimistic-')}
+      >
+        <h3>{group.name}</h3>
+        <p className="group-card__description">
+          {group.description || 'The crew is assembled. The story starts here.'}
+        </p>
+        <div className="group-card__footer">
+          <span>
+            <UsersRound size={16} aria-hidden="true" />
+            {group.memberCount} {group.memberCount === 1 ? 'member' : 'members'}
+          </span>
+          <span>
+            {group.id.startsWith('optimistic-') ? 'Saving…' : 'Open ledger'}
+            {!group.id.startsWith('optimistic-') && <ArrowUpRight size={15} aria-hidden="true" />}
+          </span>
+        </div>
+      </Link>
     </motion.article>
   );
 }
