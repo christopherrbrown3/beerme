@@ -64,6 +64,8 @@ npm run preview
 
 Pushes to `main` build and publish `dist/` through GitHub Pages. In the repository settings, set Pages source to **GitHub Actions** and configure the custom domain as `beerme.christopherbrown.ai`. DNS and repository-level Pages settings remain external setup steps.
 
+The deployment workflow is skipped while the repository is private because the current GitHub account plan does not support Pages for private repositories. It activates automatically after the repository becomes public.
+
 The committed `public/404.html` preserves deep links when GitHub Pages initially serves its 404 fallback. The service worker provides the offline application shell after the first successful visit.
 
 ## Architecture
