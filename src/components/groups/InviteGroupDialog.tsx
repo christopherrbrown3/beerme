@@ -14,6 +14,7 @@ type InviteStatus = 'idle' | 'copied' | 'shared' | 'error';
 export function InviteGroupDialog({ group, onClose }: InviteGroupDialogProps) {
   const inviteUrl = `${window.location.origin}/join/${group.inviteToken}`;
   const [qrCode, setQrCode] = useState<string | null>(null);
+  const [qrError, setQrError] = useState(false);
   const [status, setStatus] = useState<InviteStatus>('idle');
   const linkInput = useRef<HTMLInputElement>(null);
   const canShare = typeof navigator.share === 'function';
@@ -33,7 +34,7 @@ export function InviteGroupDialog({ group, onClose }: InviteGroupDialogProps) {
         if (active) setQrCode(value);
       })
       .catch(() => {
-        if (active) setStatus('error');
+        if (active) setQrError(true);
       });
 
     return () => {
@@ -82,6 +83,10 @@ export function InviteGroupDialog({ group, onClose }: InviteGroupDialogProps) {
         <div className="invite-qr" aria-live="polite">
           {qrCode ? (
             <img src={qrCode} alt={`QR code for the ${group.name} invite`} />
+          ) : qrError ? (
+            <span className="invite-qr__loading" role="status">
+              QR code unavailable. Use the invite link below.
+            </span>
           ) : (
             <span className="invite-qr__loading">Making QR code…</span>
           )}
