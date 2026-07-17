@@ -65,6 +65,14 @@ Beer is the default unit, but balances are designed to stay unit-agnostic so gro
 - Live group updates through Supabase Realtime Postgres Changes
 - Database-enforced membership access, valid participants, quantity limits, immutable history, and creator/owner reversal authorization
 
+### Balance engine
+
+- Unit-agnostic pair, directional, individual, and whole-group calculations
+- Mutual IOUs netted per relationship before user totals are calculated
+- Reversed history excluded without mutating or rewriting ledger entries
+- Explicit sign convention: positive net means a member is owed; negative net means they owe
+- Decimal-safe scaled arithmetic with zero-sum group invariants
+
 ## How it works
 
 ```text
@@ -165,7 +173,7 @@ supabase/
 - [x] Authentication and user profiles
 - [x] Groups, membership, and the home dashboard
 - [x] Append-only transaction ledger and reversals
-- [ ] Unit-agnostic balance engine
+- [x] Unit-agnostic balance engine
 - [ ] People dashboard and quick transaction flows
 - [ ] Interactive relationship matrix
 - [ ] Activity history
