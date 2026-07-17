@@ -202,7 +202,7 @@ supabase/
 - [x] People dashboard and quick transaction flows
 - [x] Interactive relationship matrix
 - [x] Activity history
-- [ ] Invite links, sharing, and QR codes
+- [x] Invite links, sharing, and QR codes
 - [ ] Native-feeling polish, performance, and accessibility pass
 
 ## Product principles

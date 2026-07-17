@@ -1261,6 +1261,65 @@ a:focus-visible {
   margin: 0;
 }
 
+.invite-sheet {
+  margin-top: 1.25rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.invite-qr {
+  width: min(100%, 15rem);
+  aspect-ratio: 1;
+  margin-inline: auto;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 1.2rem;
+  box-shadow: 0 12px 35px rgba(64, 48, 22, 0.08);
+}
+
+.invite-qr img {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.invite-qr__loading {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.invite-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.invite-actions .primary-button,
+.invite-actions .secondary-button {
+  width: 100%;
+  margin: 0;
+}
+
+.invite-actions .secondary-button:only-child {
+  grid-column: 1 / -1;
+}
+
+.invite-status {
+  min-height: 1.1rem;
+  margin: -0.25rem 0 0;
+  color: var(--muted);
+  font-size: 0.72rem;
+  text-align: center;
+}
+
+.invite-status--error {
+  color: #8d3529;
+}
+
 .reverse-summary {
   margin-top: 1.25rem;
   padding: 1rem;

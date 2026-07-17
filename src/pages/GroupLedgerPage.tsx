@@ -7,6 +7,7 @@ import { AddTransactionDialog } from '../components/transactions/AddTransactionD
 import { ReverseTransactionDialog } from '../components/transactions/ReverseTransactionDialog';
 import { TransactionCard } from '../components/transactions/TransactionCard';
 import { GroupSummary } from '../components/groups/GroupSummary';
+import { InviteGroupDialog } from '../components/groups/InviteGroupDialog';
 import { PeopleView } from '../components/groups/PeopleView';
 import { RelationshipMatrix } from '../components/groups/RelationshipMatrix';
 import { EmptyState } from '../components/ui/EmptyState';
@@ -27,7 +28,7 @@ export function GroupLedgerPage() {
     null,
   );
   const [reversingEntry, setReversingEntry] = useState<LedgerEntry | null>(null);
-  const [inviteCopied, setInviteCopied] = useState(false);
+  const [isInviting, setIsInviting] = useState(false);
   useLedgerRealtime(groupId);
 
   if (groupQuery.isLoading) return <GroupLedgerSkeleton />;
@@ -49,17 +50,6 @@ export function GroupLedgerPage() {
   const group = groupQuery.data;
   const transactions = transactionsQuery.data ?? [];
 
-  async function copyInvite() {
-    const inviteUrl = `${window.location.origin}/join/${group.inviteToken}`;
-    try {
-      await navigator.clipboard.writeText(inviteUrl);
-      setInviteCopied(true);
-      window.setTimeout(() => setInviteCopied(false), 2_000);
-    } catch {
-      setInviteCopied(false);
-    }
-  }
-
   return (
     <div className="page group-ledger-page">
       <Link className="back-link" to="/">
@@ -73,8 +63,8 @@ export function GroupLedgerPage() {
           <p>{group.description || 'Every round, favor, and friendly IOU—kept in one place.'}</p>
         </div>
         <div className="group-ledger-header__actions">
-          <button className="secondary-button" type="button" onClick={() => void copyInvite()}>
-            <Copy size={16} aria-hidden="true" /> {inviteCopied ? 'Copied' : 'Invite'}
+          <button className="secondary-button" type="button" onClick={() => setIsInviting(true)}>
+            <Copy size={16} aria-hidden="true" /> Invite
           </button>
           <button
             className="primary-button"
@@ -188,6 +178,7 @@ export function GroupLedgerPage() {
           onClose={() => setReversingEntry(null)}
         />
       )}
+      {isInviting && <InviteGroupDialog group={group} onClose={() => setIsInviting(false)} />}
     </div>
   );
 }
