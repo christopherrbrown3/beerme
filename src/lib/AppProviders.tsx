@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query';
 import { MotionConfig } from 'framer-motion';
-import { type PropsWithChildren, useEffect, useRef, useState } from 'react';
+import { type PropsWithChildren, useLayoutEffect, useRef, useState } from 'react';
 
 import { AuthProvider } from '../hooks/AuthProvider';
 import { useAuth } from '../hooks/useAuth';
@@ -35,7 +35,7 @@ export function UserScopedQueryCache({ children }: PropsWithChildren) {
   const queryClient = useQueryClient();
   const previousUserId = useRef<string | null | undefined>(undefined);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (isLoading) return;
 
     const nextUserId = user?.id ?? null;
