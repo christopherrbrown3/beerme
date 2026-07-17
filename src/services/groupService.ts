@@ -7,6 +7,7 @@ import {
 } from '../types/groups';
 import { calculateUserBalance } from '../utils/balances';
 import { normalizeGroupDescription, normalizeGroupName } from '../utils/groupValidation';
+import { fetchAllPages } from './pagination';
 import { getAllTransactions } from './transactionService';
 
 type GroupWithCount = {
@@ -22,41 +23,49 @@ type GroupWithCount = {
   memberships: { count: number }[];
 };
 
-type GroupDetailsRow = Omit<GroupWithCount, 'memberships'> & {
-  memberships: Array<{
-    user_id: string;
-    role: GroupMember['role'];
-    joined_at: string;
-    profile: {
-      username: string;
-      display_name: string;
-    };
-  }>;
+type GroupDetailsRow = Omit<GroupWithCount, 'memberships'>;
+
+type GroupMembershipRow = {
+  user_id: string;
+  role: GroupMember['role'];
+  joined_at: string;
+  profile: {
+    username: string;
+    display_name: string;
+  };
 };
 
 export async function getGroups(userId: string): Promise<GroupSummary[]> {
   const supabase = getSupabaseClient();
-  const [groupsResult, membershipResult, transactions] = await Promise.all([
-    supabase
-      .from('groups')
-      .select(
-        `
-          id, name, description, owner_id, invite_token,
-          currency_name, currency_plural, currency_symbol, created_at,
-          memberships(count)
-        `,
-      )
-      .order('created_at', { ascending: false }),
-    supabase.from('memberships').select('group_id, role').eq('user_id', userId),
+  const [groups, memberships, transactions] = await Promise.all([
+    fetchAllPages<GroupWithCount>(async (from, to) => {
+      const { data, error } = await supabase
+        .from('groups')
+        .select(
+          `
+            id, name, description, owner_id, invite_token,
+            currency_name, currency_plural, currency_symbol, created_at,
+            memberships(count)
+          `,
+        )
+        .order('created_at', { ascending: false })
+        .order('id', { ascending: false })
+        .range(from, to);
+      return { data: data as unknown as GroupWithCount[], error };
+    }),
+    fetchAllPages<{ group_id: string; role: GroupMember['role'] }>(async (from, to) => {
+      const { data, error } = await supabase
+        .from('memberships')
+        .select('group_id, role')
+        .eq('user_id', userId)
+        .order('group_id')
+        .range(from, to);
+      return { data, error };
+    }),
     getAllTransactions(),
   ]);
 
-  if (groupsResult.error) throw groupsResult.error;
-  if (membershipResult.error) throw membershipResult.error;
-
-  const roles = new Map(
-    membershipResult.data.map((membership) => [membership.group_id, membership.role]),
-  );
+  const roles = new Map(memberships.map((membership) => [membership.group_id, membership.role]));
   const transactionsByGroup = new Map<string, typeof transactions>();
   for (const transaction of transactions) {
     const entries = transactionsByGroup.get(transaction.groupId) ?? [];
@@ -64,7 +73,7 @@ export async function getGroups(userId: string): Promise<GroupSummary[]> {
     transactionsByGroup.set(transaction.groupId, entries);
   }
 
-  return (groupsResult.data as GroupWithCount[]).map((group) => {
+  return groups.map((group) => {
     const groupTransactions = transactionsByGroup.get(group.id) ?? [];
     const activityDates = groupTransactions.flatMap((transaction) =>
       transaction.reversedAt
@@ -128,25 +137,36 @@ export async function createGroup(userId: string, input: CreateGroupInput): Prom
 }
 
 export async function getGroupDetails(groupId: string, userId: string): Promise<GroupDetails> {
-  const { data, error } = await getSupabaseClient()
-    .from('groups')
-    .select(
-      `
-        id, name, description, owner_id, invite_token,
-        currency_name, currency_plural, currency_symbol, created_at,
-        memberships (
-          user_id, role, joined_at,
-          profile:profiles!memberships_user_id_fkey (username, display_name)
+  const supabase = getSupabaseClient();
+  const [groupResult, memberships] = await Promise.all([
+    supabase
+      .from('groups')
+      .select(
+        `
+          id, name, description, owner_id, invite_token,
+          currency_name, currency_plural, currency_symbol, created_at
+        `,
+      )
+      .eq('id', groupId)
+      .single(),
+    fetchAllPages<GroupMembershipRow>(async (from, to) => {
+      const { data, error } = await supabase
+        .from('memberships')
+        .select(
+          'user_id, role, joined_at, profile:profiles!memberships_user_id_fkey(username, display_name)',
         )
-      `,
-    )
-    .eq('id', groupId)
-    .single();
+        .eq('group_id', groupId)
+        .order('joined_at')
+        .order('user_id')
+        .range(from, to);
+      return { data: data as unknown as GroupMembershipRow[], error };
+    }),
+  ]);
 
-  if (error) throw error;
+  if (groupResult.error) throw groupResult.error;
 
-  const group = data as unknown as GroupDetailsRow;
-  const members = group.memberships
+  const group = groupResult.data as unknown as GroupDetailsRow;
+  const members = memberships
     .map((membership) => ({
       userId: membership.user_id,
       role: membership.role,

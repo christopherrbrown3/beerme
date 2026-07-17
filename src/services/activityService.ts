@@ -2,6 +2,7 @@ import { getSupabaseClient } from '../lib/supabase';
 import { type ActivityEvent } from '../types/activity';
 import { type LedgerEntry, type LedgerProfile } from '../types/transactions';
 import { formatUnitQuantity } from '../utils/unitPresentation';
+import { fetchAllPages } from './pagination';
 import { getAllTransactions } from './transactionService';
 
 type ActivityGroup = {
@@ -27,26 +28,32 @@ type ActivityMembership = {
 
 export async function getActivity(): Promise<ActivityEvent[]> {
   const supabase = getSupabaseClient();
-  const [groupsResult, membershipsResult, transactions] = await Promise.all([
-    supabase
-      .from('groups')
-      .select('id, name, owner_id, created_at, currency_name, currency_plural, currency_symbol'),
-    supabase
-      .from('memberships')
-      .select(
-        'group_id, user_id, joined_at, profile:profiles!memberships_user_id_fkey(id, username, display_name)',
-      ),
+  const [groups, memberships, transactions] = await Promise.all([
+    fetchAllPages<ActivityGroup>(async (from, to) => {
+      const { data, error } = await supabase
+        .from('groups')
+        .select('id, name, owner_id, created_at, currency_name, currency_plural, currency_symbol')
+        .order('created_at', { ascending: false })
+        .order('id', { ascending: false })
+        .range(from, to);
+      return { data, error };
+    }),
+    fetchAllPages<ActivityMembership>(async (from, to) => {
+      const { data, error } = await supabase
+        .from('memberships')
+        .select(
+          'group_id, user_id, joined_at, profile:profiles!memberships_user_id_fkey(id, username, display_name)',
+        )
+        .order('joined_at', { ascending: false })
+        .order('group_id')
+        .order('user_id')
+        .range(from, to);
+      return { data: data as unknown as ActivityMembership[], error };
+    }),
     getAllTransactions(),
   ]);
 
-  if (groupsResult.error) throw groupsResult.error;
-  if (membershipsResult.error) throw membershipsResult.error;
-
-  return buildActivityFeed(
-    groupsResult.data as ActivityGroup[],
-    membershipsResult.data as unknown as ActivityMembership[],
-    transactions,
-  );
+  return buildActivityFeed(groups, memberships, transactions);
 }
 
 export function buildActivityFeed(
