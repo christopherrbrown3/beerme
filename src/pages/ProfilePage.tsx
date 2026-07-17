@@ -55,6 +55,7 @@ function ProfileDetails({ profile, email }: ProfileDetailsProps) {
   const [displayName, setDisplayName] = useState(profile.display_name);
   const [displayNameError, setDisplayNameError] = useState<string | null>(null);
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const [signOutError, setSignOutError] = useState<string | null>(null);
 
   async function handleSave(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -62,13 +63,20 @@ function ProfileDetails({ profile, email }: ProfileDetailsProps) {
     setDisplayNameError(validationError);
 
     if (validationError) return;
-    await updateProfile.mutateAsync(displayName);
+    try {
+      await updateProfile.mutateAsync(displayName);
+    } catch {
+      // The mutation state renders accessible error feedback below.
+    }
   }
 
   async function handleSignOut() {
+    setSignOutError(null);
     setIsSigningOut(true);
     try {
       await signOut();
+    } catch {
+      setSignOutError('We couldn’t sign you out. Check your connection and try again.');
     } finally {
       setIsSigningOut(false);
     }
@@ -177,6 +185,11 @@ function ProfileDetails({ profile, email }: ProfileDetailsProps) {
           <LogOut size={17} aria-hidden="true" />
           {isSigningOut ? 'Signing out…' : 'Sign out'}
         </button>
+        {signOutError && (
+          <p className="form-error" role="alert">
+            {signOutError}
+          </p>
+        )}
       </section>
     </div>
   );
