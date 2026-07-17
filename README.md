@@ -48,6 +48,7 @@ Beer is the default unit, but balances are designed to stay unit-agnostic so gro
 - Confirmation-email flow
 - Database-triggered profiles with immutable usernames
 - User-owned profile reads and display-name updates enforced by RLS
+- Display-name changes propagated live across shared group views
 
 ### Groups
 
@@ -94,7 +95,7 @@ Beer is the default unit, but balances are designed to stay unit-agnostic so gro
 - Cross-group feed derived from group, membership, and immutable transaction history
 - Group creation, member joins, transaction creation, and reversal events
 - Newest-first ordering, friendly timestamps, notes, and direct group links
-- Transaction and membership Realtime refresh with no duplicate activity table
+- Transaction, membership, and profile Realtime refresh with no duplicate activity table
 
 ### Invites and native polish
 
@@ -102,6 +103,7 @@ Beer is the default unit, but balances are designed to stay unit-agnostic so gro
 - Native share sheets where available, plus resilient clipboard and manual-copy fallbacks
 - Focus-trapped dialogs with focus restoration, unique accessible labels, and scroll locking
 - Connection-state feedback, safe-area-aware standalone behavior, and reduced-motion support
+- User-controlled app updates avoid reloading over in-progress forms
 - Deferred QR code loading keeps invitation-only code out of the initial application bundle
 
 ## How it works
