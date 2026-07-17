@@ -4,7 +4,6 @@ import { useAppRealtime } from '../../hooks/useAppRealtime';
 import { BeerMeMark } from '../brand/BeerMeMark';
 import { BottomNavigation } from './BottomNavigation';
 import { NetworkStatus } from './NetworkStatus';
-import { UpdatePrompt } from './UpdatePrompt';
 
 export function AppLayout() {
   useAppRealtime();
@@ -25,7 +24,6 @@ export function AppLayout() {
       </main>
       <BottomNavigation />
       <NetworkStatus />
-      <UpdatePrompt />
     </div>
   );
 }
