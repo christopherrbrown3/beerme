@@ -10,6 +10,7 @@ const TRANSACTION_SELECT = `
   creator:profiles!transactions_created_by_fkey (id, username, display_name),
   reverser:profiles!transactions_reversed_by_fkey (id, username, display_name)
 `;
+const TRANSACTION_PAGE_SIZE = 1_000;
 
 type TransactionRow = {
   id: string;
@@ -66,17 +67,26 @@ export async function getAllTransactions(): Promise<LedgerEntry[]> {
 }
 
 async function queryTransactions(groupId?: string): Promise<LedgerEntry[]> {
-  let query = getSupabaseClient()
-    .from('transactions')
-    .select(TRANSACTION_SELECT)
-    .order('created_at', { ascending: false });
+  const rows: TransactionRow[] = [];
 
-  if (groupId) query = query.eq('group_id', groupId);
+  for (let from = 0; ; from += TRANSACTION_PAGE_SIZE) {
+    let query = getSupabaseClient()
+      .from('transactions')
+      .select(TRANSACTION_SELECT)
+      .order('created_at', { ascending: false })
+      .order('id', { ascending: false });
 
-  const { data, error } = await query;
+    if (groupId) query = query.eq('group_id', groupId);
 
-  if (error) throw error;
-  return (data as unknown as TransactionRow[]).map(mapTransaction);
+    const { data, error } = await query.range(from, from + TRANSACTION_PAGE_SIZE - 1);
+    if (error) throw error;
+
+    const page = data as unknown as TransactionRow[];
+    rows.push(...page);
+    if (page.length < TRANSACTION_PAGE_SIZE) break;
+  }
+
+  return rows.map(mapTransaction);
 }
 
 export async function addTransaction(userId: string, input: CreateTransactionInput) {
