@@ -1,5 +1,5 @@
 import { AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Clock3, Copy, Plus, UsersRound } from 'lucide-react';
+import { ArrowLeft, Clock3, Copy, Plus, Settings2, UsersRound } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 
@@ -7,6 +7,7 @@ import { AddTransactionDialog } from '../components/transactions/AddTransactionD
 import { ReverseTransactionDialog } from '../components/transactions/ReverseTransactionDialog';
 import { TransactionCard } from '../components/transactions/TransactionCard';
 import { GroupSummary } from '../components/groups/GroupSummary';
+import { GroupCurrencyDialog } from '../components/groups/GroupCurrencyDialog';
 import { InviteGroupDialog } from '../components/groups/InviteGroupDialog';
 import { PeopleView } from '../components/groups/PeopleView';
 import { RelationshipMatrix } from '../components/groups/RelationshipMatrix';
@@ -29,6 +30,7 @@ export function GroupLedgerPage() {
   );
   const [reversingEntry, setReversingEntry] = useState<LedgerEntry | null>(null);
   const [isInviting, setIsInviting] = useState(false);
+  const [isEditingCurrency, setIsEditingCurrency] = useState(false);
   if (groupQuery.isLoading) return <GroupLedgerSkeleton />;
 
   if (groupQuery.isError || !groupQuery.data) {
@@ -61,6 +63,15 @@ export function GroupLedgerPage() {
           <p>{group.description || 'Every round, favor, and friendly IOU—kept in one place.'}</p>
         </div>
         <div className="group-ledger-header__actions">
+          {group.role === 'owner' && (
+            <button
+              className="secondary-button"
+              type="button"
+              onClick={() => setIsEditingCurrency(true)}
+            >
+              <Settings2 size={16} aria-hidden="true" /> Currency
+            </button>
+          )}
           <button className="secondary-button" type="button" onClick={() => setIsInviting(true)}>
             <Copy size={16} aria-hidden="true" /> Invite
           </button>
@@ -177,6 +188,9 @@ export function GroupLedgerPage() {
         />
       )}
       {isInviting && <InviteGroupDialog group={group} onClose={() => setIsInviting(false)} />}
+      {isEditingCurrency && (
+        <GroupCurrencyDialog group={group} onClose={() => setIsEditingCurrency(false)} />
+      )}
     </div>
   );
 }

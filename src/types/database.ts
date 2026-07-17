@@ -47,6 +47,9 @@ export type Database = {
         Update: {
           name?: string;
           description?: string | null;
+          currency_name?: string;
+          currency_plural?: string;
+          currency_symbol?: string;
         };
         Relationships: [
           {

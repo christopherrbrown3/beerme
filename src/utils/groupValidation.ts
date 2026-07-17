@@ -25,6 +25,30 @@ export function validateGroupDescription(value: string) {
   return null;
 }
 
+export function normalizeCurrencyValue(value: string) {
+  return value.trim();
+}
+
+export function validateCurrencyName(value: string, label: string) {
+  const normalized = normalizeCurrencyValue(value);
+
+  if (normalized.length < 1 || normalized.length > 30) {
+    return `${label} must be between 1 and 30 characters.`;
+  }
+
+  return null;
+}
+
+export function validateCurrencySymbol(value: string) {
+  const normalized = normalizeCurrencyValue(value);
+
+  if (normalized.length < 1 || normalized.length > 12) {
+    return 'Symbol must be between 1 and 12 characters.';
+  }
+
+  return null;
+}
+
 export function extractInviteToken(value: string) {
   const trimmedValue = value.trim();
 

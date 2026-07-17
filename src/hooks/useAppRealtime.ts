@@ -27,6 +27,11 @@ export function useAppRealtime() {
         void queryClient.invalidateQueries({ queryKey: ['transactions'] });
         void queryClient.invalidateQueries({ queryKey: ['activity'] });
       })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'groups' }, () => {
+        void queryClient.invalidateQueries({ queryKey: ['groups'] });
+        void queryClient.invalidateQueries({ queryKey: ['group'] });
+        void queryClient.invalidateQueries({ queryKey: ['activity'] });
+      })
       .subscribe();
 
     return () => {

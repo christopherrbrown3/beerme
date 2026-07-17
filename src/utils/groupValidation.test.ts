@@ -3,10 +3,13 @@ import { describe, expect, it } from 'vitest';
 import {
   extractInviteToken,
   isUuid,
+  normalizeCurrencyValue,
   normalizeGroupDescription,
   normalizeGroupName,
   validateGroupDescription,
   validateGroupName,
+  validateCurrencyName,
+  validateCurrencySymbol,
 } from './groupValidation';
 
 describe('group validation', () => {
@@ -30,5 +33,17 @@ describe('group validation', () => {
     expect(extractInviteToken(token)).toBe(token);
     expect(isUuid(token)).toBe(true);
     expect(isUuid('not-an-invite')).toBe(false);
+  });
+
+  it('validates group currency labels', () => {
+    expect(normalizeCurrencyValue('  Coffee  ')).toBe('Coffee');
+    expect(validateCurrencyName('Coffee', 'Singular name')).toBeNull();
+    expect(validateCurrencySymbol('☕')).toBeNull();
+    expect(validateCurrencyName(' ', 'Plural name')).toBe(
+      'Plural name must be between 1 and 30 characters.',
+    );
+    expect(validateCurrencySymbol('1234567890123')).toBe(
+      'Symbol must be between 1 and 12 characters.',
+    );
   });
 });

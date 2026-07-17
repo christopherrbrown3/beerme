@@ -1,12 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { getGroupDetails } from '../services/groupService';
+import { getGroupDetails, updateGroupCurrency } from '../services/groupService';
 import {
   addTransaction,
   getTransactions,
   reverseTransaction,
 } from '../services/transactionService';
-import { type GroupDetails } from '../types/groups';
+import { type GroupCurrency, type GroupDetails } from '../types/groups';
 import { type CreateTransactionInput, type LedgerEntry } from '../types/transactions';
 import { normalizeTransactionNote } from '../utils/transactionValidation';
 import { useAuth } from './useAuth';
@@ -29,6 +29,21 @@ export function useTransactions(groupId: string) {
     queryKey: transactionsQueryKey(groupId),
     queryFn: () => getTransactions(groupId),
     enabled: Boolean(groupId),
+  });
+}
+
+export function useUpdateGroupCurrency(groupId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (currency: GroupCurrency) => updateGroupCurrency(groupId, currency),
+    onSuccess: (currency) => {
+      queryClient.setQueryData<GroupDetails>(groupQueryKey(groupId), (group) =>
+        group ? { ...group, currency } : group,
+      );
+      void queryClient.invalidateQueries({ queryKey: ['groups'] });
+      void queryClient.invalidateQueries({ queryKey: ['activity'] });
+    },
   });
 }
 

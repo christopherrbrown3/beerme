@@ -1,12 +1,17 @@
 import { getSupabaseClient } from '../lib/supabase';
 import {
   type CreateGroupInput,
+  type GroupCurrency,
   type GroupDetails,
   type GroupMember,
   type GroupSummary,
 } from '../types/groups';
 import { calculateUserBalance } from '../utils/balances';
-import { normalizeGroupDescription, normalizeGroupName } from '../utils/groupValidation';
+import {
+  normalizeCurrencyValue,
+  normalizeGroupDescription,
+  normalizeGroupName,
+} from '../utils/groupValidation';
 import { fetchAllPages } from './pagination';
 import { getAllTransactions } from './transactionService';
 
@@ -202,4 +207,25 @@ export async function joinGroup(token: string) {
 
   if (error) throw error;
   return data;
+}
+
+export async function updateGroupCurrency(groupId: string, currency: GroupCurrency) {
+  const { data, error } = await getSupabaseClient()
+    .from('groups')
+    .update({
+      currency_name: normalizeCurrencyValue(currency.name),
+      currency_plural: normalizeCurrencyValue(currency.plural),
+      currency_symbol: normalizeCurrencyValue(currency.symbol),
+    })
+    .eq('id', groupId)
+    .select('currency_name, currency_plural, currency_symbol')
+    .single();
+
+  if (error) throw error;
+
+  return {
+    name: data.currency_name,
+    plural: data.currency_plural,
+    symbol: data.currency_symbol,
+  } satisfies GroupCurrency;
 }

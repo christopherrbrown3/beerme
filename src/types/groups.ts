@@ -9,11 +9,13 @@ type GroupBase = {
   createdAt: string;
   memberCount: number;
   role: MembershipRole;
-  currency: {
-    name: string;
-    plural: string;
-    symbol: string;
-  };
+  currency: GroupCurrency;
+};
+
+export type GroupCurrency = {
+  name: string;
+  plural: string;
+  symbol: string;
 };
 
 export type GroupSummary = GroupBase & {

@@ -98,4 +98,18 @@ describe('app Realtime hook', () => {
     unmount();
     expect(realtime.removeChannel).toHaveBeenCalledOnce();
   });
+
+  it('invalidates every group-backed query family', () => {
+    const { unmount } = renderHook(() => useAppRealtime(), { wrapper });
+    const group = realtime.handlers.find(({ config }) => config.table === 'groups');
+    expect(group).toBeDefined();
+
+    act(() => group!.callback());
+    expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ['groups'] });
+    expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ['group'] });
+    expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ['activity'] });
+
+    unmount();
+    expect(realtime.removeChannel).toHaveBeenCalledOnce();
+  });
 });
