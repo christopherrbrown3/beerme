@@ -14,10 +14,19 @@ export function restoreStoredRedirect(
   storage: Pick<Storage, 'getItem' | 'removeItem'>,
   history: Pick<History, 'replaceState'>,
   origin = window.location.origin,
+  search = window.location.search,
 ) {
-  const storedPath = storage.getItem('beerme:redirect');
-  if (storedPath === null) return;
+  let storedPath: string | null = null;
+  try {
+    storedPath = storage.getItem('beerme:redirect');
+    if (storedPath !== null) storage.removeItem('beerme:redirect');
+  } catch {
+    // Storage may be unavailable under restrictive browser privacy settings.
+  }
 
-  storage.removeItem('beerme:redirect');
-  history.replaceState(null, '', getSafeNextPath(storedPath, origin));
+  const fallbackPath = new URLSearchParams(search).get('redirect');
+  const redirectPath = storedPath ?? fallbackPath;
+  if (redirectPath === null) return;
+
+  history.replaceState(null, '', getSafeNextPath(redirectPath, origin));
 }

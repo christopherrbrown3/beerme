@@ -7,11 +7,14 @@
   </head>
   <body>
     <script>
-      sessionStorage.setItem(
-        'beerme:redirect',
-        location.pathname + location.search + location.hash,
-      );
-      location.replace('/');
+      const redirectPath = location.pathname + location.search + location.hash;
+
+      try {
+        sessionStorage.setItem('beerme:redirect', redirectPath);
+        location.replace('/');
+      } catch {
+        location.replace('/?redirect=' + encodeURIComponent(redirectPath));
+      }
     </script>
   </body>
 </html>

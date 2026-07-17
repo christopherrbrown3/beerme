@@ -60,4 +60,42 @@ describe('restoreStoredRedirect', () => {
     expect(storage.removeItem).not.toHaveBeenCalled();
     expect(history.replaceState).not.toHaveBeenCalled();
   });
+
+  it('restores the query handoff when browser storage is blocked', () => {
+    const storage = {
+      getItem: vi.fn(() => {
+        throw new DOMException('Blocked', 'SecurityError');
+      }),
+      removeItem: vi.fn(),
+    };
+    const history = { replaceState: vi.fn() };
+
+    restoreStoredRedirect(
+      storage,
+      history,
+      origin,
+      '?redirect=%2Fjoin%2F123e4567-e89b-42d3-a456-426614174000',
+    );
+
+    expect(storage.removeItem).not.toHaveBeenCalled();
+    expect(history.replaceState).toHaveBeenCalledWith(
+      null,
+      '',
+      '/join/123e4567-e89b-42d3-a456-426614174000',
+    );
+  });
+
+  it('sanitizes an unsafe query handoff when storage is unavailable', () => {
+    const storage = {
+      getItem: vi.fn(() => {
+        throw new DOMException('Blocked', 'SecurityError');
+      }),
+      removeItem: vi.fn(),
+    };
+    const history = { replaceState: vi.fn() };
+
+    restoreStoredRedirect(storage, history, origin, '?redirect=%2F%2Fexample.com%2Fsteal');
+
+    expect(history.replaceState).toHaveBeenCalledWith(null, '', '/');
+  });
 });
