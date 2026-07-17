@@ -73,5 +73,21 @@ export function getFriendlyAuthError(error: unknown) {
     return 'An account already exists for that email.';
   }
 
+  if (
+    message.includes('rate limit') ||
+    message.includes('too many requests') ||
+    authError.status === 429
+  ) {
+    return 'BeerMe has sent too many confirmation emails. Please try again later.';
+  }
+
+  if (message.includes('email address not authorized') || message.includes('recipient')) {
+    return 'Email delivery is not configured for public signups yet. Please contact the BeerMe owner.';
+  }
+
+  if (message.includes('failed to fetch') || message.includes('network')) {
+    return 'We couldn’t reach BeerMe. Check your connection and try again.';
+  }
+
   return 'Something went wrong. Please try again in a moment.';
 }

@@ -143,6 +143,8 @@ Auth URL configuration in Supabase should include:
 - Redirect URL: `https://beerme.christopherbrown.ai/**`
 - Redirect URL: `http://localhost:5173/**`
 
+Production email confirmation also requires a custom SMTP provider configured under Supabase Authentication settings. Supabase’s built-in mailer is intended only for limited development use and will rate-limit or reject public recipients.
+
 Only the publishable key belongs in a browser environment. Secret and service-role keys bypass RLS and must never be exposed through `VITE_*` variables.
 
 ## Quality checks
