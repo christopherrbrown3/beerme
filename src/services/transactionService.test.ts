@@ -17,7 +17,8 @@ type TransactionFixture = {
 
 const database = vi.hoisted(() => ({
   pages: [] as TransactionFixture[][],
-  ranges: [] as Array<[number, number]>,
+  limits: [] as number[],
+  cursors: [] as string[],
   filters: [] as string[],
   from: vi.fn(),
 }));
@@ -45,7 +46,8 @@ function transaction(index: number): TransactionFixture {
 describe('transaction pagination', () => {
   beforeEach(() => {
     database.pages = [];
-    database.ranges = [];
+    database.limits = [];
+    database.cursors = [];
     database.filters = [];
     database.from.mockReset();
     database.from.mockImplementation(() => {
@@ -53,7 +55,8 @@ describe('transaction pagination', () => {
         select: vi.fn(),
         order: vi.fn(),
         eq: vi.fn(),
-        range: vi.fn(),
+        or: vi.fn(),
+        limit: vi.fn(),
       };
       builder.select.mockReturnValue(builder);
       builder.order.mockReturnValue(builder);
@@ -61,8 +64,12 @@ describe('transaction pagination', () => {
         database.filters.push(value);
         return builder;
       });
-      builder.range.mockImplementation((from: number, to: number) => {
-        database.ranges.push([from, to]);
+      builder.or.mockImplementation((cursor: string) => {
+        database.cursors.push(cursor);
+        return builder;
+      });
+      builder.limit.mockImplementation((limit: number) => {
+        database.limits.push(limit);
         return Promise.resolve({ data: database.pages.shift() ?? [], error: null });
       });
       return builder;
@@ -79,10 +86,10 @@ describe('transaction pagination', () => {
 
     expect(entries).toHaveLength(1_001);
     expect(entries.at(-1)?.id).toBe('transaction-1000');
-    expect(database.ranges).toEqual([
-      [0, 999],
-      [1_000, 1_999],
-    ]);
+    expect(database.limits).toEqual([1_000, 1_000]);
     expect(database.filters).toEqual(['group-1', 'group-1']);
+    expect(database.cursors).toEqual([
+      'created_at.lt.2026-01-01T00:16:39.000Z,and(created_at.eq.2026-01-01T00:16:39.000Z,id.lt.transaction-0999)',
+    ]);
   });
 });

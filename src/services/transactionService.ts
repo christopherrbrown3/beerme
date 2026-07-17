@@ -68,8 +68,9 @@ export async function getAllTransactions(): Promise<LedgerEntry[]> {
 
 async function queryTransactions(groupId?: string): Promise<LedgerEntry[]> {
   const rows: TransactionRow[] = [];
+  let cursor: Pick<TransactionRow, 'created_at' | 'id'> | undefined;
 
-  for (let from = 0; ; from += TRANSACTION_PAGE_SIZE) {
+  for (;;) {
     let query = getSupabaseClient()
       .from('transactions')
       .select(TRANSACTION_SELECT)
@@ -77,13 +78,19 @@ async function queryTransactions(groupId?: string): Promise<LedgerEntry[]> {
       .order('id', { ascending: false });
 
     if (groupId) query = query.eq('group_id', groupId);
+    if (cursor) {
+      query = query.or(
+        `created_at.lt.${cursor.created_at},and(created_at.eq.${cursor.created_at},id.lt.${cursor.id})`,
+      );
+    }
 
-    const { data, error } = await query.range(from, from + TRANSACTION_PAGE_SIZE - 1);
+    const { data, error } = await query.limit(TRANSACTION_PAGE_SIZE);
     if (error) throw error;
 
     const page = data as unknown as TransactionRow[];
     rows.push(...page);
     if (page.length < TRANSACTION_PAGE_SIZE) break;
+    cursor = page.at(-1);
   }
 
   return rows.map(mapTransaction);
