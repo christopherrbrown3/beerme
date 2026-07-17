@@ -2097,14 +2097,17 @@ a:active {
 }
 
 .transaction-card__meta button {
-  padding: 0;
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  padding: 0.5rem;
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
   flex: 0 0 auto;
   color: #8b3026;
-  background: transparent;
+  background: rgba(139, 48, 38, 0.06);
   border: 0;
+  border-radius: 0.7rem;
   font-size: 0.66rem;
   font-weight: 800;
   cursor: pointer;
