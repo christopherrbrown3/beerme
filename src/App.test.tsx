@@ -1,10 +1,30 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { type PropsWithChildren } from 'react';
 import { MemoryRouter } from 'react-router-dom';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { App } from './App';
 import { AppProviders } from './lib/AppProviders';
+
+const authState = vi.hoisted(() => ({
+  user: { id: 'user-1', email: 'friend@example.com' } as { id: string; email: string } | null,
+  isConfigured: true,
+}));
+
+vi.mock('./hooks/AuthProvider', () => ({
+  AuthProvider: ({ children }: PropsWithChildren) => children,
+}));
+
+vi.mock('./hooks/useAuth', () => ({
+  useAuth: () => ({
+    user: authState.user,
+    session: authState.user ? { user: authState.user } : null,
+    isLoading: false,
+    isConfigured: authState.isConfigured,
+    signOut: vi.fn(),
+  }),
+}));
 
 function renderApp(initialPath = '/') {
   return render(
@@ -17,6 +37,11 @@ function renderApp(initialPath = '/') {
 }
 
 describe('BeerMe app shell', () => {
+  beforeEach(() => {
+    authState.user = { id: 'user-1', email: 'friend@example.com' };
+    authState.isConfigured = true;
+  });
+
   it('renders the groups home as the default route', () => {
     renderApp();
 
@@ -42,5 +67,12 @@ describe('BeerMe app shell', () => {
 
     expect(screen.getByRole('heading', { name: 'Nothing’s pouring here.' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /back to groups/i })).toHaveAttribute('href', '/');
+  });
+
+  it('redirects signed-out visitors to login', () => {
+    authState.user = null;
+    renderApp('/activity');
+
+    expect(screen.getByRole('heading', { name: 'Sign in to your crew.' })).toBeInTheDocument();
   });
 });

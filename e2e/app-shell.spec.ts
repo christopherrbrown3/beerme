@@ -1,14 +1,13 @@
 import { expect, test } from '@playwright/test';
 
-test('primary navigation keeps the shell responsive and usable', async ({ page }) => {
+test('signed-out visitors can move between login and signup', async ({ page }) => {
   await page.goto('/');
 
-  await expect(page.getByRole('heading', { name: 'Good friends. Clear tabs.' })).toBeVisible();
-  await page.getByRole('link', { name: 'Activity' }).click();
-  await expect(page).toHaveURL(/\/activity$/);
-  await expect(page.getByRole('heading', { name: 'Activity' })).toBeVisible();
-  await page.getByRole('link', { name: 'Profile' }).click();
-  await expect(page.getByRole('heading', { name: 'Profile' })).toBeVisible();
+  await expect(page).toHaveURL(/\/auth\/login/);
+  await expect(page.getByRole('heading', { name: 'Sign in to your crew.' })).toBeVisible();
+  await page.getByRole('link', { name: 'Create an account' }).click();
+  await expect(page.getByRole('heading', { name: 'Create your BeerMe identity.' })).toBeVisible();
+  await expect(page.getByLabel('Username')).toHaveAttribute('maxlength', '24');
 });
 
 test('the app exposes installable PWA metadata', async ({ page, request }) => {

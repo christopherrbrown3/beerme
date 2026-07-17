@@ -4,6 +4,8 @@ coverage
 playwright-report
 test-results
 output/playwright
+supabase/.branches
+supabase/.temp
 spec.md
 supabase.txt
 *.local

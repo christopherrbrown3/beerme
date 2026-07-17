@@ -4,6 +4,31 @@ import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
+  build: {
+    rolldownOptions: {
+      output: {
+        codeSplitting: {
+          groups: [
+            {
+              name: 'supabase',
+              test: /node_modules\/@supabase\//,
+              priority: 30,
+            },
+            {
+              name: 'motion',
+              test: /node_modules\/(framer-motion|motion-dom|motion-utils)\//,
+              priority: 20,
+            },
+            {
+              name: 'react-vendor',
+              test: /node_modules\/(react|react-dom|react-router|@tanstack)\//,
+              priority: 10,
+            },
+          ],
+        },
+      },
+    },
+  },
   plugins: [
     react(),
     tailwindcss(),

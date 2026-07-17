@@ -6,7 +6,7 @@ Production target: [beerme.christopherbrown.ai](https://beerme.christopherbrown.
 
 ## Current status
 
-Milestone 1 — Project Foundation is complete.
+Milestone 2 — Authentication is complete.
 
 - React 19, strict TypeScript, and Vite
 - React Router application shell with Groups, Activity, Profile, and not-found routes
@@ -17,8 +17,14 @@ Milestone 1 — Project Foundation is complete.
 - GitHub Pages SPA fallback and deployment workflow
 - ESLint, Prettier, Vitest, Testing Library, and Playwright
 - CI checks for formatting, linting, types, unit tests, builds, and mobile/desktop browser tests
+- Supabase email/password signup, login, session persistence, and logout
+- Protected application routes with safe post-login continuation
+- Profile creation through an authenticated database trigger
+- Immutable, unique usernames and editable display names
+- Profile ownership enforced with PostgreSQL Row Level Security
+- Shared browser/database profile validation and friendly auth errors
 
-Authentication, real group data, and transaction behavior are intentionally not included yet. They belong to later milestones in [`spec.md`](./spec.md).
+Group data and transaction behavior are intentionally reserved for later milestones.
 
 ## Requirements
 
@@ -29,10 +35,42 @@ Authentication, real group data, and transaction behavior are intentionally not 
 
 ```bash
 npm install
+```
+
+Copy the local environment template and fill it with the project URL and publishable key from Supabase:
+
+```bash
+cp .env.example .env.local
 npm run dev
 ```
 
 Vite prints the local development URL, usually `http://localhost:5173`.
+
+Do not open the repository’s `index.html` directly. It is a Vite source entry point, so TypeScript and dependencies must be compiled first. To preview the same static files GitHub Pages receives:
+
+```bash
+npm run build
+npm run preview
+```
+
+The completed `dist/` directory is fully static. At runtime, the browser communicates directly with Supabase; no custom application server is required.
+
+## Supabase
+
+Database changes are versioned in `supabase/migrations/`. Apply pending migrations with the Supabase CLI:
+
+```bash
+supabase link --project-ref your-project-ref
+supabase db push
+```
+
+Configure these values under **Authentication → URL Configuration** in the Supabase dashboard:
+
+- Site URL: `https://beerme.christopherbrown.ai`
+- Redirect URL: `https://beerme.christopherbrown.ai/**`
+- Redirect URL: `http://localhost:5173/**`
+
+Only the Supabase publishable key belongs in the browser. Never expose a secret or service-role key in Vite environment variables.
 
 ## Quality checks
 
@@ -62,9 +100,7 @@ npm run preview
 
 ## Deployment
 
-Pushes to `main` build and publish `dist/` through GitHub Pages. In the repository settings, set Pages source to **GitHub Actions** and configure the custom domain as `beerme.christopherbrown.ai`. DNS and repository-level Pages settings remain external setup steps.
-
-The deployment workflow is skipped while the repository is private because the current GitHub account plan does not support Pages for private repositories. It activates automatically after the repository becomes public.
+Pushes to `main` build and publish `dist/` through GitHub Pages at `beerme.christopherbrown.ai`. The Supabase project URL and publishable key are stored as GitHub Actions repository variables and injected only during the static build.
 
 The committed `public/404.html` preserves deep links when GitHub Pages initially serves its 404 fallback. The service worker provides the offline application shell after the first successful visit.
 
@@ -74,12 +110,16 @@ Application code lives under `src/` and is organized by responsibility:
 
 - `components/` — reusable brand, layout, and UI primitives
 - `pages/` — route-level screens
-- `lib/` — shared application providers and infrastructure
+- `hooks/` — authentication context and query-backed profile state
+- `services/` — Supabase auth and profile operations
+- `lib/` — shared application providers and Supabase infrastructure
+- `types/` — generated-style database contracts
+- `utils/` — unit-tested, shared profile validation
 - `styles/` — global theme and responsive shell styles
 - `test/` — shared unit-test setup
 
-Future milestones will add the specified `hooks/`, `services/`, `utils/`, and `types/` layers when they have real responsibilities. This avoids placeholder modules while preserving the target architecture.
+The `supabase/` directory holds local CLI configuration and append-only database migrations. Browser code never receives elevated database credentials.
 
 ## Next milestone
 
-Milestone 2 — Authentication: connect Supabase, implement email/password signup and login, protect private routes, add logout, and create immutable-username user profiles with Row Level Security.
+Milestone 3 — Groups: create and join groups, enforce membership access, and replace the home empty state with the user’s real groups.

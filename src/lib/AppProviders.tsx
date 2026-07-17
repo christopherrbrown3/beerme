@@ -2,6 +2,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MotionConfig } from 'framer-motion';
 import { type PropsWithChildren, useState } from 'react';
 
+import { AuthProvider } from '../hooks/AuthProvider';
+
 export function AppProviders({ children }: PropsWithChildren) {
   const [queryClient] = useState(
     () =>
@@ -18,7 +20,9 @@ export function AppProviders({ children }: PropsWithChildren) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <MotionConfig reducedMotion="user">{children}</MotionConfig>
+      <AuthProvider>
+        <MotionConfig reducedMotion="user">{children}</MotionConfig>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
