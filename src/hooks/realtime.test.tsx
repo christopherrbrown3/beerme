@@ -83,4 +83,19 @@ describe('app Realtime hook', () => {
     unmount();
     expect(realtime.removeChannel).toHaveBeenCalledOnce();
   });
+
+  it('invalidates every profile-backed query family', () => {
+    const { unmount } = renderHook(() => useAppRealtime(), { wrapper });
+    const profile = realtime.handlers.find(({ config }) => config.table === 'profiles');
+    expect(profile).toBeDefined();
+
+    act(() => profile!.callback());
+    expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ['profile'] });
+    expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ['group'] });
+    expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ['transactions'] });
+    expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ['activity'] });
+
+    unmount();
+    expect(realtime.removeChannel).toHaveBeenCalledOnce();
+  });
 });
