@@ -1,6 +1,61 @@
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { getFriendlyAuthError } from './authService';
+import { getFriendlyAuthError, signUpWithPassword } from './authService';
+
+const authClient = vi.hoisted(() => ({
+  rpc: vi.fn(),
+  signUp: vi.fn(),
+}));
+
+vi.mock('../lib/supabase', () => ({
+  getSupabaseClient: () => ({
+    rpc: authClient.rpc,
+    auth: { signUp: authClient.signUp },
+  }),
+}));
+
+describe('signUpWithPassword', () => {
+  beforeEach(() => {
+    authClient.rpc.mockReset();
+    authClient.signUp.mockReset();
+    authClient.rpc.mockResolvedValue({ data: true, error: null });
+    authClient.signUp.mockResolvedValue({ data: { user: {}, session: null }, error: null });
+  });
+
+  it('carries a safe invite destination into the confirmation callback', async () => {
+    await signUpWithPassword({
+      email: ' friend@example.com ',
+      password: 'long-enough-password',
+      username: ' Friend_1 ',
+      displayName: ' Friendly Person ',
+      nextPath: '/join/123e4567-e89b-42d3-a456-426614174000',
+    });
+
+    expect(authClient.signUp).toHaveBeenCalledWith({
+      email: 'friend@example.com',
+      password: 'long-enough-password',
+      options: {
+        data: { username: 'friend_1', display_name: 'Friendly Person' },
+        emailRedirectTo:
+          'http://localhost:3000/auth/login?next=%2Fjoin%2F123e4567-e89b-42d3-a456-426614174000',
+      },
+    });
+  });
+
+  it('cannot embed an external confirmation destination', async () => {
+    await signUpWithPassword({
+      email: 'friend@example.com',
+      password: 'long-enough-password',
+      username: 'friend_1',
+      displayName: 'Friendly Person',
+      nextPath: '//example.com/steal',
+    });
+
+    expect(authClient.signUp.mock.calls[0]?.[0].options.emailRedirectTo).toBe(
+      'http://localhost:3000/auth/login?next=%2F',
+    );
+  });
+});
 
 describe('getFriendlyAuthError', () => {
   it('preserves local username conflicts', () => {
