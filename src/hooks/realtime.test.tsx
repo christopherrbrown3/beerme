@@ -58,12 +58,18 @@ describe('membership Realtime hooks', () => {
     return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
   }
 
-  it('refreshes dashboard summaries when membership changes', () => {
+  it('refreshes dashboard summaries when membership or transaction data changes', () => {
     const { unmount } = renderHook(() => useGroupsRealtime(), { wrapper });
     const membership = realtime.handlers.find(({ config }) => config.table === 'memberships');
+    const transaction = realtime.handlers.find(({ config }) => config.table === 'transactions');
     expect(membership).toBeDefined();
+    expect(transaction).toBeDefined();
 
     act(() => membership!.callback());
+    expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ['groups'] });
+    invalidateQueries.mockClear();
+
+    act(() => transaction!.callback());
     expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ['groups'] });
 
     unmount();

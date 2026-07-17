@@ -27,6 +27,9 @@ export function useGroupsRealtime() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'memberships' }, () => {
         void queryClient.invalidateQueries({ queryKey: ['groups'] });
       })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions' }, () => {
+        void queryClient.invalidateQueries({ queryKey: ['groups'] });
+      })
       .subscribe();
 
     return () => {
