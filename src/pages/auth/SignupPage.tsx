@@ -1,6 +1,6 @@
 import { ArrowRight, UserRoundPlus } from 'lucide-react';
 import { type FormEvent, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { FormField } from '../../components/ui/FormField';
 import { useAuth } from '../../hooks/useAuth';
@@ -11,10 +11,12 @@ import {
   validateDisplayName,
   validateUsername,
 } from '../../utils/profileValidation';
+import { getSafeNextPath } from '../../utils/redirect';
 
 export function SignupPage() {
   const { isConfigured } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
@@ -23,6 +25,8 @@ export function SignupPage() {
   const [usernameError, setUsernameError] = useState<string | null>(null);
   const [displayNameError, setDisplayNameError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const nextPath = getSafeNextPath(searchParams.get('next'));
+  const nextSearch = nextPath === '/' ? '' : `?next=${encodeURIComponent(nextPath)}`;
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -38,12 +42,21 @@ export function SignupPage() {
     setIsSubmitting(true);
 
     try {
-      const { session } = await signUpWithPassword({ email, password, username, displayName });
+      const { session } = await signUpWithPassword({
+        email,
+        password,
+        username,
+        displayName,
+        nextPath,
+      });
 
       if (session) {
-        await navigate('/', { replace: true });
+        await navigate(nextPath, { replace: true });
       } else {
-        await navigate('/auth/check-email', { replace: true, state: { email: email.trim() } });
+        await navigate(`/auth/check-email${nextSearch}`, {
+          replace: true,
+          state: { email: email.trim() },
+        });
       }
     } catch (submitError) {
       setError(getFriendlyAuthError(submitError));
@@ -137,7 +150,7 @@ export function SignupPage() {
       </form>
 
       <p className="auth-card__switch">
-        Already have an account? <Link to="/auth/login">Sign in</Link>
+        Already have an account? <Link to={`/auth/login${nextSearch}`}>Sign in</Link>
       </p>
     </section>
   );

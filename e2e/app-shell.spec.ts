@@ -31,6 +31,20 @@ test('a protected invite preserves its destination through login', async ({ page
   await expect(page.getByRole('heading', { name: 'Sign in to your crew.' })).toBeVisible();
 });
 
+test('a new invitee keeps the destination when moving to signup', async ({ page }) => {
+  const token = '123e4567-e89b-42d3-a456-426614174000';
+  await page.goto(`/join/${token}`);
+  await page.getByRole('link', { name: 'Create an account' }).click();
+
+  await expect(page).toHaveURL(/\/auth\/signup\?next=/);
+  expect(decodeURIComponent(page.url())).toContain(`/join/${token}`);
+  await expect(page.getByRole('heading', { name: 'Create your BeerMe identity.' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Sign in' })).toHaveAttribute(
+    'href',
+    `/auth/login?next=${encodeURIComponent(`/join/${token}`)}`,
+  );
+});
+
 test('an unsafe stored Pages redirect cannot prevent app startup', async ({ page }) => {
   await page.goto('/');
   await page.evaluate(() => sessionStorage.setItem('beerme:redirect', '//example.com/steal'));

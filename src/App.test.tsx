@@ -269,4 +269,10 @@ describe('BeerMe app shell', () => {
 
     expect(screen.getByRole('heading', { name: 'Sign in to your crew.' })).toBeInTheDocument();
   });
+
+  it('continues an authenticated confirmation callback to its safe destination', async () => {
+    renderApp('/auth/login?next=%2Fgroups%2Fgroup-1');
+
+    expect(await screen.findByRole('heading', { name: 'Friday Crew' })).toBeInTheDocument();
+  });
 });

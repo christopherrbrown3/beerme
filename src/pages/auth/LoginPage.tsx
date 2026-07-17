@@ -16,6 +16,8 @@ export function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const nextPath = getSafeNextPath(searchParams.get('next'));
+  const nextSearch = nextPath === '/' ? '' : `?next=${encodeURIComponent(nextPath)}`;
   const configurationMissing = Boolean(
     (location.state as { configurationMissing?: boolean } | null)?.configurationMissing,
   );
@@ -27,7 +29,7 @@ export function LoginPage() {
 
     try {
       await signInWithPassword(email, password);
-      await navigate(getSafeNextPath(searchParams.get('next')), { replace: true });
+      await navigate(nextPath, { replace: true });
     } catch (submitError) {
       setError(getFriendlyAuthError(submitError));
     } finally {
@@ -89,7 +91,7 @@ export function LoginPage() {
       </form>
 
       <p className="auth-card__switch">
-        New around here? <Link to="/auth/signup">Create an account</Link>
+        New around here? <Link to={`/auth/signup${nextSearch}`}>Create an account</Link>
       </p>
     </section>
   );

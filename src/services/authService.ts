@@ -2,12 +2,14 @@ import { type AuthError } from '@supabase/supabase-js';
 
 import { getSupabaseClient } from '../lib/supabase';
 import { normalizeDisplayName, normalizeUsername } from '../utils/profileValidation';
+import { getSafeNextPath } from '../utils/redirect';
 
 export type SignUpInput = {
   email: string;
   password: string;
   username: string;
   displayName: string;
+  nextPath?: string;
 };
 
 export async function signInWithPassword(email: string, password: string) {
@@ -20,9 +22,16 @@ export async function signInWithPassword(email: string, password: string) {
   return data;
 }
 
-export async function signUpWithPassword({ email, password, username, displayName }: SignUpInput) {
+export async function signUpWithPassword({
+  email,
+  password,
+  username,
+  displayName,
+  nextPath,
+}: SignUpInput) {
   const normalizedUsername = normalizeUsername(username);
   const normalizedDisplayName = normalizeDisplayName(displayName);
+  const safeNextPath = getSafeNextPath(nextPath ?? null);
   const supabase = getSupabaseClient();
 
   const { data: isAvailable, error: availabilityError } = await supabase.rpc(
@@ -41,7 +50,7 @@ export async function signUpWithPassword({ email, password, username, displayNam
         username: normalizedUsername,
         display_name: normalizedDisplayName,
       },
-      emailRedirectTo: `${window.location.origin}/`,
+      emailRedirectTo: `${window.location.origin}/auth/login?next=${encodeURIComponent(safeNextPath)}`,
     },
   });
 
