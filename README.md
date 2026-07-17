@@ -10,7 +10,6 @@ A fast, friendly way for groups to remember the little things they owe each othe
 [**Try BeerMe →**](https://beerme.christopherbrown.ai)
 
 [![CI](https://github.com/christopherrbrown3/beerme/actions/workflows/ci.yml/badge.svg)](https://github.com/christopherrbrown3/beerme/actions/workflows/ci.yml)
-[![Deploy](https://github.com/christopherrbrown3/beerme/actions/workflows/deploy.yml/badge.svg)](https://github.com/christopherrbrown3/beerme/actions/workflows/deploy.yml)
 
 </div>
 
