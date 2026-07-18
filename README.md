@@ -147,6 +147,11 @@ supabase/
 
 ## What comes next
 
-v0.1 establishes the full core loop. Likely next steps include social sign-in, owner-role transfer, notification preferences, richer group settings, and continued accessibility and performance work.
+v0.1 establishes the full core loop. The public
+[BeerMe Product Roadmap](https://github.com/users/christopherrbrown3/projects/1) is the source of
+truth for upcoming work across group and identity controls, security assurance, push
+notifications, platform quality, and native iOS and Android distribution. Each roadmap item is
+an implementation-ready GitHub issue with acceptance criteria, dependencies, story points, and
+release sequencing.
 
 BeerMe should always feel fast, fun, understandable, and trustworthy. If a feature makes a five-second interaction feel like accounting, it does not belong here.
