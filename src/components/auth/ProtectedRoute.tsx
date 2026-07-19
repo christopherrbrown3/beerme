@@ -9,13 +9,15 @@ export function ProtectedRoute() {
 
   if (isLoading) return <LoadingScreen label="Checking your tab…" />;
 
+  const next = `${location.pathname}${location.search}`;
+  const loginPath = `/auth/login?next=${encodeURIComponent(next)}`;
+
   if (!isConfigured) {
-    return <Navigate to="/auth/login" replace state={{ configurationMissing: true }} />;
+    return <Navigate to={loginPath} replace state={{ configurationMissing: true }} />;
   }
 
   if (!user) {
-    const next = `${location.pathname}${location.search}`;
-    return <Navigate to={`/auth/login?next=${encodeURIComponent(next)}`} replace />;
+    return <Navigate to={loginPath} replace />;
   }
 
   return <Outlet />;

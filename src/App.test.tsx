@@ -270,6 +270,19 @@ describe('BeerMe app shell', () => {
     expect(screen.getByRole('heading', { name: 'Sign in to your crew.' })).toBeInTheDocument();
   });
 
+  it('preserves a protected destination when authentication is not configured', () => {
+    authState.user = null;
+    authState.isConfigured = false;
+    const token = '123e4567-e89b-42d3-a456-426614174000';
+
+    renderApp(`/join/${token}`);
+
+    expect(screen.getByRole('link', { name: 'Create an account' })).toHaveAttribute(
+      'href',
+      `/auth/signup?next=${encodeURIComponent(`/join/${token}`)}`,
+    );
+  });
+
   it('continues an authenticated confirmation callback to its safe destination', async () => {
     renderApp('/auth/login?next=%2Fgroups%2Fgroup-1');
 
