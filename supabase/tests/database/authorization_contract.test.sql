@@ -16,7 +16,7 @@ select set_eq(
 
 select set_eq(
   $$
-    select p.proname || '(' || pg_get_function_identity_arguments(p.oid) || ')'
+    select p.proname || '(' || oidvectortypes(p.proargtypes) || ')'
     from pg_proc p
     join pg_namespace n on n.oid = p.pronamespace
     where n.nspname = 'public'
@@ -34,7 +34,7 @@ select set_eq(
 
 select set_eq(
   $$
-    select p.proname || '(' || pg_get_function_identity_arguments(p.oid) || ')'
+    select p.proname || '(' || oidvectortypes(p.proargtypes) || ')'
     from pg_proc p
     join pg_namespace n on n.oid = p.pronamespace
     where n.nspname = 'private'
@@ -123,7 +123,7 @@ select set_eq(
 
 select set_eq(
   $$
-    select p.proname || '(' || pg_get_function_identity_arguments(p.oid) || ')'
+    select p.proname || '(' || oidvectortypes(p.proargtypes) || ')'
     from pg_proc p
     join pg_namespace n on n.oid = p.pronamespace
     where n.nspname = 'public'
@@ -135,7 +135,7 @@ select set_eq(
 
 select set_eq(
   $$
-    select p.proname || '(' || pg_get_function_identity_arguments(p.oid) || ')'
+    select p.proname || '(' || oidvectortypes(p.proargtypes) || ')'
     from pg_proc p
     join pg_namespace n on n.oid = p.pronamespace
     where n.nspname = 'public'
@@ -153,7 +153,7 @@ select set_eq(
 
 select set_eq(
   $$
-    select p.proname || '(' || pg_get_function_identity_arguments(p.oid) || ')'
+    select p.proname || '(' || oidvectortypes(p.proargtypes) || ')'
     from pg_proc p
     join pg_namespace n on n.oid = p.pronamespace
     where n.nspname = 'private'
