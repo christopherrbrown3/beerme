@@ -48,6 +48,10 @@ BeerMe treats the ledger as the source of truth:
 - Owner-only operations are checked again in the database.
 - Invite QR codes are generated on the device, so invite tokens are not sent to a third-party QR service.
 
+The repository's [canonical threat model](docs/threat-model.md) documents assets, trust boundaries,
+security invariants, attacker stories, accepted risks, and the changes that require a security
+review.
+
 ## How it runs
 
 ```text
