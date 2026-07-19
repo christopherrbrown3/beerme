@@ -52,6 +52,9 @@ The repository's [canonical threat model](docs/threat-model.md) documents assets
 security invariants, attacker stories, accepted risks, and the changes that require a security
 review.
 
+The [database authorization audit](docs/database-authorization.md) inventories public objects,
+grants, RLS policies, trusted functions, triggers, and the adversarial tests that lock the contract.
+
 ## How it runs
 
 ```text
