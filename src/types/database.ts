@@ -182,6 +182,10 @@ export type Database = {
         Args: { transaction_id: string };
         Returns: Database['public']['Tables']['transactions']['Row'];
       };
+      transfer_group_ownership: {
+        Args: { target_group_id: string; target_user_id: string };
+        Returns: undefined;
+      };
     };
     Enums: {
       membership_role: 'owner' | 'member';

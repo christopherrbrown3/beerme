@@ -10,7 +10,7 @@ select set_eq(
     from information_schema.tables
     where table_schema = 'public' and table_type = 'BASE TABLE'
   $$,
-  array['groups', 'memberships', 'profiles', 'transactions'],
+  array['group_owner_transfers', 'groups', 'memberships', 'profiles', 'transactions'],
   'the public table inventory is explicit'
 );
 
@@ -27,7 +27,8 @@ select set_eq(
     'is_username_available(text)',
     'join_group(uuid)',
     'leave_group(uuid)',
-    'reverse_transaction(uuid)'
+    'reverse_transaction(uuid)',
+    'transfer_group_ownership(uuid, uuid)'
   ],
   'the public function inventory is explicit'
 );
@@ -58,7 +59,7 @@ select is(
       and c.relkind = 'r'
       and c.relrowsecurity
   ),
-  4::bigint,
+  5::bigint,
   'RLS is enabled on every public table'
 );
 
@@ -146,7 +147,8 @@ select set_eq(
     'is_username_available(text)',
     'join_group(uuid)',
     'leave_group(uuid)',
-    'reverse_transaction(uuid)'
+    'reverse_transaction(uuid)',
+    'transfer_group_ownership(uuid, uuid)'
   ],
   'authenticated can execute only intended public RPCs'
 );
@@ -174,7 +176,7 @@ select is(
     join pg_namespace n on n.oid = p.pronamespace
     where n.nspname in ('public', 'private') and p.prosecdef
   ),
-  10::bigint,
+  11::bigint,
   'the security-definer inventory is explicit'
 );
 
@@ -200,6 +202,7 @@ select set_eq(
   $$,
   array[
     'Members can add valid group transactions',
+    'Members can read group owner transfers',
     'Members can read group memberships',
     'Members can read group transactions',
     'Members can read their groups',

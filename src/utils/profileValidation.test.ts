@@ -30,10 +30,10 @@ describe('profile validation', () => {
     expect(validateDisplayName('a'.repeat(51))).toBeTruthy();
     expect(validateDisplayName('Alex Smith')).toBeNull();
   });
-
-  it('falls back to username when display name is unset', () => {
-    expect(getDisplayName(null, 'friend')).toBe('friend');
-    expect(getDisplayName('', 'friend')).toBe('friend');
+  it('falls back to username when display name is unset or blank', () => {
+    expect(getDisplayName(null, 'alex')).toBe('alex');
+    expect(getDisplayName('', 'alex')).toBe('alex');
+    expect(getDisplayName('   ', 'alex')).toBe('alex');
     expect(getDisplayName(' Friendly ', 'friend')).toBe('Friendly');
   });
 });

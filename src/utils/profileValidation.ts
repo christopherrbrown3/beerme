@@ -14,7 +14,7 @@ export function validateUsername(value: string) {
   return null;
 }
 
-export function normalizeDisplayName(value: string | null | undefined) {
+export function normalizeDisplayName(value: string | null | undefined): string | null {
   const displayName = value?.trim() ?? '';
   return displayName.length > 0 ? displayName : null;
 }

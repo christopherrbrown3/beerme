@@ -15,9 +15,11 @@ export function ActivityCard({ event }: ActivityCardProps) {
       ? RotateCcw
       : event.type === 'member_joined'
         ? UserRoundPlus
-        : event.type === 'group_created'
-          ? Group
-          : null;
+        : event.type === 'owner_transferred'
+          ? RotateCcw
+          : event.type === 'group_created'
+            ? Group
+            : null;
 
   return (
     <motion.article

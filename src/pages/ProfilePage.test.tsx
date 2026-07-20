@@ -41,13 +41,13 @@ describe('ProfilePage failure handling', () => {
       },
       isLoading: false,
       isError: false,
-    } as any);
+    } as ReturnType<typeof useProfile>);
     useUpdateDisplayNameMock.mockReturnValue({
       mutateAsync: actions.updateDisplayName,
       isPending: false,
       isSuccess: false,
       isError: false,
-    } as any);
+    } as unknown as ReturnType<typeof useUpdateDisplayName>);
   });
 
   it('contains a rejected display-name update while rendering mutation feedback', async () => {
@@ -61,13 +61,13 @@ describe('ProfilePage failure handling', () => {
       },
       isLoading: false,
       isError: false,
-    } as any);
+    } as ReturnType<typeof useProfile>);
     useUpdateDisplayNameMock.mockReturnValue({
       mutateAsync: actions.updateDisplayName,
       isPending: false,
       isSuccess: false,
       isError: true,
-    } as any);
+    } as unknown as ReturnType<typeof useUpdateDisplayName>);
     actions.updateDisplayName.mockRejectedValue(new Error('offline'));
     render(<ProfilePage />);
 
@@ -100,13 +100,13 @@ describe('ProfilePage failure handling', () => {
       },
       isLoading: false,
       isError: false,
-    } as any);
+    } as ReturnType<typeof useProfile>);
     useUpdateDisplayNameMock.mockReturnValue({
       mutateAsync: actions.updateDisplayName,
       isPending: false,
       isSuccess: false,
       isError: false,
-    } as any);
+    } as unknown as ReturnType<typeof useUpdateDisplayName>);
 
     render(<ProfilePage />);
 

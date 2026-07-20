@@ -12,6 +12,7 @@ import { GroupMembershipDialog } from '../components/groups/GroupMembershipDialo
 import { InviteGroupDialog } from '../components/groups/InviteGroupDialog';
 import { PeopleView } from '../components/groups/PeopleView';
 import { RelationshipMatrix } from '../components/groups/RelationshipMatrix';
+import { TransferOwnershipDialog } from '../components/groups/TransferOwnershipDialog';
 import { EmptyState } from '../components/ui/EmptyState';
 import { useGroupDetails, useTransactions } from '../hooks/useGroupLedger';
 import { useAuth } from '../hooks/useAuth';
@@ -33,6 +34,7 @@ export function GroupLedgerPage() {
   const [isInviting, setIsInviting] = useState(false);
   const [isEditingCurrency, setIsEditingCurrency] = useState(false);
   const [isManagingMembership, setIsManagingMembership] = useState(false);
+  const [isTransferringOwnership, setIsTransferringOwnership] = useState(false);
   if (groupQuery.isLoading) return <GroupLedgerSkeleton />;
 
   if (groupQuery.isError || !groupQuery.data) {
@@ -72,6 +74,16 @@ export function GroupLedgerPage() {
               onClick={() => setIsEditingCurrency(true)}
             >
               <Settings2 size={16} aria-hidden="true" /> Currency
+            </button>
+          )}
+          {group.role === 'owner' && (
+            <button
+              className="secondary-button"
+              type="button"
+              onClick={() => setIsTransferringOwnership(true)}
+              disabled={group.members.filter((member) => member.userId !== user!.id).length === 0}
+            >
+              <UsersRound size={16} aria-hidden="true" /> Transfer ownership
             </button>
           )}
           <button className="secondary-button" type="button" onClick={() => setIsInviting(true)}>
@@ -221,6 +233,13 @@ export function GroupLedgerPage() {
       )}
       {isManagingMembership && (
         <GroupMembershipDialog group={group} onClose={() => setIsManagingMembership(false)} />
+      )}
+      {isTransferringOwnership && (
+        <TransferOwnershipDialog
+          group={group}
+          currentUserId={user!.id}
+          onClose={() => setIsTransferringOwnership(false)}
+        />
       )}
     </div>
   );

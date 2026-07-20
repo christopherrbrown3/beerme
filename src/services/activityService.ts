@@ -31,7 +31,7 @@ type ActivityMembership = {
 
 export async function getActivity(): Promise<ActivityEvent[]> {
   const supabase = getSupabaseClient();
-  const [groups, memberships, transactions] = await Promise.all([
+  const [groups, memberships, transfers, transactions] = await Promise.all([
     fetchAllPages<ActivityGroup>(async (from, to) => {
       const { data, error } = await supabase
         .from('groups')
@@ -53,15 +53,44 @@ export async function getActivity(): Promise<ActivityEvent[]> {
         .range(from, to);
       return { data: data as unknown as ActivityMembership[], error };
     }),
+    fetchAllPages<ActivityOwnerTransfer>(async (from, to) => {
+      const { data, error } = await supabase
+        .from('group_owner_transfers')
+        .select(
+          'group_id, previous_owner_id, new_owner_id, transferred_at, previous_owner:profiles!group_owner_transfers_previous_owner_id_fkey(id, username, display_name), new_owner:profiles!group_owner_transfers_new_owner_id_fkey(id, username, display_name)',
+        )
+        .order('transferred_at', { ascending: false })
+        .order('group_id')
+        .range(from, to);
+      return { data: data as unknown as ActivityOwnerTransfer[], error };
+    }),
     getAllTransactions(),
   ]);
 
-  return buildActivityFeed(groups, memberships, transactions);
+  return buildActivityFeed(groups, memberships, transfers, transactions);
 }
+
+type ActivityOwnerTransfer = {
+  group_id: string;
+  previous_owner_id: string;
+  new_owner_id: string;
+  transferred_at: string;
+  previous_owner: {
+    id: string;
+    username: string;
+    display_name: string;
+  };
+  new_owner: {
+    id: string;
+    username: string;
+    display_name: string;
+  };
+};
 
 export function buildActivityFeed(
   groups: ActivityGroup[],
   memberships: ActivityMembership[],
+  transfers: ActivityOwnerTransfer[],
   transactions: LedgerEntry[],
 ): ActivityEvent[] {
   const groupMap = new Map(groups.map((group) => [group.id, group]));
@@ -102,6 +131,25 @@ export function buildActivityFeed(
       occurredAt: membership.joined_at,
       title: `${actor.displayName} joined ${group.name}`,
       detail: 'A new friend joined the ledger.',
+    });
+  }
+
+  for (const transfer of transfers) {
+    const group = groupMap.get(transfer.group_id);
+    if (!group) continue;
+
+    const actor = mapProfile(transfer.previous_owner);
+    const newOwner = mapProfile(transfer.new_owner);
+    events.push({
+      id: `owner-transferred:${transfer.group_id}:${transfer.transferred_at}`,
+      type: 'owner_transferred',
+      groupId: group.id,
+      groupName: group.name,
+      groupSymbol: group.currency_symbol,
+      actor,
+      occurredAt: transfer.transferred_at,
+      title: `${actor.displayName} transferred ownership to ${newOwner.displayName}`,
+      detail: `${newOwner.displayName} is now the group owner.`,
     });
   }
 

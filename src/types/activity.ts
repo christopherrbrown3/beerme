@@ -1,7 +1,11 @@
 import { type LedgerProfile } from './transactions';
 
 export type ActivityEventType =
-  'group_created' | 'member_joined' | 'transaction_created' | 'transaction_reversed';
+  | 'group_created'
+  | 'member_joined'
+  | 'owner_transferred'
+  | 'transaction_created'
+  | 'transaction_reversed';
 
 export type ActivityEvent = {
   id: string;
