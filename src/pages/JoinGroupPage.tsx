@@ -63,9 +63,9 @@ export function JoinGroupPage() {
               className="primary-button"
               type="button"
               onClick={handleJoin}
-              disabled={joinGroup.isLoading}
+              disabled={joinGroup.isPending}
             >
-              {joinGroup.isLoading ? 'Joining…' : 'Join group'}
+              {joinGroup.isPending ? 'Joining…' : 'Join group'}
             </button>
             <Link className="secondary-button" to="/">
               Back to your groups

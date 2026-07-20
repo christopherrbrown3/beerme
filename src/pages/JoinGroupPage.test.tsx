@@ -9,7 +9,7 @@ const join = {
   mutateAsync: vi.fn(),
   reset: vi.fn(),
   isError: false,
-  isLoading: false,
+  isPending: false,
 };
 
 vi.mock('../hooks/useGroups', () => ({
@@ -17,7 +17,7 @@ vi.mock('../hooks/useGroups', () => ({
     mutateAsync: join.mutateAsync,
     reset: join.reset,
     isError: join.isError,
-    isLoading: join.isLoading,
+    isPending: join.isPending,
   }),
 }));
 
@@ -26,7 +26,7 @@ describe('JoinGroupPage', () => {
     join.mutateAsync.mockReset();
     join.reset.mockReset();
     join.isError = false;
-    join.isLoading = false;
+    join.isPending = false;
   });
 
   it('does not join automatically and shows a Join group button', async () => {
