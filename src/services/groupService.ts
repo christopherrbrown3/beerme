@@ -239,3 +239,12 @@ export async function deleteGroup(groupId: string) {
   const { error } = await getSupabaseClient().rpc('delete_group', { target_group_id: groupId });
   if (error) throw error;
 }
+
+export async function transferGroupOwnership(groupId: string, targetUserId: string) {
+  const { error } = await getSupabaseClient().rpc('transfer_group_ownership', {
+    target_group_id: groupId,
+    target_user_id: targetUserId,
+  });
+
+  if (error) throw error;
+}

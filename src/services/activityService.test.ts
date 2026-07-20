@@ -44,11 +44,21 @@ const transaction: LedgerEntry = {
 };
 
 describe('buildActivityFeed', () => {
-  it('derives group, join, transaction, and reversal events newest first', () => {
-    const events = buildActivityFeed(groups, memberships, [transaction]);
+  it('derives group, join, transfer, transaction, and reversal events newest first', () => {
+    const transfer = {
+      group_id: 'group-1',
+      previous_owner_id: 'chris',
+      new_owner_id: 'alex',
+      transferred_at: '2026-07-17T12:30:00.000Z',
+      previous_owner: { id: 'chris', username: 'chris', display_name: 'Chris' },
+      new_owner: { id: 'alex', username: 'alex', display_name: 'Alex' },
+    };
+
+    const events = buildActivityFeed(groups, memberships, [transfer], [transaction]);
 
     expect(events.map((event) => event.type)).toEqual([
       'transaction_reversed',
+      'owner_transferred',
       'transaction_created',
       'member_joined',
       'group_created',
@@ -58,15 +68,19 @@ describe('buildActivityFeed', () => {
       detail: 'Alex owes Chris 2 Beers',
     });
     expect(events[1]).toMatchObject({
+      title: 'Chris transferred ownership to Alex',
+      detail: 'Alex is now the group owner.',
+    });
+    expect(events[2]).toMatchObject({
       title: 'Alex owes Chris 2 Beers',
       detail: 'Trivia night',
     });
-    expect(events[2]!.title).toBe('Alex joined Friday Crew');
-    expect(events[3]!.title).toBe('Chris created Friday Crew');
+    expect(events[3]!.title).toBe('Alex joined Friday Crew');
+    expect(events[4]!.title).toBe('Chris created Friday Crew');
   });
 
   it('skips orphaned records and owner join duplicates', () => {
-    const events = buildActivityFeed(groups, memberships, [
+    const events = buildActivityFeed(groups, memberships, [], [
       { ...transaction, groupId: 'missing-group' },
     ]);
 
