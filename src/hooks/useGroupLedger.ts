@@ -6,6 +6,7 @@ import {
   leaveGroup,
   updateGroupCurrency,
 } from '../services/groupService';
+import { getSupabaseClient } from '../lib/supabase';
 import {
   addTransaction,
   getTransactions,
@@ -165,6 +166,29 @@ export function useReverseTransaction(groupId: string) {
     onSettled: () => {
       void queryClient.invalidateQueries({ queryKey });
       void queryClient.invalidateQueries({ queryKey: ['groups'] });
+    },
+  });
+}
+
+export function useTransferGroupOwnership(groupId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (targetUserId: string) => {
+      // call backend RPC to transfer ownership if implemented
+      return (async () => {
+        const res = await (getSupabaseClient().rpc as any)('transfer_group_ownership', {
+          target_group_id: groupId,
+          target_user_id: targetUserId,
+        });
+        if (res.error) throw res.error;
+        return res.data;
+      })();
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['groups'] });
+      void queryClient.invalidateQueries({ queryKey: ['activity'] });
+      void queryClient.invalidateQueries({ queryKey: ['group'] });
     },
   });
 }

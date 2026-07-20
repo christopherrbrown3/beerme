@@ -12,7 +12,7 @@ export async function getProfile(userId: string) {
   return data;
 }
 
-export async function updateDisplayName(userId: string, displayName: string) {
+export async function updateDisplayName(userId: string, displayName: string | null | undefined) {
   const { data, error } = await getSupabaseClient()
     .from('profiles')
     .update({ display_name: normalizeDisplayName(displayName) })

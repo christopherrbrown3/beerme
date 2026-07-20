@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  getDisplayName,
   normalizeDisplayName,
   normalizeUsername,
   validateDisplayName,
@@ -25,8 +26,14 @@ describe('profile validation', () => {
 
   it('trims and validates display names', () => {
     expect(normalizeDisplayName('  Alex Smith  ')).toBe('Alex Smith');
-    expect(validateDisplayName('')).toBeTruthy();
+    expect(validateDisplayName('')).toBeNull();
     expect(validateDisplayName('a'.repeat(51))).toBeTruthy();
     expect(validateDisplayName('Alex Smith')).toBeNull();
+  });
+
+  it('falls back to username when display name is unset', () => {
+    expect(getDisplayName(null, 'friend')).toBe('friend');
+    expect(getDisplayName('', 'friend')).toBe('friend');
+    expect(getDisplayName(' Friendly ', 'friend')).toBe('Friendly');
   });
 });
