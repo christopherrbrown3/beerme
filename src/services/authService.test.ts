@@ -48,7 +48,7 @@ describe('signUpWithPassword', () => {
     });
   });
 
-  it('creates an account without a display name on the nullable profile schema', async () => {
+  it('uses the username as the display name when display name is blank', async () => {
     await signUpWithPassword({
       password: 'long-enough-password',
       username: ' Friend_1 ',
@@ -57,29 +57,6 @@ describe('signUpWithPassword', () => {
 
     expect(authClient.signUp).toHaveBeenCalledOnce();
     expect(authClient.signUp).toHaveBeenCalledWith({
-      email: 'friend_1@users.beerme.invalid',
-      password: 'long-enough-password',
-      options: {
-        data: { username: 'friend_1', display_name: null },
-      },
-    });
-  });
-
-  it('retries username-only signup for a legacy non-null profile schema', async () => {
-    authClient.signUp
-      .mockResolvedValueOnce({
-        data: { user: null, session: null },
-        error: { message: 'Database error saving new user' },
-      })
-      .mockResolvedValueOnce({ data: { user: {}, session: null }, error: null });
-
-    await signUpWithPassword({
-      password: 'long-enough-password',
-      username: ' Friend_1 ',
-    });
-
-    expect(authClient.signUp).toHaveBeenCalledTimes(2);
-    expect(authClient.signUp).toHaveBeenLastCalledWith({
       email: 'friend_1@users.beerme.invalid',
       password: 'long-enough-password',
       options: {
