@@ -1,5 +1,5 @@
 import { Link2, ShieldAlert } from 'lucide-react';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
 import { BeerMeMark } from '../components/brand/BeerMeMark';
@@ -10,31 +10,23 @@ export function JoinGroupPage() {
   const { token = '' } = useParams();
   const navigate = useNavigate();
   const joinGroup = useJoinGroup();
-  const didStart = useRef(false);
   const isInvalidToken = !isUuid(token);
 
-  const attemptJoin = useCallback(() => {
+  const handleJoin = useCallback(async () => {
     if (isInvalidToken) return;
-    didStart.current = true;
 
-    void joinGroup
-      .mutateAsync(token)
-      .then((groupId) => navigate(`/groups/${groupId}`, { replace: true }))
-      .catch(() => undefined);
+    try {
+      const groupId = await joinGroup.mutateAsync(token);
+      if (groupId) {
+        navigate(`/groups/${groupId}`, { replace: true });
+      }
+    } catch {
+      // swallow errors so the page can show the existing error state
+    }
   }, [isInvalidToken, joinGroup, navigate, token]);
-
-  useEffect(() => {
-    if (!didStart.current) attemptJoin();
-  }, [attemptJoin]);
 
   const hasJoinError = !isInvalidToken && joinGroup.isError;
   const showError = isInvalidToken || hasJoinError;
-
-  function retryJoin() {
-    joinGroup.reset();
-    didStart.current = false;
-    attemptJoin();
-  }
 
   return (
     <main className="join-page">
@@ -52,29 +44,38 @@ export function JoinGroupPage() {
             ? 'This invite won’t pour.'
             : hasJoinError
               ? 'We couldn’t join this round.'
-              : 'Joining your crew…'}
+              : 'Confirm your invite.'}
         </h1>
         <p>
           {isInvalidToken
             ? 'The link may be incomplete or no longer valid. Ask your friend for a fresh invite.'
             : hasJoinError
               ? 'The invite may be fine, but the connection didn’t finish. Try it once more.'
-              : 'We’re checking the invitation and adding you securely.'}
+              : 'Tap Join to accept this invitation and add the group to your BeerMe account.'}
         </p>
-        {isInvalidToken && (
+        {isInvalidToken ? (
           <Link className="secondary-button" to="/">
             Back to your groups
           </Link>
-        )}
-        {hasJoinError && (
+        ) : (
           <div className="join-card__actions">
-            <button className="primary-button" type="button" onClick={retryJoin}>
-              Try again
+            <button
+              className="primary-button"
+              type="button"
+              onClick={handleJoin}
+              disabled={joinGroup.isLoading}
+            >
+              {joinGroup.isLoading ? 'Joining…' : 'Join group'}
             </button>
             <Link className="secondary-button" to="/">
               Back to your groups
             </Link>
           </div>
+        )}
+        {hasJoinError && (
+          <p className="join-card__error" role="alert">
+            We couldn’t join this round. Please try again.
+          </p>
         )}
       </section>
     </main>
