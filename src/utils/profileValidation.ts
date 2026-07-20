@@ -14,16 +14,22 @@ export function validateUsername(value: string) {
   return null;
 }
 
-export function normalizeDisplayName(value: string) {
-  return value.trim();
+export function normalizeDisplayName(value: string | null | undefined): string | null {
+  const displayName = value?.trim() ?? '';
+  return displayName.length > 0 ? displayName : null;
 }
 
-export function validateDisplayName(value: string) {
+export function validateDisplayName(value: string | null | undefined) {
   const displayName = normalizeDisplayName(value);
 
-  if (displayName.length < 1 || displayName.length > 50) {
+  if (displayName === null) return null;
+  if (displayName.length > 50) {
     return 'Display name must be between 1 and 50 characters.';
   }
 
   return null;
+}
+
+export function getDisplayName(displayName: string | null | undefined, username: string) {
+  return normalizeDisplayName(displayName) ?? username;
 }
