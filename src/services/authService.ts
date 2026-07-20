@@ -43,16 +43,36 @@ export async function signUpWithPassword({ password, username, displayName }: Si
     display_name: normalizedDisplayName,
   };
 
-  const { data, error } = await supabase.auth.signUp({
+  const credentials = {
     email: getInternalAuthIdentifier(normalizedUsername),
     password,
+  };
+  let { data, error } = await supabase.auth.signUp({
+    ...credentials,
     options: {
       data: authPayload,
     },
   });
 
+  if (normalizedDisplayName === null && isProfileStorageError(error)) {
+    ({ data, error } = await supabase.auth.signUp({
+      ...credentials,
+      options: {
+        data: {
+          username: normalizedUsername,
+          display_name: normalizedUsername,
+        },
+      },
+    }));
+  }
+
   if (error) throw error;
   return data;
+}
+
+function isProfileStorageError(error: AuthError | null) {
+  const message = error?.message.toLowerCase() ?? '';
+  return message.includes('database error') && message.includes('saving new user');
 }
 
 export function getFriendlyAuthError(error: unknown) {
@@ -85,6 +105,10 @@ export function getFriendlyAuthError(error: unknown) {
 
   if (message.includes('failed to fetch') || message.includes('network')) {
     return 'We couldn’t reach BeerMe. Check your connection and try again.';
+  }
+
+  if (message.includes('database error') && message.includes('saving new user')) {
+    return 'We couldn’t finish creating your profile. Please try again in a moment.';
   }
 
   return 'Something went wrong. Please try again in a moment.';

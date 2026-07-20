@@ -72,24 +72,6 @@ export function SignupPage() {
       <form className="auth-form" onSubmit={(event) => void handleSubmit(event)}>
         <div className="form-grid">
           <FormField
-            label="Display name (optional)"
-            name="display-name"
-            type="text"
-            autoComplete="name"
-            value={displayName}
-            onChange={(event) => {
-              setDisplayName(event.target.value);
-              if (displayNameError) setDisplayNameError(validateDisplayName(event.target.value));
-            }}
-            onBlur={() => {
-              setDisplayName(normalizeDisplayName(displayName) ?? '');
-              setDisplayNameError(validateDisplayName(displayName));
-            }}
-            error={displayNameError}
-            hint="Leave blank to use your username instead."
-            maxLength={50}
-          />
-          <FormField
             label="Username"
             name="username"
             type="text"
@@ -106,6 +88,24 @@ export function SignupPage() {
             maxLength={24}
             pattern="[a-z0-9_]{3,24}"
             required
+          />
+          <FormField
+            label="Display name (optional)"
+            name="display-name"
+            type="text"
+            autoComplete="name"
+            value={displayName}
+            onChange={(event) => {
+              setDisplayName(event.target.value);
+              if (displayNameError) setDisplayNameError(validateDisplayName(event.target.value));
+            }}
+            onBlur={() => {
+              setDisplayName(normalizeDisplayName(displayName) ?? '');
+              setDisplayNameError(validateDisplayName(displayName));
+            }}
+            error={displayNameError}
+            hint="Leave blank to use your username instead."
+            maxLength={50}
           />
         </div>
         <FormField
