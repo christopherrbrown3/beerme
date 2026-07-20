@@ -48,6 +48,60 @@ describe('signUpWithPassword', () => {
     });
   });
 
+  it('creates an account without a display name on the nullable profile schema', async () => {
+    await signUpWithPassword({
+      password: 'long-enough-password',
+      username: ' Friend_1 ',
+      displayName: '   ',
+    });
+
+    expect(authClient.signUp).toHaveBeenCalledOnce();
+    expect(authClient.signUp).toHaveBeenCalledWith({
+      email: 'friend_1@users.beerme.invalid',
+      password: 'long-enough-password',
+      options: {
+        data: { username: 'friend_1', display_name: null },
+      },
+    });
+  });
+
+  it('retries username-only signup for a legacy non-null profile schema', async () => {
+    authClient.signUp
+      .mockResolvedValueOnce({
+        data: { user: null, session: null },
+        error: { message: 'Database error saving new user' },
+      })
+      .mockResolvedValueOnce({ data: { user: {}, session: null }, error: null });
+
+    await signUpWithPassword({
+      password: 'long-enough-password',
+      username: ' Friend_1 ',
+    });
+
+    expect(authClient.signUp).toHaveBeenCalledTimes(2);
+    expect(authClient.signUp).toHaveBeenLastCalledWith({
+      email: 'friend_1@users.beerme.invalid',
+      password: 'long-enough-password',
+      options: {
+        data: { username: 'friend_1', display_name: 'friend_1' },
+      },
+    });
+  });
+
+  it('does not retry unrelated signup errors', async () => {
+    const error = { message: 'Password should be at least 8 characters' };
+    authClient.signUp.mockResolvedValue({ data: { user: null, session: null }, error });
+
+    await expect(
+      signUpWithPassword({
+        password: 'short',
+        username: 'friend_1',
+      }),
+    ).rejects.toBe(error);
+
+    expect(authClient.signUp).toHaveBeenCalledOnce();
+  });
+
   it('uses the same normalized identifier for login', async () => {
     authClient.signInWithPassword.mockResolvedValue({ data: { session: {} }, error: null });
     await signInWithPassword(' FRIEND_1 ', 'long-enough-password');
@@ -88,6 +142,12 @@ describe('getFriendlyAuthError', () => {
     );
     expect(getFriendlyAuthError({ message: 'Password should be at least 8 characters' })).toBe(
       'Use a stronger password with at least 8 characters.',
+    );
+  });
+
+  it('explains profile-storage failures', () => {
+    expect(getFriendlyAuthError({ message: 'Database error saving new user' })).toBe(
+      'We couldn’t finish creating your profile. Please try again in a moment.',
     );
   });
 });

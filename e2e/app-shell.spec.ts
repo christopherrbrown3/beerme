@@ -10,6 +10,8 @@ test('signed-out visitors can move between login and signup', async ({ page }) =
   await page.getByRole('link', { name: 'Create an account' }).click();
   await expect(page.getByRole('heading', { name: 'Create your BeerMe identity.' })).toBeVisible();
   await expect(page.locator('#username')).toHaveAttribute('maxlength', '24');
+  await expect(page.locator('.form-grid input').nth(0)).toHaveAttribute('id', 'username');
+  await expect(page.locator('.form-grid input').nth(1)).toHaveAttribute('id', 'display-name');
   await expect(page.locator('input[type="email"]')).toHaveCount(0);
 });
 
