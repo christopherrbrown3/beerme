@@ -40,39 +40,19 @@ export async function signUpWithPassword({ password, username, displayName }: Si
 
   const authPayload: Record<string, string | null> = {
     username: normalizedUsername,
-    display_name: normalizedDisplayName,
+    display_name: normalizedDisplayName ?? normalizedUsername,
   };
 
-  const credentials = {
+  const { data, error } = await supabase.auth.signUp({
     email: getInternalAuthIdentifier(normalizedUsername),
     password,
-  };
-  let { data, error } = await supabase.auth.signUp({
-    ...credentials,
     options: {
       data: authPayload,
     },
   });
 
-  if (normalizedDisplayName === null && isProfileStorageError(error)) {
-    ({ data, error } = await supabase.auth.signUp({
-      ...credentials,
-      options: {
-        data: {
-          username: normalizedUsername,
-          display_name: normalizedUsername,
-        },
-      },
-    }));
-  }
-
   if (error) throw error;
   return data;
-}
-
-function isProfileStorageError(error: AuthError | null) {
-  const message = error?.message.toLowerCase() ?? '';
-  return message.includes('database error') && message.includes('saving new user');
 }
 
 export function getFriendlyAuthError(error: unknown) {
