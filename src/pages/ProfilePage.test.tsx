@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ProfilePage } from './ProfilePage';
+import { useProfile, useUpdateDisplayName } from '../hooks/useProfile';
 
 const actions = vi.hoisted(() => ({
   updateDisplayName: vi.fn(),
@@ -18,34 +19,55 @@ vi.mock('../hooks/useAuth', () => ({
 }));
 
 vi.mock('../hooks/useProfile', () => ({
-  useProfile: () => ({
-    data: {
-      id: 'user-1',
-      username: 'friend',
-      display_name: 'Friendly Tester',
-      created_at: '2026-07-17T00:00:00.000Z',
-    },
-    isLoading: false,
-    isError: false,
-  }),
-  useUpdateDisplayName: () => ({
-    mutateAsync: actions.updateDisplayName,
-    isPending: false,
-    isSuccess: false,
-    isError: actions.updateIsError,
-  }),
+  useProfile: vi.fn(),
+  useUpdateDisplayName: vi.fn(),
 }));
+
+const useProfileMock = vi.mocked(useProfile);
+const useUpdateDisplayNameMock = vi.mocked(useUpdateDisplayName);
 
 describe('ProfilePage failure handling', () => {
   beforeEach(() => {
     actions.updateDisplayName.mockReset();
     actions.signOut.mockReset();
-    actions.updateIsError = false;
+    useProfileMock.mockReset();
+    useUpdateDisplayNameMock.mockReset();
+    useProfileMock.mockReturnValue({
+      data: {
+        id: 'user-1',
+        username: 'friend',
+        display_name: 'Friendly Tester',
+        created_at: '2026-07-17T00:00:00.000Z',
+      },
+      isLoading: false,
+      isError: false,
+    } as ReturnType<typeof useProfile>);
+    useUpdateDisplayNameMock.mockReturnValue({
+      mutateAsync: actions.updateDisplayName,
+      isPending: false,
+      isSuccess: false,
+      isError: false,
+    } as unknown as ReturnType<typeof useUpdateDisplayName>);
   });
 
   it('contains a rejected display-name update while rendering mutation feedback', async () => {
     const user = userEvent.setup();
-    actions.updateIsError = true;
+    useProfileMock.mockReturnValue({
+      data: {
+        id: 'user-1',
+        username: 'friend',
+        display_name: 'Friendly Tester',
+        created_at: '2026-07-17T00:00:00.000Z',
+      },
+      isLoading: false,
+      isError: false,
+    } as ReturnType<typeof useProfile>);
+    useUpdateDisplayNameMock.mockReturnValue({
+      mutateAsync: actions.updateDisplayName,
+      isPending: false,
+      isSuccess: false,
+      isError: true,
+    } as unknown as ReturnType<typeof useUpdateDisplayName>);
     actions.updateDisplayName.mockRejectedValue(new Error('offline'));
     render(<ProfilePage />);
 
@@ -66,5 +88,28 @@ describe('ProfilePage failure handling', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent('We couldn’t sign you out.');
     expect(screen.getByRole('button', { name: 'Sign out' })).toBeEnabled();
+  });
+
+  it('falls back to username when display name is not set', () => {
+    useProfileMock.mockReturnValue({
+      data: {
+        id: 'user-1',
+        username: 'friend',
+        display_name: null,
+        created_at: '2026-07-17T00:00:00.000Z',
+      },
+      isLoading: false,
+      isError: false,
+    } as ReturnType<typeof useProfile>);
+    useUpdateDisplayNameMock.mockReturnValue({
+      mutateAsync: actions.updateDisplayName,
+      isPending: false,
+      isSuccess: false,
+      isError: false,
+    } as unknown as ReturnType<typeof useUpdateDisplayName>);
+
+    render(<ProfilePage />);
+
+    expect(screen.getByRole('heading', { name: 'friend' })).toBeInTheDocument();
   });
 });

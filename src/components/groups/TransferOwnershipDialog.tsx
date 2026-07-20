@@ -11,7 +11,11 @@ type TransferOwnershipDialogProps = {
   onClose: () => void;
 };
 
-export function TransferOwnershipDialog({ group, currentUserId, onClose }: TransferOwnershipDialogProps) {
+export function TransferOwnershipDialog({
+  group,
+  currentUserId,
+  onClose,
+}: TransferOwnershipDialogProps) {
   const transferOwnership = useTransferGroupOwnership(group.id);
   const [targetUserId, setTargetUserId] = useState('');
   const [selectionError, setSelectionError] = useState<string | null>(null);
@@ -60,7 +64,9 @@ export function TransferOwnershipDialog({ group, currentUserId, onClose }: Trans
               </option>
             ))}
           </select>
-          {selectionError && <span className="form-field__message form-field__message--error">{selectionError}</span>}
+          {selectionError && (
+            <span className="form-field__message form-field__message--error">{selectionError}</span>
+          )}
         </label>
 
         {transferOwnership.isError && (
@@ -70,10 +76,19 @@ export function TransferOwnershipDialog({ group, currentUserId, onClose }: Trans
         )}
 
         <div className="dialog-actions">
-          <button className="secondary-button" type="button" onClick={onClose} disabled={transferOwnership.isPending}>
+          <button
+            className="secondary-button"
+            type="button"
+            onClick={onClose}
+            disabled={transferOwnership.isPending}
+          >
             Cancel
           </button>
-          <button className="primary-button" type="submit" disabled={transferOwnership.isPending || candidateMembers.length === 0}>
+          <button
+            className="primary-button"
+            type="submit"
+            disabled={transferOwnership.isPending || candidateMembers.length === 0}
+          >
             <CheckCircle2 size={17} aria-hidden="true" />
             {transferOwnership.isPending ? 'Transferring…' : 'Transfer ownership'}
           </button>

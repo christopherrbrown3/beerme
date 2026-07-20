@@ -7,17 +7,17 @@ export type Database = {
         Row: {
           id: string;
           username: string;
-          display_name: string;
+          display_name: string | null;
           created_at: string;
         };
         Insert: {
           id: string;
           username: string;
-          display_name: string;
+          display_name?: string | null;
           created_at?: string;
         };
         Update: {
-          display_name?: string;
+          display_name?: string | null;
         };
         Relationships: [];
       };

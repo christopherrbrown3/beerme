@@ -8,7 +8,7 @@ const INTERNAL_AUTH_DOMAIN = 'users.beerme.invalid';
 export type SignUpInput = {
   password: string;
   username: string;
-  displayName: string;
+  displayName?: string | null;
 };
 
 export function getInternalAuthIdentifier(username: string) {
@@ -38,14 +38,16 @@ export async function signUpWithPassword({ password, username, displayName }: Si
   if (availabilityError) throw availabilityError;
   if (!isAvailable) throw new Error('That username is already taken.');
 
+  const authPayload: Record<string, string | null> = {
+    username: normalizedUsername,
+    display_name: normalizedDisplayName,
+  };
+
   const { data, error } = await supabase.auth.signUp({
     email: getInternalAuthIdentifier(normalizedUsername),
     password,
     options: {
-      data: {
-        username: normalizedUsername,
-        display_name: normalizedDisplayName,
-      },
+      data: authPayload,
     },
   });
 

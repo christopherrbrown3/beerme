@@ -9,7 +9,7 @@ test('signed-out visitors can move between login and signup', async ({ page }) =
   await expect(page.locator('input[type="email"]')).toHaveCount(0);
   await page.getByRole('link', { name: 'Create an account' }).click();
   await expect(page.getByRole('heading', { name: 'Create your BeerMe identity.' })).toBeVisible();
-  await expect(page.getByLabel('Username')).toHaveAttribute('maxlength', '24');
+  await expect(page.locator('#username')).toHaveAttribute('maxlength', '24');
   await expect(page.locator('input[type="email"]')).toHaveCount(0);
 });
 

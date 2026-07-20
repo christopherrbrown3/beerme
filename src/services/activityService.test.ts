@@ -80,9 +80,12 @@ describe('buildActivityFeed', () => {
   });
 
   it('skips orphaned records and owner join duplicates', () => {
-    const events = buildActivityFeed(groups, memberships, [], [
-      { ...transaction, groupId: 'missing-group' },
-    ]);
+    const events = buildActivityFeed(
+      groups,
+      memberships,
+      [],
+      [{ ...transaction, groupId: 'missing-group' }],
+    );
 
     expect(events).toHaveLength(2);
     expect(events.map((event) => event.type)).toEqual(['member_joined', 'group_created']);

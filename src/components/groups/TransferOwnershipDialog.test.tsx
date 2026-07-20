@@ -30,8 +30,20 @@ const group: GroupDetails = {
   role: 'owner',
   currency: { name: 'Beer', plural: 'Beers', symbol: '🍺' },
   members: [
-    { userId: 'user-1', role: 'owner', joinedAt: '2026-07-17T10:00:00.000Z', username: 'chris', displayName: 'Chris' },
-    { userId: 'user-2', role: 'member', joinedAt: '2026-07-17T11:00:00.000Z', username: 'alex', displayName: 'Alex' },
+    {
+      userId: 'user-1',
+      role: 'owner',
+      joinedAt: '2026-07-17T10:00:00.000Z',
+      username: 'chris',
+      displayName: 'Chris',
+    },
+    {
+      userId: 'user-2',
+      role: 'member',
+      joinedAt: '2026-07-17T11:00:00.000Z',
+      username: 'alex',
+      displayName: 'Alex',
+    },
   ],
 };
 

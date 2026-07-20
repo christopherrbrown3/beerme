@@ -1,4 +1,5 @@
 import { getSupabaseClient } from '../lib/supabase';
+import { getDisplayName } from '../utils/profileValidation';
 import {
   type CreateGroupInput,
   type GroupCurrency,
@@ -36,7 +37,7 @@ type GroupMembershipRow = {
   joined_at: string;
   profile: {
     username: string;
-    display_name: string;
+    display_name: string | null;
   };
 };
 
@@ -177,7 +178,7 @@ export async function getGroupDetails(groupId: string, userId: string): Promise<
       role: membership.role,
       joinedAt: membership.joined_at,
       username: membership.profile.username,
-      displayName: membership.profile.display_name,
+      displayName: getDisplayName(membership.profile.display_name, membership.profile.username),
     }))
     .sort((a, b) => {
       if (a.role !== b.role) return a.role === 'owner' ? -1 : 1;

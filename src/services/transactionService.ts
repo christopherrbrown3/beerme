@@ -1,4 +1,5 @@
 import { getSupabaseClient } from '../lib/supabase';
+import { getDisplayName } from '../utils/profileValidation';
 import { type CreateTransactionInput, type LedgerEntry } from '../types/transactions';
 import { normalizeTransactionNote } from '../utils/transactionValidation';
 
@@ -19,10 +20,10 @@ type TransactionRow = {
   note: string | null;
   created_at: string;
   reversed_at: string | null;
-  debtor: { id: string; username: string; display_name: string };
-  creditor: { id: string; username: string; display_name: string };
-  creator: { id: string; username: string; display_name: string };
-  reverser: { id: string; username: string; display_name: string } | null;
+  debtor: { id: string; username: string; display_name: string | null };
+  creditor: { id: string; username: string; display_name: string | null };
+  creator: { id: string; username: string; display_name: string | null };
+  reverser: { id: string; username: string; display_name: string | null } | null;
 };
 
 function mapTransaction(row: TransactionRow): LedgerEntry {
@@ -32,19 +33,19 @@ function mapTransaction(row: TransactionRow): LedgerEntry {
     debtor: {
       id: row.debtor.id,
       username: row.debtor.username,
-      displayName: row.debtor.display_name,
+      displayName: getDisplayName(row.debtor.display_name, row.debtor.username),
     },
     creditor: {
       id: row.creditor.id,
       username: row.creditor.username,
-      displayName: row.creditor.display_name,
+      displayName: getDisplayName(row.creditor.display_name, row.creditor.username),
     },
     quantity: Number(row.quantity),
     note: row.note,
     createdBy: {
       id: row.creator.id,
       username: row.creator.username,
-      displayName: row.creator.display_name,
+      displayName: getDisplayName(row.creator.display_name, row.creator.username),
     },
     createdAt: row.created_at,
     reversedAt: row.reversed_at,
@@ -52,7 +53,7 @@ function mapTransaction(row: TransactionRow): LedgerEntry {
       ? {
           id: row.reverser.id,
           username: row.reverser.username,
-          displayName: row.reverser.display_name,
+          displayName: getDisplayName(row.reverser.display_name, row.reverser.username),
         }
       : null,
   };
