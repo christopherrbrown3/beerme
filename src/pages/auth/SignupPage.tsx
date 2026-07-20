@@ -72,7 +72,7 @@ export function SignupPage() {
       <form className="auth-form" onSubmit={(event) => void handleSubmit(event)}>
         <div className="form-grid">
           <FormField
-            label="Display name"
+            label="Display name (optional)"
             name="display-name"
             type="text"
             autoComplete="name"
@@ -82,12 +82,12 @@ export function SignupPage() {
               if (displayNameError) setDisplayNameError(validateDisplayName(event.target.value));
             }}
             onBlur={() => {
-              setDisplayName(normalizeDisplayName(displayName));
+              setDisplayName(normalizeDisplayName(displayName) ?? '');
               setDisplayNameError(validateDisplayName(displayName));
             }}
             error={displayNameError}
+            hint="Leave blank to use your username instead."
             maxLength={50}
-            required
           />
           <FormField
             label="Username"

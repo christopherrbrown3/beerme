@@ -1,4 +1,5 @@
 import { getSupabaseClient } from '../lib/supabase';
+import { getDisplayName } from '../utils/profileValidation';
 import { type ActivityEvent } from '../types/activity';
 import { type LedgerEntry, type LedgerProfile } from '../types/transactions';
 import { formatUnitQuantity } from '../utils/unitPresentation';
@@ -15,15 +16,17 @@ type ActivityGroup = {
   currency_symbol: string;
 };
 
+type ActivityProfile = {
+  id: string;
+  username: string;
+  display_name: string | null;
+};
+
 type ActivityMembership = {
   group_id: string;
   user_id: string;
   joined_at: string;
-  profile: {
-    id: string;
-    username: string;
-    display_name: string;
-  };
+  profile: ActivityProfile;
 };
 
 export async function getActivity(): Promise<ActivityEvent[]> {
@@ -148,6 +151,6 @@ function mapProfile(profile: ActivityMembership['profile']): LedgerProfile {
   return {
     id: profile.id,
     username: profile.username,
-    displayName: profile.display_name,
+    displayName: getDisplayName(profile.display_name, profile.username),
   };
 }

@@ -5,7 +5,11 @@ import { PageIntro } from '../components/ui/PageIntro';
 import { useAuth } from '../hooks/useAuth';
 import { useProfile, useUpdateDisplayName } from '../hooks/useProfile';
 import { type Profile } from '../types/database';
-import { validateDisplayName } from '../utils/profileValidation';
+import {
+  getDisplayName,
+  normalizeDisplayName,
+  validateDisplayName,
+} from '../utils/profileValidation';
 
 export function ProfilePage() {
   const profileQuery = useProfile();
@@ -46,7 +50,7 @@ type ProfileDetailsProps = {
 function ProfileDetails({ profile }: ProfileDetailsProps) {
   const { signOut } = useAuth();
   const updateProfile = useUpdateDisplayName();
-  const [displayName, setDisplayName] = useState(profile.display_name);
+  const [displayName, setDisplayName] = useState(profile.display_name ?? '');
   const [displayNameError, setDisplayNameError] = useState<string | null>(null);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [signOutError, setSignOutError] = useState<string | null>(null);
@@ -80,11 +84,13 @@ function ProfileDetails({ profile }: ProfileDetailsProps) {
     <div className="profile-stack">
       <section className="profile-identity" aria-labelledby="profile-identity-title">
         <div className="profile-avatar" aria-hidden="true">
-          {profile.display_name.slice(0, 1).toUpperCase()}
+          {getDisplayName(profile.display_name, profile.username).slice(0, 1).toUpperCase()}
         </div>
         <div>
           <p className="eyebrow">Your identity</p>
-          <h2 id="profile-identity-title">{profile.display_name}</h2>
+          <h2 id="profile-identity-title">
+            {getDisplayName(profile.display_name, profile.username)}
+          </h2>
           <p>@{profile.username}</p>
         </div>
       </section>
@@ -96,7 +102,10 @@ function ProfileDetails({ profile }: ProfileDetailsProps) {
           </span>
           <div>
             <h2 id="profile-details-title">Profile details</h2>
-            <p>Your username is permanent, but your display name can grow with you.</p>
+            <p>
+              Your username is permanent, but your display name can grow with you. Leave it blank to
+              show your username instead.
+            </p>
           </div>
         </div>
 
@@ -111,7 +120,6 @@ function ProfileDetails({ profile }: ProfileDetailsProps) {
               aria-invalid={Boolean(displayNameError)}
               aria-describedby={displayNameError ? 'profile-display-name-error' : undefined}
               maxLength={50}
-              required
             />
             {displayNameError && (
               <span
@@ -125,7 +133,9 @@ function ProfileDetails({ profile }: ProfileDetailsProps) {
           <button
             className="primary-button profile-form__save"
             type="submit"
-            disabled={updateProfile.isPending || displayName.trim() === profile.display_name}
+            disabled={
+              updateProfile.isPending || normalizeDisplayName(displayName) === profile.display_name
+            }
           >
             <Save size={17} aria-hidden="true" />
             {updateProfile.isPending ? 'Saving…' : 'Save changes'}
