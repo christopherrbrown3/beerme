@@ -35,7 +35,7 @@ The first public release is a complete mobile-first group ledger:
 - **Activity across groups** — follow new groups, joins, transactions, and reversals in one timeline
 - **A real phone app feel** — installable PWA, offline shell, native sharing, safe-area support, and accessible motion
 
-Beer is simply the default. Transactions store numeric quantities, so changing a group’s currency relabels its ledger without changing its math.
+Beer is simply the default. Owners can choose a familiar IOU unit in one tap or define a custom one. Transactions store numeric quantities, so changing the unit relabels the ledger without changing its math.
 
 ## Designed to stay trustworthy
 

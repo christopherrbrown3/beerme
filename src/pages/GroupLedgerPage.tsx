@@ -73,7 +73,7 @@ export function GroupLedgerPage() {
               type="button"
               onClick={() => setIsEditingCurrency(true)}
             >
-              <Settings2 size={16} aria-hidden="true" /> Currency
+              <Settings2 size={16} aria-hidden="true" /> IOU unit
             </button>
           )}
           {group.role === 'owner' && (
