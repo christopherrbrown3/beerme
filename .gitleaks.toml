@@ -1,0 +1,14 @@
+title = "BeerMe secret scanning"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Documented placeholders, reserved identifiers, and the fixed UUID test fixture"
+regexTarget = "match"
+regexes = [
+  '''https://your-project\.supabase\.co''',
+  '''your-publishable-key''',
+  '''users\.beerme\.invalid''',
+  '''123e4567-e89b-42d3-a456-426614174000''',
+]
