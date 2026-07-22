@@ -45,6 +45,7 @@ select set_eq(
     'is_group_member(uuid, uuid)',
     'protect_transaction_history()',
     'shares_group_with(uuid)',
+    'shares_owner_transfer_history_with(uuid)',
     'shares_transaction_history_with(uuid)'
   ],
   'the private helper inventory is explicit'
@@ -164,6 +165,7 @@ select set_eq(
   array[
     'is_group_member(uuid, uuid)',
     'shares_group_with(uuid)',
+    'shares_owner_transfer_history_with(uuid)',
     'shares_transaction_history_with(uuid)'
   ],
   'authenticated can execute only policy helper functions in private'
@@ -176,7 +178,7 @@ select is(
     join pg_namespace n on n.oid = p.pronamespace
     where n.nspname in ('public', 'private') and p.prosecdef
   ),
-  11::bigint,
+  12::bigint,
   'the security-definer inventory is explicit'
 );
 

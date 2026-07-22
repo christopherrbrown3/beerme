@@ -90,4 +90,25 @@ describe('buildActivityFeed', () => {
     expect(events).toHaveLength(2);
     expect(events.map((event) => event.type)).toEqual(['member_joined', 'group_created']);
   });
+
+  it('skips ownership transfers whose related profiles are hidden by row-level security', () => {
+    const events = buildActivityFeed(
+      groups,
+      memberships,
+      [
+        {
+          group_id: 'group-1',
+          previous_owner_id: 'chris',
+          new_owner_id: 'alex',
+          transferred_at: '2026-07-17T12:30:00.000Z',
+          previous_owner: { id: 'chris', username: 'chris', display_name: 'Chris' },
+          new_owner: null,
+        },
+      ],
+      [transaction],
+    );
+
+    expect(events.some((event) => event.type === 'owner_transferred')).toBe(false);
+    expect(events.some((event) => event.type === 'transaction_created')).toBe(true);
+  });
 });
