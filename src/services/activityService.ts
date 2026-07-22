@@ -53,7 +53,18 @@ export async function getActivity(): Promise<ActivityEvent[]> {
         .range(from, to);
       return { data: data as unknown as ActivityMembership[], error };
     }),
-    fetchAllPages<ActivityOwnerTransfer>(async (from, to) => {
+    getOwnerTransfers(supabase),
+    getAllTransactions(),
+  ]);
+
+  return buildActivityFeed(groups, memberships, transfers, transactions);
+}
+
+async function getOwnerTransfers(
+  supabase: ReturnType<typeof getSupabaseClient>,
+): Promise<ActivityOwnerTransfer[]> {
+  try {
+    return await fetchAllPages<ActivityOwnerTransfer>(async (from, to) => {
       const { data, error } = await supabase
         .from('group_owner_transfers')
         .select(
@@ -63,11 +74,17 @@ export async function getActivity(): Promise<ActivityEvent[]> {
         .order('group_id')
         .range(from, to);
       return { data: data as unknown as ActivityOwnerTransfer[], error };
-    }),
-    getAllTransactions(),
-  ]);
+    });
+  } catch (error) {
+    if (isMissingTableError(error)) return [];
+    throw error;
+  }
+}
 
-  return buildActivityFeed(groups, memberships, transfers, transactions);
+function isMissingTableError(error: unknown): boolean {
+  return (
+    typeof error === 'object' && error !== null && 'code' in error && error.code === 'PGRST205'
+  );
 }
 
 type ActivityOwnerTransfer = {

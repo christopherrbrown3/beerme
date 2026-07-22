@@ -1,7 +1,20 @@
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { type LedgerEntry } from '../types/transactions';
-import { buildActivityFeed } from './activityService';
+import { buildActivityFeed, getActivity } from './activityService';
+
+const activityDatabase = vi.hoisted(() => ({
+  from: vi.fn(),
+  ownerTransferError: null as null | { code: string; message: string },
+}));
+
+vi.mock('../lib/supabase', () => ({
+  getSupabaseClient: () => ({ from: activityDatabase.from }),
+}));
+
+vi.mock('./transactionService', () => ({
+  getAllTransactions: vi.fn(async () => []),
+}));
 
 const groups = [
   {
@@ -110,5 +123,44 @@ describe('buildActivityFeed', () => {
 
     expect(events.some((event) => event.type === 'owner_transferred')).toBe(false);
     expect(events.some((event) => event.type === 'transaction_created')).toBe(true);
+  });
+});
+
+describe('getActivity', () => {
+  beforeEach(() => {
+    activityDatabase.ownerTransferError = null;
+    activityDatabase.from.mockReset();
+    activityDatabase.from.mockImplementation((table: string) => {
+      const builder = {
+        select: vi.fn(),
+        order: vi.fn(),
+        range: vi.fn(),
+      };
+      builder.select.mockReturnValue(builder);
+      builder.order.mockReturnValue(builder);
+      builder.range.mockResolvedValue({
+        data: [],
+        error: table === 'group_owner_transfers' ? activityDatabase.ownerTransferError : null,
+      });
+      return builder;
+    });
+  });
+
+  it('loads core activity when the optional ownership-transfer table is not deployed', async () => {
+    activityDatabase.ownerTransferError = {
+      code: 'PGRST205',
+      message: "Could not find the table 'public.group_owner_transfers' in the schema cache",
+    };
+
+    await expect(getActivity()).resolves.toEqual([]);
+  });
+
+  it('still reports unexpected ownership-transfer query failures', async () => {
+    activityDatabase.ownerTransferError = {
+      code: '42501',
+      message: 'permission denied for table group_owner_transfers',
+    };
+
+    await expect(getActivity()).rejects.toMatchObject({ code: '42501' });
   });
 });
