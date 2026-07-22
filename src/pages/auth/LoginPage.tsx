@@ -8,6 +8,8 @@ import { getFriendlyAuthError, signInWithPassword } from '../../services/authSer
 import { normalizeUsername, validateUsername } from '../../utils/profileValidation';
 import { getSafeNextPath } from '../../utils/redirect';
 
+const PASSWORD_REQUIRED_MESSAGE = 'Enter your password.';
+
 export function LoginPage() {
   const { isConfigured } = useAuth();
   const location = useLocation();
@@ -16,6 +18,7 @@ export function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [usernameError, setUsernameError] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const nextPath = getSafeNextPath(searchParams.get('next'));
@@ -27,9 +30,11 @@ export function LoginPage() {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const nextUsernameError = validateUsername(username);
+    const nextPasswordError = password ? null : PASSWORD_REQUIRED_MESSAGE;
     setUsernameError(nextUsernameError);
+    setPasswordError(nextPasswordError);
     setError(null);
-    if (nextUsernameError) return;
+    if (nextUsernameError || nextPasswordError) return;
     setIsSubmitting(true);
 
     try {
@@ -89,7 +94,13 @@ export function LoginPage() {
           type="password"
           autoComplete="current-password"
           value={password}
-          onChange={(event) => setPassword(event.target.value)}
+          onChange={(event) => {
+            setPassword(event.target.value);
+            if (passwordError) {
+              setPasswordError(event.target.value ? null : PASSWORD_REQUIRED_MESSAGE);
+            }
+          }}
+          error={passwordError}
           minLength={8}
           required
         />

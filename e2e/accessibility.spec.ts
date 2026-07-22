@@ -81,6 +81,29 @@ test('signup preserves keyboard order and exposes validation errors', async ({ p
   );
 });
 
+test('login keeps username semantics when an empty password is submitted', async ({ page }) => {
+  let authRequests = 0;
+  await page.route('**/auth/v1/token**', async (route) => {
+    authRequests += 1;
+    await route.abort();
+  });
+  await page.goto('/auth/login');
+
+  const username = page.locator('#username');
+  const password = page.locator('#password');
+  await username.fill('friend_1');
+  await page.locator('form').evaluate((form) => {
+    form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+  });
+
+  await expect(password).toHaveAttribute('aria-invalid', 'true');
+  await expect(password).toHaveAccessibleDescription('Enter your password.');
+  await expect(username).toHaveValue('friend_1');
+  await expect(page.locator('input[type="email"]')).toHaveCount(0);
+  await expect(page).toHaveURL(/\/auth\/login$/);
+  expect(authRequests).toBe(0);
+});
+
 test('reduced-motion preference collapses animation and transition durations', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/auth/signup');
