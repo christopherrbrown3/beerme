@@ -13,6 +13,15 @@ type DialogProps = PropsWithChildren<{
   onClose: () => void;
 }>;
 
+const FOCUSABLE_SELECTOR =
+  'button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), a[href]';
+
+function getFocusableElements(container: HTMLElement) {
+  return Array.from(container.querySelectorAll<HTMLElement>('*')).filter(
+    (element) => element.matches(FOCUSABLE_SELECTOR) && element.tabIndex >= 0 && !element.hidden,
+  );
+}
+
 export function Dialog({ title, description, onClose, children }: DialogProps) {
   const titleId = useId();
   const descriptionId = useId();
@@ -24,9 +33,13 @@ export function Dialog({ title, description, onClose, children }: DialogProps) {
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
 
-    const focusTarget = dialogRef.current?.querySelector<HTMLElement>(
-      '[autofocus], button, input, select, textarea, a[href]',
-    );
+    const autofocusTarget = dialogRef.current?.querySelector<HTMLElement>('[autofocus]');
+    const focusTarget =
+      autofocusTarget?.matches(FOCUSABLE_SELECTOR) && !autofocusTarget.hidden
+        ? autofocusTarget
+        : dialogRef.current
+          ? getFocusableElements(dialogRef.current)[0]
+          : undefined;
     focusTarget?.focus();
 
     function handleKeyDown(event: KeyboardEvent) {
@@ -44,11 +57,7 @@ export function Dialog({ title, description, onClose, children }: DialogProps) {
   function trapFocus(event: ReactKeyboardEvent<HTMLDivElement>) {
     if (event.key !== 'Tab') return;
 
-    const focusable = Array.from(
-      event.currentTarget.querySelectorAll<HTMLElement>(
-        'button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), a[href]',
-      ),
-    ).filter((element) => element.tabIndex >= 0 && !element.hidden);
+    const focusable = getFocusableElements(event.currentTarget);
     if (focusable.length === 0) return;
 
     const first = focusable[0]!;

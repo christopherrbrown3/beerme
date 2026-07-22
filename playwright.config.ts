@@ -25,5 +25,10 @@ export default defineConfig({
     command: 'npm run build && npm run preview -- --host 127.0.0.1 --port 4287 --strictPort',
     url: 'http://127.0.0.1:4287',
     reuseExistingServer: !process.env.CI,
+    env: {
+      VITE_SUPABASE_URL: process.env.VITE_SUPABASE_URL ?? 'https://accessibility-tests.supabase.co',
+      VITE_SUPABASE_PUBLISHABLE_KEY:
+        process.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? 'accessibility-test-key',
+    },
   },
 });

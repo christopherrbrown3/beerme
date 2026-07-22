@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
 
+import { expectNoBlockingAccessibilityViolations } from '../../test/accessibility';
 import { type GroupSummary } from '../../types/groups';
 import { GroupCard } from './GroupCard';
 
@@ -32,5 +33,11 @@ describe('GroupCard', () => {
     render(<GroupCard group={{ ...group, id: 'optimistic-1' }} />, { wrapper: MemoryRouter });
     expect(screen.queryByRole('link')).not.toBeInTheDocument();
     expect(screen.getByText('Saving…')).toBeInTheDocument();
+  });
+
+  it('has no blocking accessibility violations', async () => {
+    render(<GroupCard group={group} />, { wrapper: MemoryRouter });
+
+    await expectNoBlockingAccessibilityViolations();
   });
 });

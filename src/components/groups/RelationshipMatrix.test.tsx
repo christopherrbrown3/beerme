@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
+import { expectNoBlockingAccessibilityViolations } from '../../test/accessibility';
 import { type GroupDetails } from '../../types/groups';
 import { type LedgerEntry } from '../../types/transactions';
 import { getMatrixHeatTone } from '../../utils/matrix';
@@ -75,6 +76,19 @@ describe('RelationshipMatrix', () => {
       debtorUserId: 'sam',
       creditorUserId: 'chris',
     });
+  });
+
+  it('has no blocking accessibility violations', async () => {
+    render(
+      <RelationshipMatrix
+        group={group}
+        transactions={[ledgerEntry('alex', 'chris', 3)]}
+        currentUserId="chris"
+        onAddTransaction={vi.fn()}
+      />,
+    );
+
+    await expectNoBlockingAccessibilityViolations();
   });
 });
 
