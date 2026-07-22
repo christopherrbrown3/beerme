@@ -75,16 +75,8 @@ type ActivityOwnerTransfer = {
   previous_owner_id: string;
   new_owner_id: string;
   transferred_at: string;
-  previous_owner: {
-    id: string;
-    username: string;
-    display_name: string;
-  };
-  new_owner: {
-    id: string;
-    username: string;
-    display_name: string;
-  };
+  previous_owner: ActivityProfile | null;
+  new_owner: ActivityProfile | null;
 };
 
 export function buildActivityFeed(
@@ -136,7 +128,7 @@ export function buildActivityFeed(
 
   for (const transfer of transfers) {
     const group = groupMap.get(transfer.group_id);
-    if (!group) continue;
+    if (!group || !transfer.previous_owner || !transfer.new_owner) continue;
 
     const actor = mapProfile(transfer.previous_owner);
     const newOwner = mapProfile(transfer.new_owner);

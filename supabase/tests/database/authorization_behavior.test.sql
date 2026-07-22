@@ -15,7 +15,7 @@ exception
 end;
 $$;
 
-select plan(34);
+select plan(36);
 
 insert into auth.users (
   id, email, raw_user_meta_data
@@ -306,6 +306,53 @@ select ok(
     '42501'
   ),
   'anonymous callers cannot execute authenticated RPCs'
+);
+
+reset role;
+
+update public.groups
+set owner_id = '10000000-0000-4000-8000-000000000003'
+where id = '20000000-0000-4000-8000-000000000001';
+
+update public.memberships
+set role = 'member'
+where group_id = '20000000-0000-4000-8000-000000000001'
+  and user_id = '10000000-0000-4000-8000-000000000001';
+
+update public.memberships
+set role = 'owner'
+where group_id = '20000000-0000-4000-8000-000000000001'
+  and user_id = '10000000-0000-4000-8000-000000000003';
+
+insert into public.group_owner_transfers (
+  group_id,
+  previous_owner_id,
+  new_owner_id
+) values (
+  '20000000-0000-4000-8000-000000000001',
+  '10000000-0000-4000-8000-000000000001',
+  '10000000-0000-4000-8000-000000000003'
+);
+
+delete from public.memberships
+where group_id = '20000000-0000-4000-8000-000000000001'
+  and user_id = '10000000-0000-4000-8000-000000000001';
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true);
+
+select is(
+  (select count(*) from public.group_owner_transfers),
+  1::bigint,
+  'a previous owner retains access to their ownership-transfer history'
+);
+select ok(
+  exists (
+    select 1
+    from public.profiles
+    where id = '10000000-0000-4000-8000-000000000003'
+  ),
+  'a previous owner can identify the new owner after leaving the group'
 );
 
 reset role;
