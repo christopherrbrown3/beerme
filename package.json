@@ -18,6 +18,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
+    "accessibility:policy": "node scripts/accessibility-policy.mjs",
     "security:audit": "node scripts/security-audit.mjs"
   },
   "dependencies": {
@@ -31,6 +32,7 @@
     "react-router-dom": "^7.18.1"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.12.1",
     "@eslint/js": "^9.39.5",
     "@playwright/test": "^1.61.1",
     "@tailwindcss/vite": "^4.3.3",
@@ -43,6 +45,7 @@
     "@types/react-dom": "^19.2.0",
     "@vitejs/plugin-react": "^6.0.3",
     "@vitest/coverage-v8": "^4.1.10",
+    "axe-core": "^4.12.1",
     "eslint": "^9.39.5",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-jsx-a11y": "^6.10.2",

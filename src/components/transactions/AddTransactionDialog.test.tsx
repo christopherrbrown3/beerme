@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
+import { expectNoBlockingAccessibilityViolations } from '../../test/accessibility';
 import { type GroupDetails } from '../../types/groups';
 import { AddTransactionDialog } from './AddTransactionDialog';
 
@@ -42,6 +43,12 @@ const group: GroupDetails = {
 };
 
 describe('AddTransactionDialog accessibility', () => {
+  it('has no blocking accessibility violations', async () => {
+    render(<AddTransactionDialog group={group} onClose={vi.fn()} />);
+
+    await expectNoBlockingAccessibilityViolations();
+  });
+
   it('associates visible validation messages with each invalid control', async () => {
     const user = userEvent.setup();
     render(<AddTransactionDialog group={group} onClose={vi.fn()} />);

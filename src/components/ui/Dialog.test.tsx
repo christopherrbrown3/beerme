@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
+import { expectNoBlockingAccessibilityViolations } from '../../test/accessibility';
 import { Dialog } from './Dialog';
 
 function DialogHarness({ onClose = vi.fn() }: { onClose?: () => void }) {
@@ -40,12 +41,26 @@ describe('Dialog', () => {
     const close = screen.getByRole('button', { name: 'Close dialog' });
     await waitFor(() => expect(close).toHaveFocus());
 
+    const lastAction = screen.getByRole('button', { name: 'Last action' });
     const backwardsTab = createEvent.keyDown(close, { key: 'Tab', shiftKey: true });
     fireEvent(close, backwardsTab);
     expect(backwardsTab.defaultPrevented).toBe(true);
+    expect(lastAction).toHaveFocus();
+
+    const forwardsTab = createEvent.keyDown(lastAction, { key: 'Tab' });
+    fireEvent(lastAction, forwardsTab);
+    expect(forwardsTab.defaultPrevented).toBe(true);
+    expect(close).toHaveFocus();
 
     await user.keyboard('{Escape}');
     expect(onClose).toHaveBeenCalledOnce();
     expect(opener).toHaveFocus();
+  });
+
+  it('has no blocking accessibility violations', async () => {
+    render(<DialogHarness />);
+    await userEvent.click(screen.getByRole('button', { name: 'Open' }));
+
+    await expectNoBlockingAccessibilityViolations();
   });
 });

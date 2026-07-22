@@ -490,8 +490,8 @@ a:active {
 }
 
 .icon-button {
-  width: 2.5rem;
-  height: 2.5rem;
+  width: 2.75rem;
+  height: 2.75rem;
   display: grid;
   place-items: center;
   color: #ffd47a;
@@ -1155,8 +1155,8 @@ a:active {
   position: absolute;
   top: 1rem;
   right: 1rem;
-  width: 2.6rem;
-  height: 2.6rem;
+  width: 2.75rem;
+  height: 2.75rem;
   display: grid;
   place-items: center;
   color: var(--muted);
@@ -1485,6 +1485,7 @@ a:active {
 }
 
 .back-link {
+  min-height: 2.75rem;
   margin-bottom: 1.5rem;
   display: inline-flex;
   align-items: center;
@@ -1804,7 +1805,7 @@ a:active {
 }
 
 .person-card__actions .secondary-button {
-  min-height: 2.7rem;
+  min-height: 2.75rem;
   margin: 0;
   padding-inline: 0.55rem;
   background: rgba(255, 255, 255, 0.45);

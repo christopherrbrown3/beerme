@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { expectNoBlockingAccessibilityViolations } from '../../test/accessibility';
 import { type GroupDetails } from '../../types/groups';
 import { UNIT_PRESETS } from '../../utils/unitPresets';
 import { GroupCurrencyDialog } from './GroupCurrencyDialog';
@@ -36,6 +37,12 @@ const customGroup: GroupDetails = {
 
 describe('GroupCurrencyDialog', () => {
   beforeEach(() => updateCurrency.mutateAsync.mockClear());
+
+  it('has no blocking accessibility violations', async () => {
+    render(<GroupCurrencyDialog group={group} onClose={vi.fn()} />);
+
+    await expectNoBlockingAccessibilityViolations();
+  });
 
   it('selects the preset matching the stored unit', () => {
     render(<GroupCurrencyDialog group={group} onClose={vi.fn()} />);
