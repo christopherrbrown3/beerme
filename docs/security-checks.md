@@ -13,9 +13,24 @@ have passed.
 - **Secret scanning:** Gitleaks scans repository history. Its narrow allowlist covers only the
   documented fake Supabase placeholders, the reserved `.invalid` internal auth domain, and the
   fixed RFC 4122 example UUID used as an invite-token test fixture.
-- **Update policy:** Dependabot checks npm and pinned GitHub Actions every Monday.
+- **Update policy:** Dependabot checks npm and pinned GitHub Actions every Monday. Routine npm
+  minor/patch releases are grouped into at most one open pull request, and Actions updates are
+  grouped into at most one more. npm security updates remain enabled and are grouped separately so
+  routine maintenance cannot crowd them out. Breaking major upgrades are planned explicitly rather
+  than opened automatically.
 - **Immutable Actions:** every workflow Action is pinned to a full commit SHA. Version comments are
   maintained for Dependabot and human review.
+
+## Protected main branch
+
+The repository-side protection rule for `main` requires every change to arrive through a pull
+request whose branch is current with `main`. The `quality`, `e2e`, `database`, `security`, `codeql`,
+and `dependency-review` checks must pass, and review conversations must be resolved. The rule also
+applies to administrators and disallows force pushes and branch deletion.
+
+The approval count is intentionally zero because this is currently a single-maintainer repository;
+the pull request and automated checks remain mandatory without making the maintainer approve their
+own work. Raise the approval count when another regular reviewer is available.
 
 ## Ownership
 
