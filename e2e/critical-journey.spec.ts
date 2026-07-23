@@ -26,6 +26,7 @@ test.describe('isolated authenticated journeys', () => {
     const groupName = `E2E crew ${runId}`;
     const memberContext = await browser.newContext();
     const memberPage = await memberContext.newPage();
+    let journeyCompleted = false;
 
     try {
       await signUp(page, ownerUsername, password);
@@ -115,9 +116,12 @@ test.describe('isolated authenticated journeys', () => {
       await deleteDialog.getByRole('button', { name: 'Delete group' }).click();
       await expect(page.getByRole('heading', { name: 'Good friends. Clear tabs.' })).toBeVisible();
       await expect(page.getByRole('link', { name: new RegExp(groupName) })).toHaveCount(0);
+      journeyCompleted = true;
     } finally {
       await memberContext.close();
-      await deleteLocalTestUsers([ownerUsername, memberUsername]);
+      if (journeyCompleted) {
+        await deleteLocalTestUsers([ownerUsername, memberUsername]);
+      }
     }
   });
 });
