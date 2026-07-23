@@ -7,7 +7,7 @@ test.use({ trace: 'off' });
 
 async function signUp(page: Page, username: string, password: string) {
   await page.goto('/auth/signup');
-  await page.getByLabel('Username').fill(username);
+  await page.getByLabel('Username', { exact: true }).fill(username);
   await page.getByLabel('Password').fill(password);
   await page.getByRole('button', { name: 'Create account' }).click();
   await expect(page).toHaveURL(/\/$/);
@@ -36,7 +36,7 @@ test.describe('isolated authenticated journeys', () => {
       await page.getByRole('link', { name: 'Profile' }).click();
       await page.getByRole('button', { name: 'Sign out' }).click();
       await expect(page.getByRole('heading', { name: 'Sign in to your crew.' })).toBeVisible();
-      await page.getByLabel('Username').fill(ownerUsername);
+      await page.getByLabel('Username', { exact: true }).fill(ownerUsername);
       await page.getByLabel('Password').fill(password);
       await page.getByRole('button', { name: 'Sign in' }).click();
       await expect(page.getByRole('heading', { name: 'Good friends. Clear tabs.' })).toBeVisible();
@@ -64,7 +64,7 @@ test.describe('isolated authenticated journeys', () => {
 
       await memberPage.goto(inviteUrl);
       await memberPage.getByRole('link', { name: 'Create an account' }).click();
-      await memberPage.getByLabel('Username').fill(memberUsername);
+      await memberPage.getByLabel('Username', { exact: true }).fill(memberUsername);
       await memberPage.getByLabel('Password').fill(password);
       await memberPage.getByRole('button', { name: 'Create account' }).click();
       await expect(memberPage.getByRole('heading', { name: 'Confirm your invite.' })).toBeVisible();
