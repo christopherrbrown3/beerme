@@ -51,7 +51,9 @@ test.describe('isolated authenticated journeys', () => {
       await createDialog.getByLabel('Description Optional').fill('Synthetic browser test data');
       await createDialog.getByRole('button', { name: 'Create group' }).click();
       await page.getByRole('link', { name: new RegExp(groupName) }).click();
-      await expect(page.getByRole('heading', { name: groupName })).toBeVisible();
+      await expect(
+        page.getByRole('heading', { name: groupName, exact: true, level: 1 }),
+      ).toBeVisible();
 
       await page.getByRole('button', { name: 'IOU unit' }).click();
       const currencyDialog = page.getByRole('dialog', { name: 'Ledger unit' });
@@ -73,7 +75,9 @@ test.describe('isolated authenticated journeys', () => {
       await memberPage.getByRole('button', { name: 'Create account' }).click();
       await expect(memberPage.getByRole('heading', { name: 'Confirm your invite.' })).toBeVisible();
       await memberPage.getByRole('button', { name: 'Join group' }).click();
-      await expect(memberPage.getByRole('heading', { name: groupName })).toBeVisible();
+      await expect(
+        memberPage.getByRole('heading', { name: groupName, exact: true, level: 1 }),
+      ).toBeVisible();
 
       await page.reload();
       await expect(page.getByLabel('2 members')).toBeVisible();
@@ -81,7 +85,7 @@ test.describe('isolated authenticated journeys', () => {
       const transactionDialog = page.getByRole('dialog', { name: 'Add to the ledger' });
       await transactionDialog.getByLabel('Who owes?').selectOption({ label: memberUsername });
       await transactionDialog.getByLabel('Who is owed?').selectOption({ label: ownerUsername });
-      await transactionDialog.getByLabel('Quantity').fill('2');
+      await transactionDialog.getByRole('spinbutton', { name: 'Quantity' }).fill('2');
       await transactionDialog.getByLabel('Note Optional').fill('Synthetic coffee');
       await transactionDialog.getByRole('button', { name: 'Add transaction' }).click();
 
