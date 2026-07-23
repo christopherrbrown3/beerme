@@ -40,7 +40,7 @@ test.describe('isolated authenticated journeys', () => {
       await page.getByLabel('Password').fill(password);
       await page.getByRole('button', { name: 'Sign in' }).click();
       await expect(page).toHaveURL(/\/profile$/);
-      await expect(page.getByRole('heading', { name: 'Profile' })).toBeVisible();
+      await expect(page.getByRole('heading', { name: 'Profile', exact: true })).toBeVisible();
       await page.getByRole('link', { name: 'Groups' }).click();
       await expect(page.getByRole('heading', { name: 'Good friends. Clear tabs.' })).toBeVisible();
 
