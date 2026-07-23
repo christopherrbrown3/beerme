@@ -136,6 +136,35 @@ npm run test:e2e
 
 Install the Playwright browser once with `npx playwright install chromium`.
 
+### Browser integration tests
+
+The fast browser suite runs mobile and desktop Chromium:
+
+```bash
+npm run test:e2e
+```
+
+Authenticated critical journeys use a fresh, local Supabase stack. They are guarded to reject
+hosted project URLs, create unique synthetic users, and delete those users after each run:
+
+```bash
+npx supabase start
+npm run test:e2e:local -- --project=desktop-chromium
+```
+
+Install the complete browser matrix and run it locally with:
+
+```bash
+npx playwright install chromium firefox webkit
+npm run test:e2e:local
+```
+
+Pull requests run the Chromium suite against isolated local Supabase. The protected `main` workflow
+runs Chromium, Firefox, and WebKit before deployment. Failure artifacts retain screenshots and
+video for seven days. Signed-out tests also retain traces; traces are disabled for authenticated
+journeys so browser storage, authorization headers, passwords, and session material are not
+uploaded.
+
 ## Project map
 
 ```text

@@ -57,20 +57,25 @@ for (const route of ['/auth/login', '/auth/signup']) {
   });
 }
 
-test('signup preserves keyboard order and exposes validation errors', async ({ page }) => {
+test('signup preserves keyboard order and exposes validation errors', async ({
+  browserName,
+  page,
+}) => {
   await page.goto('/auth/signup');
 
   const username = page.locator('#username');
   const displayName = page.locator('#display-name');
   const password = page.locator('#password');
+  const moveToNextControl =
+    browserName === 'webkit' && process.platform === 'darwin' ? 'Alt+Tab' : 'Tab';
 
   await username.focus();
   await expect(username).toBeFocused();
-  await page.keyboard.press('Tab');
+  await page.keyboard.press(moveToNextControl);
   await expect(displayName).toBeFocused();
-  await page.keyboard.press('Tab');
+  await page.keyboard.press(moveToNextControl);
   await expect(password).toBeFocused();
-  await page.keyboard.press('Tab');
+  await page.keyboard.press(moveToNextControl);
   await expect(page.getByRole('button', { name: 'Create account' })).toBeFocused();
 
   await username.fill('ab');
@@ -107,15 +112,18 @@ test('login keeps username semantics when an empty password is submitted', async
 test('reduced-motion preference collapses animation and transition durations', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/auth/signup');
+  await expect(page.getByRole('heading', { name: 'Create your BeerMe identity.' })).toBeVisible();
 
   const excessiveDurations = await page.locator('body *').evaluateAll((elements) => {
     function milliseconds(duration: string) {
       return duration
         .split(',')
         .map((value) => value.trim())
-        .map((value) =>
-          value.endsWith('ms') ? Number.parseFloat(value) : Number.parseFloat(value) * 1000,
-        );
+        .map((value) => {
+          const parsed = Number.parseFloat(value);
+          if (!Number.isFinite(parsed)) return 0;
+          return value.endsWith('ms') ? parsed : parsed * 1000;
+        });
     }
 
     return elements.flatMap((element) => {
