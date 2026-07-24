@@ -22,6 +22,7 @@
     "test:e2e:local": "node scripts/run-local-e2e.mjs",
     "test:e2e:ui": "node scripts/run-local-e2e.mjs --ui",
     "accessibility:policy": "node scripts/accessibility-policy.mjs",
+    "database:deployment-policy": "node scripts/database-deployment-policy.mjs",
     "security:audit": "node scripts/security-audit.mjs"
   },
   "dependencies": {
