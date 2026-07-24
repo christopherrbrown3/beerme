@@ -15,7 +15,7 @@ exception
 end;
 $$;
 
-select plan(36);
+select plan(41);
 
 insert into auth.users (
   id, email, raw_user_meta_data
@@ -96,6 +96,59 @@ select is((select count(*) from public.groups), 1::bigint, 'owner reads only the
 select is((select count(*) from public.memberships), 3::bigint, 'owner reads current group memberships');
 select is((select count(*) from public.transactions), 2::bigint, 'owner reads current group ledger');
 select is((select count(*) from public.profiles), 3::bigint, 'owner reads only relevant profiles');
+
+savepoint transfer_ownership_rpc_test;
+
+select lives_ok(
+  $$select public.transfer_group_ownership(
+    '20000000-0000-4000-8000-000000000001',
+    '10000000-0000-4000-8000-000000000002'
+  )$$,
+  'an existing group owner can transfer ownership through the deployed RPC'
+);
+select is(
+  (
+    select owner_id
+    from public.groups
+    where id = '20000000-0000-4000-8000-000000000001'
+  ),
+  '10000000-0000-4000-8000-000000000002'::uuid,
+  'the selected member becomes the group owner'
+);
+select is(
+  (
+    select role
+    from public.memberships
+    where group_id = '20000000-0000-4000-8000-000000000001'
+      and user_id = '10000000-0000-4000-8000-000000000002'
+  ),
+  'owner'::public.membership_role,
+  'the selected member receives the enum owner role'
+);
+select is(
+  (
+    select role
+    from public.memberships
+    where group_id = '20000000-0000-4000-8000-000000000001'
+      and user_id = '10000000-0000-4000-8000-000000000001'
+  ),
+  'member'::public.membership_role,
+  'the previous owner receives the enum member role'
+);
+select is(
+  (
+    select count(*)
+    from public.group_owner_transfers
+    where group_id = '20000000-0000-4000-8000-000000000001'
+      and previous_owner_id = '10000000-0000-4000-8000-000000000001'
+      and new_owner_id = '10000000-0000-4000-8000-000000000002'
+  ),
+  1::bigint,
+  'the successful transfer records one history entry'
+);
+
+rollback to savepoint transfer_ownership_rpc_test;
+release savepoint transfer_ownership_rpc_test;
 
 select results_eq(
   $$

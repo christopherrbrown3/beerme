@@ -9,6 +9,7 @@ const transfer = vi.hoisted(() => ({
   mutateAsync: vi.fn(() => Promise.resolve()),
   isPending: false,
   isError: false,
+  error: null as unknown,
 }));
 
 vi.mock('../../hooks/useGroupLedger', () => ({
@@ -54,6 +55,9 @@ function renderDialog(props: MockDialogProps) {
 describe('TransferOwnershipDialog', () => {
   beforeEach(() => {
     transfer.mutateAsync.mockClear();
+    transfer.isPending = false;
+    transfer.isError = false;
+    transfer.error = null;
   });
 
   it('requires a new owner to be selected before transferring', async () => {
@@ -85,5 +89,30 @@ describe('TransferOwnershipDialog', () => {
 
     renderDialog({ group: ownerOnlyGroup });
     expect(screen.getByRole('button', { name: 'Transfer ownership' })).toBeDisabled();
+  });
+
+  it('shows an actionable owner-state error without blaming connectivity', () => {
+    transfer.isError = true;
+    transfer.error = new Error('Only the current group owner can transfer ownership.');
+
+    renderDialog({ group });
+
+    expect(
+      screen.getByText(
+        'You are no longer this group’s owner. Refresh the group to see its current owner.',
+      ),
+    ).toBeVisible();
+    expect(screen.queryByText(/check your connection/i)).not.toBeInTheDocument();
+  });
+
+  it('reserves connection guidance for actual network failures', () => {
+    transfer.isError = true;
+    transfer.error = new TypeError('Failed to fetch');
+
+    renderDialog({ group });
+
+    expect(
+      screen.getByText('We couldn’t reach BeerMe. Check your connection and try again.'),
+    ).toBeVisible();
   });
 });

@@ -241,6 +241,42 @@ export async function deleteGroup(groupId: string) {
   if (error) throw error;
 }
 
+function getErrorMessage(error: unknown) {
+  if (error instanceof Error) return error.message;
+  if (typeof error !== 'object' || error === null || !('message' in error)) return '';
+
+  return typeof error.message === 'string' ? error.message : '';
+}
+
+export function getFriendlyTransferOwnershipError(error: unknown) {
+  const message = getErrorMessage(error);
+
+  if (/authentication is required|jwt|session/i.test(message)) {
+    return 'Your session expired. Sign in again, then retry the transfer.';
+  }
+
+  if (/only the current group owner/i.test(message)) {
+    return 'You are no longer this group’s owner. Refresh the group to see its current owner.';
+  }
+
+  if (/target user is not a member/i.test(message)) {
+    return 'That person is no longer a group member. Refresh the group and choose another member.';
+  }
+
+  if (/cannot transfer ownership to the current owner/i.test(message)) {
+    return 'Choose a different group member as the new owner.';
+  }
+
+  if (
+    error instanceof TypeError ||
+    /failed to fetch|network(?:error| request failed)/i.test(message)
+  ) {
+    return 'We couldn’t reach BeerMe. Check your connection and try again.';
+  }
+
+  return 'BeerMe couldn’t complete the transfer. Refresh the group and try again.';
+}
+
 export async function transferGroupOwnership(groupId: string, targetUserId: string) {
   const { error } = await getSupabaseClient().rpc('transfer_group_ownership', {
     target_group_id: groupId,
