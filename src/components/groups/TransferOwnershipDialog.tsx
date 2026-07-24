@@ -2,6 +2,7 @@ import { CheckCircle2 } from 'lucide-react';
 import { type FormEvent, useState } from 'react';
 
 import { useTransferGroupOwnership } from '../../hooks/useGroupLedger';
+import { getFriendlyTransferOwnershipError } from '../../services/groupService';
 import { type GroupDetails } from '../../types/groups';
 import { Dialog } from '../ui/Dialog';
 
@@ -71,7 +72,7 @@ export function TransferOwnershipDialog({
 
         {transferOwnership.isError && (
           <div className="form-alert form-alert--error" role="alert">
-            We couldn’t transfer ownership. Check your connection and try again.
+            {getFriendlyTransferOwnershipError(transferOwnership.error)}
           </div>
         )}
 
