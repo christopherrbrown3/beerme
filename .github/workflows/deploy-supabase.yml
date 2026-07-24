@@ -1,0 +1,205 @@
+name: Deploy Supabase migrations
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: Type DEPLOY flfwhplxetsgutekcfyn
+        required: true
+        type: string
+      reason:
+        description: Why this production migration is needed
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: supabase-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    environment:
+      name: supabase-production
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_BACKUP_PASSPHRASE: ${{ secrets.SUPABASE_BACKUP_PASSPHRASE }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+      SUPABASE_PROJECT_ID: flfwhplxetsgutekcfyn
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: supabase/setup-cli@46f7f98c7f948ad727d22c1e67fab04c223a0520 # v3.0.0
+        with:
+          version: 2.109.1
+
+      - name: Validate production request and credentials
+        env:
+          DEPLOY_CONFIRMATION: ${{ inputs.confirmation }}
+          DEPLOY_REASON: ${{ inputs.reason }}
+        run: |
+          set -euo pipefail
+
+          if [[ "$DEPLOY_CONFIRMATION" != "DEPLOY $SUPABASE_PROJECT_ID" ]]; then
+            echo "Production confirmation did not match the project."
+            exit 1
+          fi
+
+          for required_name in \
+            SUPABASE_ACCESS_TOKEN \
+            SUPABASE_BACKUP_PASSPHRASE \
+            SUPABASE_DB_PASSWORD
+          do
+            if [[ -z "${!required_name:-}" ]]; then
+              echo "Missing required environment secret: $required_name"
+              exit 1
+            fi
+          done
+
+          {
+            echo "## Supabase production deployment"
+            echo
+            echo "- Project: \`$SUPABASE_PROJECT_ID\`"
+            echo "- Commit: \`$GITHUB_SHA\`"
+            echo "- Requested by: \`$GITHUB_ACTOR\`"
+            echo "- Reason: $DEPLOY_REASON"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Link production project
+        run: |
+          supabase link \
+            --project-ref "$SUPABASE_PROJECT_ID" \
+            --password "$SUPABASE_DB_PASSWORD"
+
+      - name: Record pre-deploy migration state
+        run: supabase migration list --linked --password "$SUPABASE_DB_PASSWORD"
+
+      - name: Create encrypted production snapshot
+        id: snapshot
+        run: |
+          set -euo pipefail
+          umask 077
+
+          snapshot_directory="$RUNNER_TEMP/beerme-snapshot-$GITHUB_RUN_ID"
+          plaintext_archive="$RUNNER_TEMP/beerme-snapshot-$GITHUB_RUN_ID.tar.gz"
+          encrypted_archive="$RUNNER_TEMP/beerme-snapshot-$GITHUB_RUN_ID.tar.gz.enc"
+
+          cleanup_plaintext() {
+            rm -rf "$snapshot_directory" "$plaintext_archive"
+          }
+          trap cleanup_plaintext EXIT
+
+          install -d -m 700 "$snapshot_directory"
+
+          supabase db dump \
+            --linked \
+            --password "$SUPABASE_DB_PASSWORD" \
+            --role-only \
+            --file "$snapshot_directory/roles.sql"
+          supabase db dump \
+            --linked \
+            --password "$SUPABASE_DB_PASSWORD" \
+            --file "$snapshot_directory/schema.sql"
+          supabase db dump \
+            --linked \
+            --password "$SUPABASE_DB_PASSWORD" \
+            --data-only \
+            --use-copy \
+            --exclude "storage.buckets_vectors" \
+            --exclude "storage.vector_indexes" \
+            --file "$snapshot_directory/data.sql"
+
+          test -s "$snapshot_directory/roles.sql"
+          test -s "$snapshot_directory/schema.sql"
+          test -s "$snapshot_directory/data.sql"
+
+          tar -C "$snapshot_directory" -czf "$plaintext_archive" \
+            roles.sql schema.sql data.sql
+
+          openssl enc \
+            -aes-256-cbc \
+            -pbkdf2 \
+            -iter 200000 \
+            -salt \
+            -pass env:SUPABASE_BACKUP_PASSPHRASE \
+            -in "$plaintext_archive" \
+            -out "$encrypted_archive"
+
+          test -s "$encrypted_archive"
+          snapshot_sha256="$(sha256sum "$encrypted_archive" | cut -d ' ' -f 1)"
+
+          echo "archive=$encrypted_archive" >> "$GITHUB_OUTPUT"
+          echo "sha256=$snapshot_sha256" >> "$GITHUB_OUTPUT"
+
+          {
+            echo "- Snapshot SHA-256: \`$snapshot_sha256\`"
+            echo "- Snapshot contents: roles, schema, and data"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload encrypted snapshot
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: beerme-production-snapshot-${{ github.run_id }}
+          path: ${{ steps.snapshot.outputs.archive }}
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Preview pending migrations
+        run: supabase db push --linked --password "$SUPABASE_DB_PASSWORD" --dry-run
+
+      - name: Apply migrations
+        run: supabase db push --linked --password "$SUPABASE_DB_PASSWORD" --yes
+
+      - name: Verify migration alignment
+        run: |
+          supabase migration list --linked --password "$SUPABASE_DB_PASSWORD"
+          supabase db push --linked --password "$SUPABASE_DB_PASSWORD" --dry-run
+
+      - name: Verify ownership-transfer API schema
+        env:
+          SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY }}
+          SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+        run: |
+          set -euo pipefail
+
+          if [[ -z "${SUPABASE_URL:-}" || -z "${SUPABASE_PUBLISHABLE_KEY:-}" ]]; then
+            echo "Missing browser-safe Supabase repository variables."
+            exit 1
+          fi
+
+          response_file="$RUNNER_TEMP/owner-transfer-api-response.json"
+          status="$(
+            curl --silent --show-error \
+              --output "$response_file" \
+              --write-out "%{http_code}" \
+              --header "apikey: $SUPABASE_PUBLISHABLE_KEY" \
+              "$SUPABASE_URL/rest/v1/group_owner_transfers?select=group_id&limit=1"
+          )"
+
+          if grep --quiet "PGRST205" "$response_file" || [[ "$status" == "404" ]]; then
+            echo "PostgREST still cannot resolve public.group_owner_transfers."
+            exit 1
+          fi
+
+          if [[ "$status" != "401" && "$status" != "403" ]]; then
+            echo "Expected anonymous access to be denied; received HTTP $status."
+            exit 1
+          fi
+
+          echo "- PostgREST resolves ownership history and denies anonymous access (HTTP $status)." \
+            >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Remove encrypted snapshot from runner
+        if: always()
+        env:
+          SNAPSHOT_ARCHIVE: ${{ steps.snapshot.outputs.archive }}
+        run: |
+          if [[ -n "${SNAPSHOT_ARCHIVE:-}" ]]; then
+            rm -f "$SNAPSHOT_ARCHIVE"
+          fi

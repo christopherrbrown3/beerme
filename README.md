@@ -107,9 +107,15 @@ Opening the repository’s `index.html` directly will show nothing useful becaus
 Database changes are append-only migrations under `supabase/migrations/`:
 
 ```bash
-supabase link --project-ref your-project-ref
-supabase db push
+supabase start
+supabase db reset
 ```
+
+This recreates the local database and applies every tracked migration. Use linked projects only for
+non-production development. Production migrations run through the manually approved,
+snapshot-first workflow documented in
+[Production database deployments](docs/production-database-deployments.md); do not run
+`supabase db push` against production from a local shell.
 
 BeerMe collects only a username, display name, and password. Supabase Auth requires an email-shaped login identifier internally, so BeerMe deterministically derives a non-deliverable address under the reserved `.invalid` domain. No real email address is requested, stored, or sent.
 
