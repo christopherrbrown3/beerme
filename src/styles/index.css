@@ -1430,6 +1430,34 @@ a:active {
   color: #8d3529;
 }
 
+.invite-rotation {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.invite-rotation h3,
+.invite-rotation p {
+  margin: 0;
+}
+
+.invite-rotation h3 {
+  font-size: 0.95rem;
+}
+
+.invite-rotation p {
+  color: var(--muted);
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.invite-rotation__confirm {
+  display: grid;
+  gap: 0.75rem;
+}
+
 .reverse-summary {
   margin-top: 1.25rem;
   padding: 1rem;

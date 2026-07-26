@@ -7,6 +7,7 @@ const activityDatabase = vi.hoisted(() => ({
   from: vi.fn(),
   ownerTransferError: null as null | { code: string; message: string },
   memberRemovalError: null as null | { code: string; message: string },
+  inviteRotationError: null as null | { code: string; message: string },
 }));
 
 vi.mock('../lib/supabase', () => ({
@@ -58,7 +59,7 @@ const transaction: LedgerEntry = {
 };
 
 describe('buildActivityFeed', () => {
-  it('derives group, join, transfer, transaction, and reversal events newest first', () => {
+  it('derives group, invite, join, transfer, transaction, and reversal events newest first', () => {
     const transfer = {
       group_id: 'group-1',
       previous_owner_id: 'chris',
@@ -76,12 +77,27 @@ describe('buildActivityFeed', () => {
       removed_user: { id: 'alex', username: 'alex', display_name: 'Alex' },
       remover: { id: 'chris', username: 'chris', display_name: 'Chris' },
     };
+    const rotation = {
+      id: 'rotation-1',
+      group_id: 'group-1',
+      rotated_by: 'chris',
+      rotated_at: '2026-07-17T12:40:00.000Z',
+      rotator: { id: 'chris', username: 'chris', display_name: 'Chris' },
+    };
 
-    const events = buildActivityFeed(groups, memberships, [transfer], [transaction], [removal]);
+    const events = buildActivityFeed(
+      groups,
+      memberships,
+      [transfer],
+      [transaction],
+      [removal],
+      [rotation],
+    );
 
     expect(events.map((event) => event.type)).toEqual([
       'transaction_reversed',
       'member_removed',
+      'invite_rotated',
       'owner_transferred',
       'transaction_created',
       'member_joined',
@@ -96,15 +112,19 @@ describe('buildActivityFeed', () => {
       detail: 'Alex no longer has access to the group.',
     });
     expect(events[2]).toMatchObject({
+      title: 'Chris rotated the invite link for Friday Crew',
+      detail: 'The previous invite link no longer works.',
+    });
+    expect(events[3]).toMatchObject({
       title: 'Chris transferred ownership to Alex',
       detail: 'Alex is now the group owner.',
     });
-    expect(events[3]).toMatchObject({
+    expect(events[4]).toMatchObject({
       title: 'Alex owes Chris 2 Beers',
       detail: 'Trivia night',
     });
-    expect(events[4]!.title).toBe('Alex joined Friday Crew');
-    expect(events[5]!.title).toBe('Chris created Friday Crew');
+    expect(events[5]!.title).toBe('Alex joined Friday Crew');
+    expect(events[6]!.title).toBe('Chris created Friday Crew');
   });
 
   it('skips orphaned records and owner join duplicates', () => {
@@ -145,6 +165,7 @@ describe('getActivity', () => {
   beforeEach(() => {
     activityDatabase.ownerTransferError = null;
     activityDatabase.memberRemovalError = null;
+    activityDatabase.inviteRotationError = null;
     activityDatabase.from.mockReset();
     activityDatabase.from.mockImplementation((table: string) => {
       const builder = {
@@ -161,7 +182,9 @@ describe('getActivity', () => {
             ? activityDatabase.ownerTransferError
             : table === 'group_member_removals'
               ? activityDatabase.memberRemovalError
-              : null,
+              : table === 'group_invite_rotations'
+                ? activityDatabase.inviteRotationError
+                : null,
       });
       return builder;
     });
@@ -198,6 +221,24 @@ describe('getActivity', () => {
     activityDatabase.memberRemovalError = {
       code: '42501',
       message: 'permission denied for table group_member_removals',
+    };
+
+    await expect(getActivity()).rejects.toMatchObject({ code: '42501' });
+  });
+
+  it('loads core activity when the optional invite-rotation table is not deployed', async () => {
+    activityDatabase.inviteRotationError = {
+      code: 'PGRST205',
+      message: "Could not find the table 'public.group_invite_rotations' in the schema cache",
+    };
+
+    await expect(getActivity()).resolves.toEqual([]);
+  });
+
+  it('still reports unexpected invite-rotation query failures', async () => {
+    activityDatabase.inviteRotationError = {
+      code: '42501',
+      message: 'permission denied for table group_invite_rotations',
     };
 
     await expect(getActivity()).rejects.toMatchObject({ code: '42501' });

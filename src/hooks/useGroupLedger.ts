@@ -5,6 +5,7 @@ import {
   getGroupDetails,
   leaveGroup,
   removeGroupMember,
+  rotateGroupInvite,
   transferGroupOwnership,
   updateGroupCurrency,
 } from '../services/groupService';
@@ -98,6 +99,20 @@ export function useRemoveGroupMember(groupId: string) {
         queryClient.invalidateQueries({ queryKey: ['groups'] }),
         queryClient.invalidateQueries({ queryKey: ['activity'] }),
       ]);
+    },
+  });
+}
+
+export function useRotateGroupInvite(groupId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () => rotateGroupInvite(groupId),
+    onSuccess: async (inviteToken) => {
+      queryClient.setQueryData<GroupDetails>(groupQueryKey(groupId), (group) =>
+        group ? { ...group, inviteToken } : group,
+      );
+      await queryClient.invalidateQueries({ queryKey: ['activity'] });
     },
   });
 }

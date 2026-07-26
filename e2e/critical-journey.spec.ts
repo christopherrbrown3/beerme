@@ -65,14 +65,25 @@ test.describe('isolated authenticated journeys', () => {
       const inviteDialog = page.getByRole('dialog', {
         name: `Invite friends to ${groupName}`,
       });
+      const oldInviteUrl = await inviteDialog.getByLabel('Invite link').inputValue();
+      await inviteDialog.getByRole('button', { name: 'Rotate invite' }).click();
+      await inviteDialog.getByRole('button', { name: 'Rotate link' }).click();
       const inviteUrl = await inviteDialog.getByLabel('Invite link').inputValue();
+      expect(inviteUrl).not.toBe(oldInviteUrl);
       await inviteDialog.getByRole('button', { name: 'Close dialog' }).click();
 
-      await memberPage.goto(inviteUrl);
+      await memberPage.goto(oldInviteUrl);
       await memberPage.getByRole('link', { name: 'Create an account' }).click();
       await memberPage.locator('#username').fill(memberUsername);
       await memberPage.getByLabel('Password').fill(password);
       await memberPage.getByRole('button', { name: 'Create account' }).click();
+      await expect(memberPage.getByRole('heading', { name: 'Confirm your invite.' })).toBeVisible();
+      await memberPage.getByRole('button', { name: 'Join group' }).click();
+      await expect(
+        memberPage.getByRole('heading', { name: 'This invite won’t pour.' }),
+      ).toBeVisible();
+
+      await memberPage.goto(inviteUrl);
       await expect(memberPage.getByRole('heading', { name: 'Confirm your invite.' })).toBeVisible();
       await memberPage.getByRole('button', { name: 'Join group' }).click();
       await expect(
@@ -120,6 +131,9 @@ test.describe('isolated authenticated journeys', () => {
       ).toBeVisible();
 
       await page.getByRole('link', { name: 'Activity' }).click();
+      await expect(
+        page.getByText(`${ownerUsername} rotated the invite link for ${groupName}`),
+      ).toBeVisible();
       await expect(
         page.getByText(`${ownerUsername} removed ${memberUsername} from ${groupName}`),
       ).toBeVisible();

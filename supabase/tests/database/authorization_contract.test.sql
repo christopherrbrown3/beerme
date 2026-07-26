@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(22);
+select plan(23);
 
 select set_eq(
   $$
@@ -13,6 +13,7 @@ select set_eq(
   array[
     'group_member_removals',
     'group_owner_transfers',
+    'group_invite_rotations',
     'groups',
     'memberships',
     'profiles',
@@ -30,12 +31,14 @@ select set_eq(
   $$,
   array[
     'delete_group(uuid)',
+    'get_group_invite_token(uuid)',
     'handle_new_user()',
     'is_username_available(text)',
     'join_group(uuid)',
     'leave_group(uuid)',
     'remove_group_member(uuid, uuid)',
     'reverse_transaction(uuid)',
+    'rotate_group_invite(uuid)',
     'transfer_group_ownership(uuid, uuid)'
   ],
   'the public function inventory is explicit'
@@ -53,6 +56,7 @@ select set_eq(
     'is_group_member(uuid, uuid)',
     'protect_transaction_history()',
     'shares_group_with(uuid)',
+    'shares_invite_rotation_history_with(uuid)',
     'shares_member_removal_history_with(uuid)',
     'shares_owner_transfer_history_with(uuid)',
     'shares_transaction_history_with(uuid)'
@@ -69,7 +73,7 @@ select is(
       and c.relkind = 'r'
       and c.relrowsecurity
   ),
-  6::bigint,
+  7::bigint,
   'RLS is enabled on every public table'
 );
 
@@ -98,8 +102,21 @@ select ok(
     and not has_table_privilege('authenticated', 'public.memberships', 'UPDATE')
     and not has_table_privilege('authenticated', 'public.group_member_removals', 'INSERT')
     and not has_table_privilege('authenticated', 'public.group_member_removals', 'UPDATE')
+    and not has_table_privilege('authenticated', 'public.group_invite_rotations', 'INSERT')
+    and not has_table_privilege('authenticated', 'public.group_invite_rotations', 'UPDATE')
     and not has_table_privilege('authenticated', 'public.profiles', 'INSERT'),
   'membership, removal history, and profile creation are not directly client-writable'
+);
+
+select ok(
+  not exists (
+    select 1
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'groups'
+      and column_name = 'invite_token'
+  ),
+  'invite tokens are not stored on public group rows'
 );
 
 select ok(
@@ -156,11 +173,13 @@ select set_eq(
   $$,
   array[
     'delete_group(uuid)',
+    'get_group_invite_token(uuid)',
     'is_username_available(text)',
     'join_group(uuid)',
     'leave_group(uuid)',
     'remove_group_member(uuid, uuid)',
     'reverse_transaction(uuid)',
+    'rotate_group_invite(uuid)',
     'transfer_group_ownership(uuid, uuid)'
   ],
   'authenticated can execute only intended public RPCs'
@@ -177,6 +196,7 @@ select set_eq(
   array[
     'is_group_member(uuid, uuid)',
     'shares_group_with(uuid)',
+    'shares_invite_rotation_history_with(uuid)',
     'shares_member_removal_history_with(uuid)',
     'shares_owner_transfer_history_with(uuid)',
     'shares_transaction_history_with(uuid)'
@@ -191,7 +211,7 @@ select is(
     join pg_namespace n on n.oid = p.pronamespace
     where n.nspname in ('public', 'private') and p.prosecdef
   ),
-  14::bigint,
+  17::bigint,
   'the security-definer inventory is explicit'
 );
 
@@ -219,6 +239,7 @@ select set_eq(
     'Members can add valid group transactions',
     'Members can read group member removals',
     'Members can read group owner transfers',
+    'Members can read group invite rotations',
     'Members can read group memberships',
     'Members can read group transactions',
     'Members can read their groups',
