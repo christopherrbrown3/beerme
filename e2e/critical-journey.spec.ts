@@ -68,8 +68,9 @@ test.describe('isolated authenticated journeys', () => {
       const oldInviteUrl = await inviteDialog.getByLabel('Invite link').inputValue();
       await inviteDialog.getByRole('button', { name: 'Rotate invite' }).click();
       await inviteDialog.getByRole('button', { name: 'Rotate link' }).click();
-      const inviteUrl = await inviteDialog.getByLabel('Invite link').inputValue();
-      expect(inviteUrl).not.toBe(oldInviteUrl);
+      const inviteLink = inviteDialog.getByLabel('Invite link');
+      await expect(inviteLink).not.toHaveValue(oldInviteUrl);
+      const inviteUrl = await inviteLink.inputValue();
       await inviteDialog.getByRole('button', { name: 'Close dialog' }).click();
 
       await memberPage.goto(oldInviteUrl);
