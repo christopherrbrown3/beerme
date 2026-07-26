@@ -75,6 +75,7 @@ test.describe('isolated authenticated journeys', () => {
 
       await memberPage.goto(oldInviteUrl);
       await memberPage.getByRole('link', { name: 'Create an account' }).click();
+      await expect(memberPage).toHaveURL(/\/auth\/signup\?next=/);
       await memberPage.locator('#username').fill(memberUsername);
       await memberPage.getByLabel('Password').fill(password);
       await memberPage.getByRole('button', { name: 'Create account' }).click();
