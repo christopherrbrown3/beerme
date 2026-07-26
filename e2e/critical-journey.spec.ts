@@ -81,7 +81,7 @@ test.describe('isolated authenticated journeys', () => {
       await expect(memberPage.getByRole('heading', { name: 'Confirm your invite.' })).toBeVisible();
       await memberPage.getByRole('button', { name: 'Join group' }).click();
       await expect(
-        memberPage.getByRole('heading', { name: 'This invite won’t pour.' }),
+        memberPage.getByRole('heading', { name: 'We couldn’t join this round.' }),
       ).toBeVisible();
 
       await memberPage.goto(inviteUrl);
