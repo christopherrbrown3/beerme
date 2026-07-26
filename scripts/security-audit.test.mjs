@@ -83,7 +83,18 @@ describe('npm audit finding policy', () => {
       ]),
     );
 
-    const exceptions = [exception(), exception({ id: 'SEC-2026-002', finding: 'transitive' })];
-    expect(getUnexceptedFindings(getBlockingFindings(report), exceptions)).toEqual([]);
+    expect(getUnexceptedFindings(getBlockingFindings(report), [exception()])).toEqual([]);
+  });
+
+  it('follows transitive package causes to the root advisory', () => {
+    const blockingFindings = getBlockingFindings(report);
+    const aliases = findingAliases(
+      'transitive',
+      report.vulnerabilities.transitive,
+      new Map(blockingFindings),
+    );
+
+    expect(aliases).toContain('GHSA-abcd-1234-5678');
+    expect(aliases).toContain('123456');
   });
 });

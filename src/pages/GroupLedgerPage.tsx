@@ -12,11 +12,12 @@ import { GroupMembershipDialog } from '../components/groups/GroupMembershipDialo
 import { InviteGroupDialog } from '../components/groups/InviteGroupDialog';
 import { PeopleView } from '../components/groups/PeopleView';
 import { RelationshipMatrix } from '../components/groups/RelationshipMatrix';
+import { RemoveMemberDialog } from '../components/groups/RemoveMemberDialog';
 import { TransferOwnershipDialog } from '../components/groups/TransferOwnershipDialog';
 import { EmptyState } from '../components/ui/EmptyState';
 import { useGroupDetails, useTransactions } from '../hooks/useGroupLedger';
 import { useAuth } from '../hooks/useAuth';
-import { type GroupDetails } from '../types/groups';
+import { type GroupDetails, type GroupMember } from '../types/groups';
 import { type LedgerEntry, type TransactionParties } from '../types/transactions';
 
 type GroupView = 'people' | 'matrix' | 'history';
@@ -35,6 +36,7 @@ export function GroupLedgerPage() {
   const [isEditingCurrency, setIsEditingCurrency] = useState(false);
   const [isManagingMembership, setIsManagingMembership] = useState(false);
   const [isTransferringOwnership, setIsTransferringOwnership] = useState(false);
+  const [removingMember, setRemovingMember] = useState<GroupMember | null>(null);
   if (groupQuery.isLoading) return <GroupLedgerSkeleton />;
 
   if (groupQuery.isError || !groupQuery.data) {
@@ -165,6 +167,7 @@ export function GroupLedgerPage() {
           transactions={transactions}
           currentUserId={user!.id}
           onAddTransaction={setTransactionDialog}
+          onRemoveMember={setRemovingMember}
         />
       )}
 
@@ -239,6 +242,13 @@ export function GroupLedgerPage() {
           group={group}
           currentUserId={user!.id}
           onClose={() => setIsTransferringOwnership(false)}
+        />
+      )}
+      {removingMember && (
+        <RemoveMemberDialog
+          group={group}
+          member={removingMember}
+          onClose={() => setRemovingMember(null)}
         />
       )}
     </div>

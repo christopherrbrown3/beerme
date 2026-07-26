@@ -6,6 +6,7 @@ import { buildActivityFeed, getActivity } from './activityService';
 const activityDatabase = vi.hoisted(() => ({
   from: vi.fn(),
   ownerTransferError: null as null | { code: string; message: string },
+  memberRemovalError: null as null | { code: string; message: string },
 }));
 
 vi.mock('../lib/supabase', () => ({
@@ -66,11 +67,21 @@ describe('buildActivityFeed', () => {
       previous_owner: { id: 'chris', username: 'chris', display_name: 'Chris' },
       new_owner: { id: 'alex', username: 'alex', display_name: 'Alex' },
     };
+    const removal = {
+      id: 'removal-1',
+      group_id: 'group-1',
+      removed_user_id: 'alex',
+      removed_by: 'chris',
+      removed_at: '2026-07-17T12:45:00.000Z',
+      removed_user: { id: 'alex', username: 'alex', display_name: 'Alex' },
+      remover: { id: 'chris', username: 'chris', display_name: 'Chris' },
+    };
 
-    const events = buildActivityFeed(groups, memberships, [transfer], [transaction]);
+    const events = buildActivityFeed(groups, memberships, [transfer], [transaction], [removal]);
 
     expect(events.map((event) => event.type)).toEqual([
       'transaction_reversed',
+      'member_removed',
       'owner_transferred',
       'transaction_created',
       'member_joined',
@@ -81,15 +92,19 @@ describe('buildActivityFeed', () => {
       detail: 'Alex owes Chris 2 Beers',
     });
     expect(events[1]).toMatchObject({
+      title: 'Chris removed Alex from Friday Crew',
+      detail: 'Alex no longer has access to the group.',
+    });
+    expect(events[2]).toMatchObject({
       title: 'Chris transferred ownership to Alex',
       detail: 'Alex is now the group owner.',
     });
-    expect(events[2]).toMatchObject({
+    expect(events[3]).toMatchObject({
       title: 'Alex owes Chris 2 Beers',
       detail: 'Trivia night',
     });
-    expect(events[3]!.title).toBe('Alex joined Friday Crew');
-    expect(events[4]!.title).toBe('Chris created Friday Crew');
+    expect(events[4]!.title).toBe('Alex joined Friday Crew');
+    expect(events[5]!.title).toBe('Chris created Friday Crew');
   });
 
   it('skips orphaned records and owner join duplicates', () => {
@@ -129,6 +144,7 @@ describe('buildActivityFeed', () => {
 describe('getActivity', () => {
   beforeEach(() => {
     activityDatabase.ownerTransferError = null;
+    activityDatabase.memberRemovalError = null;
     activityDatabase.from.mockReset();
     activityDatabase.from.mockImplementation((table: string) => {
       const builder = {
@@ -140,7 +156,12 @@ describe('getActivity', () => {
       builder.order.mockReturnValue(builder);
       builder.range.mockResolvedValue({
         data: [],
-        error: table === 'group_owner_transfers' ? activityDatabase.ownerTransferError : null,
+        error:
+          table === 'group_owner_transfers'
+            ? activityDatabase.ownerTransferError
+            : table === 'group_member_removals'
+              ? activityDatabase.memberRemovalError
+              : null,
       });
       return builder;
     });
@@ -159,6 +180,24 @@ describe('getActivity', () => {
     activityDatabase.ownerTransferError = {
       code: '42501',
       message: 'permission denied for table group_owner_transfers',
+    };
+
+    await expect(getActivity()).rejects.toMatchObject({ code: '42501' });
+  });
+
+  it('loads core activity when the optional member-removal table is not deployed', async () => {
+    activityDatabase.memberRemovalError = {
+      code: 'PGRST205',
+      message: "Could not find the table 'public.group_member_removals' in the schema cache",
+    };
+
+    await expect(getActivity()).resolves.toEqual([]);
+  });
+
+  it('still reports unexpected member-removal query failures', async () => {
+    activityDatabase.memberRemovalError = {
+      code: '42501',
+      message: 'permission denied for table group_member_removals',
     };
 
     await expect(getActivity()).rejects.toMatchObject({ code: '42501' });

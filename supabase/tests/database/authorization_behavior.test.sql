@@ -15,7 +15,7 @@ exception
 end;
 $$;
 
-select plan(41);
+select plan(56);
 
 insert into auth.users (
   id, email, raw_user_meta_data
@@ -40,6 +40,11 @@ values
     '10000000-0000-4000-8000-000000000004',
     'audit_stranger@users.beerme.invalid',
     '{"username":"audit_stranger","display_name":"Audit Stranger"}'
+  ),
+  (
+    '10000000-0000-4000-8000-000000000005',
+    'audit_quiet@users.beerme.invalid',
+    '{"username":"audit_quiet","display_name":"Audit Quiet"}'
   );
 
 insert into public.groups (id, name, owner_id, invite_token)
@@ -65,6 +70,11 @@ values
   (
     '20000000-0000-4000-8000-000000000001',
     '10000000-0000-4000-8000-000000000003',
+    'member'
+  ),
+  (
+    '20000000-0000-4000-8000-000000000001',
+    '10000000-0000-4000-8000-000000000005',
     'member'
   );
 
@@ -93,9 +103,116 @@ set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true);
 
 select is((select count(*) from public.groups), 1::bigint, 'owner reads only their group');
-select is((select count(*) from public.memberships), 3::bigint, 'owner reads current group memberships');
+select is((select count(*) from public.memberships), 4::bigint, 'owner reads current group memberships');
 select is((select count(*) from public.transactions), 2::bigint, 'owner reads current group ledger');
-select is((select count(*) from public.profiles), 3::bigint, 'owner reads only relevant profiles');
+select is((select count(*) from public.profiles), 4::bigint, 'owner reads only relevant profiles');
+
+savepoint remove_group_member_rpc_test;
+
+select lives_ok(
+  $$select public.remove_group_member(
+    '20000000-0000-4000-8000-000000000001',
+    '10000000-0000-4000-8000-000000000005'
+  )$$,
+  'an owner can remove a non-owner member through the deployed RPC'
+);
+select is(
+  (
+    select count(*)
+    from public.memberships
+    where group_id = '20000000-0000-4000-8000-000000000001'
+      and user_id = '10000000-0000-4000-8000-000000000005'
+  ),
+  0::bigint,
+  'the removed membership is deleted'
+);
+select is(
+  (
+    select count(*)
+    from public.group_member_removals
+    where group_id = '20000000-0000-4000-8000-000000000001'
+      and removed_user_id = '10000000-0000-4000-8000-000000000005'
+      and removed_by = '10000000-0000-4000-8000-000000000001'
+  ),
+  1::bigint,
+  'the removal records one append-only activity entry'
+);
+select is(
+  (select count(*) from public.transactions),
+  2::bigint,
+  'removing a member leaves transaction history unchanged'
+);
+select ok(
+  exists (
+    select 1
+    from public.profiles
+    where id = '10000000-0000-4000-8000-000000000005'
+  ),
+  'remaining members can identify a removed user without transaction history'
+);
+
+reset role;
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000005', true);
+
+select is((select count(*) from public.groups), 0::bigint, 'a removed member loses group access');
+select is(
+  (select count(*) from public.transactions),
+  0::bigint,
+  'a removed member loses ledger access'
+);
+select is(
+  (select count(*) from public.memberships),
+  0::bigint,
+  'a removed member loses membership access'
+);
+select is(
+  (select count(*) from public.group_member_removals),
+  0::bigint,
+  'a removed member cannot read their removal activity'
+);
+select is(
+  (select count(*) from public.profiles),
+  1::bigint,
+  'a removed member can read only their own profile'
+);
+
+reset role;
+rollback to savepoint remove_group_member_rpc_test;
+release savepoint remove_group_member_rpc_test;
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true);
+
+select ok(
+  pg_temp.throws_sqlstate(
+    $$select public.remove_group_member(
+      '20000000-0000-4000-8000-000000000002',
+      '10000000-0000-4000-8000-000000000004'
+    )$$,
+    '42501'
+  ),
+  'an owner cannot remove a member from an unrelated group'
+);
+select ok(
+  pg_temp.throws_sqlstate(
+    $$select public.remove_group_member(
+      '20000000-0000-4000-8000-000000000001',
+      '10000000-0000-4000-8000-000000000001'
+    )$$,
+    '55000'
+  ),
+  'an owner cannot remove themselves'
+);
+select ok(
+  pg_temp.throws_sqlstate(
+    $$select public.remove_group_member(
+      '20000000-0000-4000-8000-000000000001',
+      '10000000-0000-4000-8000-000000000004'
+    )$$,
+    '22023'
+  ),
+  'an owner cannot remove a user who is not a group member'
+);
 
 savepoint transfer_ownership_rpc_test;
 
@@ -198,7 +315,18 @@ select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000002
 
 select is((select count(*) from public.groups), 1::bigint, 'member reads only their current group');
 select is((select count(*) from public.transactions), 2::bigint, 'member reads only their current ledger');
-select is((select count(*) from public.profiles), 3::bigint, 'member reads current peers but not strangers');
+select is((select count(*) from public.profiles), 4::bigint, 'member reads current peers but not strangers');
+
+select ok(
+  pg_temp.throws_sqlstate(
+    $$select public.remove_group_member(
+      '20000000-0000-4000-8000-000000000001',
+      '10000000-0000-4000-8000-000000000003'
+    )$$,
+    '42501'
+  ),
+  'a non-owner cannot remove another member'
+);
 
 select lives_ok(
   $$
@@ -360,6 +488,16 @@ select ok(
   ),
   'anonymous callers cannot execute authenticated RPCs'
 );
+select ok(
+  pg_temp.throws_sqlstate(
+    $$select public.remove_group_member(
+      '20000000-0000-4000-8000-000000000001',
+      '10000000-0000-4000-8000-000000000003'
+    )$$,
+    '42501'
+  ),
+  'anonymous callers cannot execute member-removal RPCs'
+);
 
 reset role;
 
@@ -420,6 +558,11 @@ select ok(
   position('FOR UPDATE' in upper(pg_get_functiondef('public.leave_group(uuid)'::regprocedure))) > 0
     and position(
       'FOR UPDATE' in upper(pg_get_functiondef('public.delete_group(uuid)'::regprocedure))
+    ) > 0
+    and position(
+      'FOR UPDATE' in upper(
+        pg_get_functiondef('public.remove_group_member(uuid, uuid)'::regprocedure)
+      )
     ) > 0,
   'membership lifecycle RPCs lock mutable authorization state'
 );

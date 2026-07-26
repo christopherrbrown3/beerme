@@ -10,7 +10,14 @@ select set_eq(
     from information_schema.tables
     where table_schema = 'public' and table_type = 'BASE TABLE'
   $$,
-  array['group_owner_transfers', 'groups', 'memberships', 'profiles', 'transactions'],
+  array[
+    'group_member_removals',
+    'group_owner_transfers',
+    'groups',
+    'memberships',
+    'profiles',
+    'transactions'
+  ],
   'the public table inventory is explicit'
 );
 
@@ -27,6 +34,7 @@ select set_eq(
     'is_username_available(text)',
     'join_group(uuid)',
     'leave_group(uuid)',
+    'remove_group_member(uuid, uuid)',
     'reverse_transaction(uuid)',
     'transfer_group_ownership(uuid, uuid)'
   ],
@@ -45,6 +53,7 @@ select set_eq(
     'is_group_member(uuid, uuid)',
     'protect_transaction_history()',
     'shares_group_with(uuid)',
+    'shares_member_removal_history_with(uuid)',
     'shares_owner_transfer_history_with(uuid)',
     'shares_transaction_history_with(uuid)'
   ],
@@ -60,7 +69,7 @@ select is(
       and c.relkind = 'r'
       and c.relrowsecurity
   ),
-  5::bigint,
+  6::bigint,
   'RLS is enabled on every public table'
 );
 
@@ -87,8 +96,10 @@ select ok(
 select ok(
   not has_table_privilege('authenticated', 'public.memberships', 'INSERT')
     and not has_table_privilege('authenticated', 'public.memberships', 'UPDATE')
+    and not has_table_privilege('authenticated', 'public.group_member_removals', 'INSERT')
+    and not has_table_privilege('authenticated', 'public.group_member_removals', 'UPDATE')
     and not has_table_privilege('authenticated', 'public.profiles', 'INSERT'),
-  'membership and profile creation are not directly client-writable'
+  'membership, removal history, and profile creation are not directly client-writable'
 );
 
 select ok(
@@ -148,6 +159,7 @@ select set_eq(
     'is_username_available(text)',
     'join_group(uuid)',
     'leave_group(uuid)',
+    'remove_group_member(uuid, uuid)',
     'reverse_transaction(uuid)',
     'transfer_group_ownership(uuid, uuid)'
   ],
@@ -165,6 +177,7 @@ select set_eq(
   array[
     'is_group_member(uuid, uuid)',
     'shares_group_with(uuid)',
+    'shares_member_removal_history_with(uuid)',
     'shares_owner_transfer_history_with(uuid)',
     'shares_transaction_history_with(uuid)'
   ],
@@ -178,7 +191,7 @@ select is(
     join pg_namespace n on n.oid = p.pronamespace
     where n.nspname in ('public', 'private') and p.prosecdef
   ),
-  12::bigint,
+  14::bigint,
   'the security-definer inventory is explicit'
 );
 
@@ -204,6 +217,7 @@ select set_eq(
   $$,
   array[
     'Members can add valid group transactions',
+    'Members can read group member removals',
     'Members can read group owner transfers',
     'Members can read group memberships',
     'Members can read group transactions',

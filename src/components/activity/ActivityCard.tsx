@@ -1,4 +1,4 @@
-import { Group, RotateCcw, UserRoundPlus } from 'lucide-react';
+import { Group, RotateCcw, UserMinus, UserRoundPlus } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 
@@ -15,11 +15,13 @@ export function ActivityCard({ event }: ActivityCardProps) {
       ? RotateCcw
       : event.type === 'member_joined'
         ? UserRoundPlus
-        : event.type === 'owner_transferred'
-          ? RotateCcw
-          : event.type === 'group_created'
-            ? Group
-            : null;
+        : event.type === 'member_removed'
+          ? UserMinus
+          : event.type === 'owner_transferred'
+            ? RotateCcw
+            : event.type === 'group_created'
+              ? Group
+              : null;
 
   return (
     <motion.article

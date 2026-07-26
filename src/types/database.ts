@@ -92,6 +92,40 @@ export type Database = {
           },
         ];
       };
+      group_member_removals: {
+        Row: {
+          id: string;
+          group_id: string;
+          removed_user_id: string;
+          removed_by: string;
+          removed_at: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [
+          {
+            foreignKeyName: 'group_member_removals_group_id_fkey';
+            columns: ['group_id'];
+            isOneToOne: false;
+            referencedRelation: 'groups';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'group_member_removals_removed_user_id_fkey';
+            columns: ['removed_user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'group_member_removals_removed_by_fkey';
+            columns: ['removed_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       transactions: {
         Row: {
           id: string;
@@ -181,6 +215,10 @@ export type Database = {
       reverse_transaction: {
         Args: { transaction_id: string };
         Returns: Database['public']['Tables']['transactions']['Row'];
+      };
+      remove_group_member: {
+        Args: { target_group_id: string; target_user_id: string };
+        Returns: undefined;
       };
       transfer_group_ownership: {
         Args: { target_group_id: string; target_user_id: string };
