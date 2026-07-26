@@ -39,9 +39,17 @@ type ActivityMemberRemoval = {
   remover: ActivityProfile | null;
 };
 
+type ActivityInviteRotation = {
+  id: string;
+  group_id: string;
+  rotated_by: string;
+  rotated_at: string;
+  rotator: ActivityProfile | null;
+};
+
 export async function getActivity(): Promise<ActivityEvent[]> {
   const supabase = getSupabaseClient();
-  const [groups, memberships, transfers, removals, transactions] = await Promise.all([
+  const [groups, memberships, transfers, removals, rotations, transactions] = await Promise.all([
     fetchAllPages<ActivityGroup>(async (from, to) => {
       const { data, error } = await supabase
         .from('groups')
@@ -65,10 +73,11 @@ export async function getActivity(): Promise<ActivityEvent[]> {
     }),
     getOwnerTransfers(supabase),
     getMemberRemovals(supabase),
+    getInviteRotations(supabase),
     getAllTransactions(),
   ]);
 
-  return buildActivityFeed(groups, memberships, transfers, transactions, removals);
+  return buildActivityFeed(groups, memberships, transfers, transactions, removals, rotations);
 }
 
 async function getOwnerTransfers(
@@ -114,6 +123,28 @@ async function getMemberRemovals(
   }
 }
 
+async function getInviteRotations(
+  supabase: ReturnType<typeof getSupabaseClient>,
+): Promise<ActivityInviteRotation[]> {
+  try {
+    return await fetchAllPages<ActivityInviteRotation>(async (from, to) => {
+      const { data, error } = await supabase
+        .from('group_invite_rotations')
+        .select(
+          'id, group_id, rotated_by, rotated_at, rotator:profiles!group_invite_rotations_rotated_by_fkey(id, username, display_name)',
+        )
+        .order('rotated_at', { ascending: false })
+        .order('group_id')
+        .order('id')
+        .range(from, to);
+      return { data: data as unknown as ActivityInviteRotation[], error };
+    });
+  } catch (error) {
+    if (isMissingTableError(error)) return [];
+    throw error;
+  }
+}
+
 function isMissingTableError(error: unknown): boolean {
   return (
     typeof error === 'object' && error !== null && 'code' in error && error.code === 'PGRST205'
@@ -135,6 +166,7 @@ export function buildActivityFeed(
   transfers: ActivityOwnerTransfer[],
   transactions: LedgerEntry[],
   removals: ActivityMemberRemoval[] = [],
+  rotations: ActivityInviteRotation[] = [],
 ): ActivityEvent[] {
   const groupMap = new Map(groups.map((group) => [group.id, group]));
   const events: ActivityEvent[] = [];
@@ -212,6 +244,24 @@ export function buildActivityFeed(
       occurredAt: removal.removed_at,
       title: `${actor.displayName} removed ${removedUser.displayName} from ${group.name}`,
       detail: `${removedUser.displayName} no longer has access to the group.`,
+    });
+  }
+
+  for (const rotation of rotations) {
+    const group = groupMap.get(rotation.group_id);
+    if (!group || !rotation.rotator) continue;
+
+    const actor = mapProfile(rotation.rotator);
+    events.push({
+      id: `invite-rotated:${rotation.id}`,
+      type: 'invite_rotated',
+      groupId: group.id,
+      groupName: group.name,
+      groupSymbol: group.currency_symbol,
+      actor,
+      occurredAt: rotation.rotated_at,
+      title: `${actor.displayName} rotated the invite link for ${group.name}`,
+      detail: 'The previous invite link no longer works.',
     });
   }
 

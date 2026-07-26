@@ -4,6 +4,7 @@ export type ActivityEventType =
   | 'group_created'
   | 'member_joined'
   | 'member_removed'
+  | 'invite_rotated'
   | 'owner_transferred'
   | 'transaction_created'
   | 'transaction_reversed';

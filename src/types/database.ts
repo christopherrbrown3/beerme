@@ -27,7 +27,6 @@ export type Database = {
           name: string;
           description: string | null;
           owner_id: string;
-          invite_token: string;
           currency_name: string;
           currency_plural: string;
           currency_symbol: string;
@@ -38,7 +37,6 @@ export type Database = {
           name: string;
           description?: string | null;
           owner_id: string;
-          invite_token?: string;
           currency_name?: string;
           currency_plural?: string;
           currency_symbol?: string;
@@ -126,6 +124,32 @@ export type Database = {
           },
         ];
       };
+      group_invite_rotations: {
+        Row: {
+          id: string;
+          group_id: string;
+          rotated_by: string;
+          rotated_at: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [
+          {
+            foreignKeyName: 'group_invite_rotations_group_id_fkey';
+            columns: ['group_id'];
+            isOneToOne: false;
+            referencedRelation: 'groups';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'group_invite_rotations_rotated_by_fkey';
+            columns: ['rotated_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       transactions: {
         Row: {
           id: string;
@@ -204,6 +228,10 @@ export type Database = {
         Args: { token: string };
         Returns: string;
       };
+      get_group_invite_token: {
+        Args: { target_group_id: string };
+        Returns: string;
+      };
       leave_group: {
         Args: { target_group_id: string };
         Returns: undefined;
@@ -219,6 +247,10 @@ export type Database = {
       remove_group_member: {
         Args: { target_group_id: string; target_user_id: string };
         Returns: undefined;
+      };
+      rotate_group_invite: {
+        Args: { target_group_id: string };
+        Returns: string;
       };
       transfer_group_ownership: {
         Args: { target_group_id: string; target_user_id: string };

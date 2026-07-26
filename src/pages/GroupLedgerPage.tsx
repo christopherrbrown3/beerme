@@ -88,9 +88,11 @@ export function GroupLedgerPage() {
               <UsersRound size={16} aria-hidden="true" /> Transfer ownership
             </button>
           )}
-          <button className="secondary-button" type="button" onClick={() => setIsInviting(true)}>
-            <Copy size={16} aria-hidden="true" /> Invite
-          </button>
+          {group.role === 'owner' && (
+            <button className="secondary-button" type="button" onClick={() => setIsInviting(true)}>
+              <Copy size={16} aria-hidden="true" /> Invite
+            </button>
+          )}
           <button
             className="primary-button"
             type="button"

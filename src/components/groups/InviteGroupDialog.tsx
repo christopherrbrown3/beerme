@@ -1,6 +1,8 @@
-import { Check, Copy, Share2 } from 'lucide-react';
+import { Check, Copy, RefreshCw, Share2 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
+import { useRotateGroupInvite } from '../../hooks/useGroupLedger';
+import { getFriendlyRotateInviteError } from '../../services/groupService';
 import { type GroupDetails } from '../../types/groups';
 import { Dialog } from '../ui/Dialog';
 
@@ -12,12 +14,15 @@ type InviteGroupDialogProps = {
 type InviteStatus = 'idle' | 'copied' | 'shared' | 'error';
 
 export function InviteGroupDialog({ group, onClose }: InviteGroupDialogProps) {
-  const inviteUrl = `${window.location.origin}/join/${group.inviteToken}`;
+  const rotateInvite = useRotateGroupInvite(group.id);
+  const [inviteToken, setInviteToken] = useState(group.inviteToken);
   const [qrCode, setQrCode] = useState<string | null>(null);
   const [qrError, setQrError] = useState(false);
   const [status, setStatus] = useState<InviteStatus>('idle');
+  const [isConfirmingRotation, setIsConfirmingRotation] = useState(false);
   const linkInput = useRef<HTMLInputElement>(null);
   const canShare = typeof navigator.share === 'function';
+  const inviteUrl = `${window.location.origin}/join/${inviteToken}`;
 
   useEffect(() => {
     let active = true;
@@ -70,6 +75,19 @@ export function InviteGroupDialog({ group, onClose }: InviteGroupDialogProps) {
     } catch (error) {
       if (error instanceof DOMException && error.name === 'AbortError') return;
       await copyInvite();
+    }
+  }
+
+  async function rotateInviteLink() {
+    try {
+      const nextInviteToken = await rotateInvite.mutateAsync();
+      setInviteToken(nextInviteToken);
+      setQrCode(null);
+      setQrError(false);
+      setStatus('idle');
+      setIsConfirmingRotation(false);
+    } catch {
+      // The mutation error is rendered below.
     }
   }
 
@@ -128,6 +146,54 @@ export function InviteGroupDialog({ group, onClose }: InviteGroupDialogProps) {
           {status === 'error' &&
             'Copy wasn’t available. Select the link above and copy it manually.'}
         </p>
+
+        <section className="invite-rotation" aria-labelledby="invite-rotation-heading">
+          <div>
+            <h3 id="invite-rotation-heading">Need a fresh link?</h3>
+            <p>
+              Rotating turns off the current link immediately. Anyone joining will need the new one.
+            </p>
+          </div>
+
+          {rotateInvite.isError && (
+            <div className="form-alert form-alert--error" role="alert">
+              {getFriendlyRotateInviteError(rotateInvite.error)}
+            </div>
+          )}
+
+          {isConfirmingRotation ? (
+            <div className="invite-rotation__confirm">
+              <p>People with the current link will no longer be able to join.</p>
+              <div className="dialog-actions">
+                <button
+                  className="secondary-button"
+                  type="button"
+                  onClick={() => setIsConfirmingRotation(false)}
+                  disabled={rotateInvite.isPending}
+                >
+                  Keep current link
+                </button>
+                <button
+                  className="danger-button"
+                  type="button"
+                  onClick={() => void rotateInviteLink()}
+                  disabled={rotateInvite.isPending}
+                >
+                  <RefreshCw size={17} aria-hidden="true" />
+                  {rotateInvite.isPending ? 'Rotating…' : 'Rotate link'}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              className="secondary-button"
+              type="button"
+              onClick={() => setIsConfirmingRotation(true)}
+            >
+              <RefreshCw size={17} aria-hidden="true" /> Rotate invite
+            </button>
+          )}
+        </section>
       </div>
     </Dialog>
   );

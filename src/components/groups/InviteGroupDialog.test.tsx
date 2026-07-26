@@ -6,8 +6,17 @@ import { type GroupDetails } from '../../types/groups';
 import { InviteGroupDialog } from './InviteGroupDialog';
 
 const toDataURL = vi.hoisted(() => vi.fn(() => Promise.resolve('data:image/png;base64,invite')));
+const rotateInvite = vi.hoisted(() => vi.fn());
 
 vi.mock('qrcode', () => ({ default: { toDataURL } }));
+vi.mock('../../hooks/useGroupLedger', () => ({
+  useRotateGroupInvite: () => ({
+    mutateAsync: rotateInvite,
+    isError: false,
+    error: null,
+    isPending: false,
+  }),
+}));
 
 const group: GroupDetails = {
   id: 'group-1',
@@ -26,6 +35,7 @@ describe('InviteGroupDialog', () => {
   beforeEach(() => {
     toDataURL.mockReset();
     toDataURL.mockResolvedValue('data:image/png;base64,invite');
+    rotateInvite.mockReset();
     Object.defineProperty(navigator, 'share', { value: undefined, configurable: true });
   });
 
@@ -84,5 +94,24 @@ describe('InviteGroupDialog', () => {
     await user.click(screen.getByRole('button', { name: 'Copy link' }));
     expect(writeText).toHaveBeenCalledOnce();
     expect(screen.getByRole('button', { name: 'Copied' })).toBeInTheDocument();
+  });
+
+  it('requires confirmation before rotating and then replaces the displayed link', async () => {
+    const user = userEvent.setup();
+    rotateInvite.mockResolvedValue('223e4567-e89b-42d3-a456-426614174000');
+
+    render(<InviteGroupDialog group={group} onClose={vi.fn()} />);
+
+    await user.click(screen.getByRole('button', { name: 'Rotate invite' }));
+    expect(
+      screen.getByText('People with the current link will no longer be able to join.'),
+    ).toBeVisible();
+    expect(rotateInvite).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole('button', { name: 'Rotate link' }));
+    await waitFor(() => expect(rotateInvite).toHaveBeenCalledOnce());
+    expect(screen.getByLabelText('Invite link')).toHaveValue(
+      'http://localhost:3000/join/223e4567-e89b-42d3-a456-426614174000',
+    );
   });
 });

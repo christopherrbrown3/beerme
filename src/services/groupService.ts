@@ -21,7 +21,6 @@ type GroupWithCount = {
   name: string;
   description: string | null;
   owner_id: string;
-  invite_token: string;
   currency_name: string;
   currency_plural: string;
   currency_symbol: string;
@@ -49,7 +48,7 @@ export async function getGroups(userId: string): Promise<GroupSummary[]> {
         .from('groups')
         .select(
           `
-            id, name, description, owner_id, invite_token,
+            id, name, description, owner_id,
             currency_name, currency_plural, currency_symbol, created_at,
             memberships(count)
           `,
@@ -92,7 +91,7 @@ export async function getGroups(userId: string): Promise<GroupSummary[]> {
       name: group.name,
       description: group.description,
       ownerId: group.owner_id,
-      inviteToken: group.invite_token,
+      inviteToken: '',
       createdAt: group.created_at,
       memberCount: group.memberships[0]?.count ?? 0,
       role: roles.get(group.id) ?? 'member',
@@ -118,7 +117,9 @@ export async function createGroup(userId: string, input: CreateGroupInput): Prom
       description: normalizeGroupDescription(input.description),
       owner_id: userId,
     })
-    .select('*')
+    .select(
+      'id, name, description, owner_id, currency_name, currency_plural, currency_symbol, created_at',
+    )
     .single();
 
   if (error) throw error;
@@ -128,7 +129,7 @@ export async function createGroup(userId: string, input: CreateGroupInput): Prom
     name: data.name,
     description: data.description,
     ownerId: data.owner_id,
-    inviteToken: data.invite_token,
+    inviteToken: '',
     createdAt: data.created_at,
     memberCount: 1,
     role: 'owner',
@@ -149,7 +150,7 @@ export async function getGroupDetails(groupId: string, userId: string): Promise<
       .from('groups')
       .select(
         `
-          id, name, description, owner_id, invite_token,
+          id, name, description, owner_id,
           currency_name, currency_plural, currency_symbol, created_at
         `,
       )
@@ -185,12 +186,14 @@ export async function getGroupDetails(groupId: string, userId: string): Promise<
       return a.displayName.localeCompare(b.displayName);
     });
 
+  const inviteToken = group.owner_id === userId ? await getGroupInviteToken(groupId) : '';
+
   return {
     id: group.id,
     name: group.name,
     description: group.description,
     ownerId: group.owner_id,
-    inviteToken: group.invite_token,
+    inviteToken,
     createdAt: group.created_at,
     memberCount: members.length,
     role: members.find((member) => member.userId === userId)?.role ?? 'member',
@@ -205,6 +208,38 @@ export async function getGroupDetails(groupId: string, userId: string): Promise<
 
 export async function joinGroup(token: string) {
   const { data, error } = await getSupabaseClient().rpc('join_group', { token });
+
+  if (error) throw error;
+  return data;
+}
+
+async function getGroupInviteToken(groupId: string) {
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase.rpc('get_group_invite_token', {
+    target_group_id: groupId,
+  });
+
+  if (!error) return data;
+
+  if (error.code !== 'PGRST202') throw error;
+
+  // Keep owners from losing the Invite control during the short interval between a web deploy and
+  // its matching migration. The legacy column is removed atomically with the new RPC.
+  const legacyInviteResult = await supabase
+    .from('groups')
+    .select('invite_token')
+    .eq('id', groupId)
+    .single();
+
+  if (legacyInviteResult.error) throw legacyInviteResult.error;
+
+  return (legacyInviteResult.data as unknown as { invite_token: string }).invite_token;
+}
+
+export async function rotateGroupInvite(groupId: string) {
+  const { data, error } = await getSupabaseClient().rpc('rotate_group_invite', {
+    target_group_id: groupId,
+  });
 
   if (error) throw error;
   return data;
@@ -313,6 +348,31 @@ export function getFriendlyRemoveMemberError(error: unknown) {
   }
 
   return 'BeerMe couldn’t remove that member. Refresh the group and try again.';
+}
+
+export function getFriendlyRotateInviteError(error: unknown) {
+  const message = getErrorMessage(error);
+
+  if (/authentication is required|jwt|session/i.test(message)) {
+    return 'Your session expired. Sign in again, then try rotating the invite.';
+  }
+
+  if (/only the current group owner/i.test(message)) {
+    return 'You are no longer this group’s owner. Refresh the group to see who can manage invites.';
+  }
+
+  if (/wait a minute before rotating/i.test(message)) {
+    return 'You just rotated this invite. Please wait a minute before doing it again.';
+  }
+
+  if (
+    error instanceof TypeError ||
+    /failed to fetch|network(?:error| request failed)/i.test(message)
+  ) {
+    return 'We couldn’t reach BeerMe. Check your connection and try again.';
+  }
+
+  return 'BeerMe couldn’t rotate that invite. Refresh the group and try again.';
 }
 
 export async function transferGroupOwnership(groupId: string, targetUserId: string) {

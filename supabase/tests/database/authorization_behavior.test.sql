@@ -15,7 +15,7 @@ exception
 end;
 $$;
 
-select plan(56);
+select plan(67);
 
 insert into auth.users (
   id, email, raw_user_meta_data
@@ -47,18 +47,24 @@ values
     '{"username":"audit_quiet","display_name":"Audit Quiet"}'
   );
 
-insert into public.groups (id, name, owner_id, invite_token)
+insert into public.groups (id, name, owner_id)
 values
   (
     '20000000-0000-4000-8000-000000000001', 'Audit Group One',
-    '10000000-0000-4000-8000-000000000001',
-    '30000000-0000-4000-8000-000000000001'
+    '10000000-0000-4000-8000-000000000001'
   ),
   (
     '20000000-0000-4000-8000-000000000002', 'Audit Group Two',
-    '10000000-0000-4000-8000-000000000004',
-    '30000000-0000-4000-8000-000000000002'
+    '10000000-0000-4000-8000-000000000004'
   );
+
+update private.group_invites
+set token = case group_id
+  when '20000000-0000-4000-8000-000000000001'::uuid
+    then '30000000-0000-4000-8000-000000000001'::uuid
+  when '20000000-0000-4000-8000-000000000002'::uuid
+    then '30000000-0000-4000-8000-000000000002'::uuid
+end;
 
 insert into public.memberships (group_id, user_id, role)
 values
@@ -106,6 +112,65 @@ select is((select count(*) from public.groups), 1::bigint, 'owner reads only the
 select is((select count(*) from public.memberships), 4::bigint, 'owner reads current group memberships');
 select is((select count(*) from public.transactions), 2::bigint, 'owner reads current group ledger');
 select is((select count(*) from public.profiles), 4::bigint, 'owner reads only relevant profiles');
+select ok(
+  pg_temp.throws_sqlstate(
+    $$select invite_token from public.groups where id = '20000000-0000-4000-8000-000000000001'$$,
+    '42703'
+  ),
+  'invite capabilities are not exposed on public group rows'
+);
+select is(
+  public.get_group_invite_token('20000000-0000-4000-8000-000000000001'),
+  '30000000-0000-4000-8000-000000000001'::uuid,
+  'only the owner can retrieve the current private invite token'
+);
+
+savepoint rotate_group_invite_rpc_test;
+
+select set_config(
+  'beerme.test.rotated_invite',
+  public.rotate_group_invite('20000000-0000-4000-8000-000000000001')::text,
+  true
+);
+select isnt(
+  current_setting('beerme.test.rotated_invite')::uuid,
+  '30000000-0000-4000-8000-000000000001'::uuid,
+  'rotating replaces the invite capability with a new token'
+);
+select is(
+  (
+    select count(*)
+    from public.group_invite_rotations
+    where group_id = '20000000-0000-4000-8000-000000000001'
+      and rotated_by = '10000000-0000-4000-8000-000000000001'
+  ),
+  1::bigint,
+  'a successful rotation records token-free activity history'
+);
+select ok(
+  pg_temp.throws_sqlstate(
+    $$select public.join_group('30000000-0000-4000-8000-000000000001')$$,
+    '22023'
+  ),
+  'the old invite link fails immediately after rotation'
+);
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000004', true);
+select is(
+  public.join_group(current_setting('beerme.test.rotated_invite')::uuid),
+  '20000000-0000-4000-8000-000000000001'::uuid,
+  'the new invite link joins an authenticated person'
+);
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true);
+select ok(
+  pg_temp.throws_sqlstate(
+    $$select public.rotate_group_invite('20000000-0000-4000-8000-000000000001')$$,
+    '55000'
+  ),
+  'rotation is rate limited per group'
+);
+
+rollback to savepoint rotate_group_invite_rpc_test;
+release savepoint rotate_group_invite_rpc_test;
 
 savepoint remove_group_member_rpc_test;
 
@@ -327,6 +392,20 @@ select ok(
   ),
   'a non-owner cannot remove another member'
 );
+select ok(
+  pg_temp.throws_sqlstate(
+    $$select public.get_group_invite_token('20000000-0000-4000-8000-000000000001')$$,
+    '42501'
+  ),
+  'a non-owner cannot retrieve a group invite token'
+);
+select ok(
+  pg_temp.throws_sqlstate(
+    $$select public.rotate_group_invite('20000000-0000-4000-8000-000000000001')$$,
+    '42501'
+  ),
+  'a non-owner cannot rotate a group invite'
+);
 
 select lives_ok(
   $$
@@ -497,6 +576,20 @@ select ok(
     '42501'
   ),
   'anonymous callers cannot execute member-removal RPCs'
+);
+select ok(
+  pg_temp.throws_sqlstate(
+    $$select public.get_group_invite_token('20000000-0000-4000-8000-000000000001')$$,
+    '42501'
+  ),
+  'anonymous callers cannot execute invite-token RPCs'
+);
+select ok(
+  pg_temp.throws_sqlstate(
+    $$select public.rotate_group_invite('20000000-0000-4000-8000-000000000001')$$,
+    '42501'
+  ),
+  'anonymous callers cannot execute invite-rotation RPCs'
 );
 
 reset role;
