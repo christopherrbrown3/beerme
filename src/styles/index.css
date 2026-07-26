@@ -1142,7 +1142,10 @@ a:active {
   position: relative;
   z-index: 1;
   width: min(100%, 32rem);
+  max-height: calc(100dvh - 2rem);
   padding: 1.5rem;
+  overflow-y: auto;
+  box-sizing: border-box;
   color: var(--ink);
   background: var(--paper);
   border: 1px solid rgba(255, 255, 255, 0.38);
