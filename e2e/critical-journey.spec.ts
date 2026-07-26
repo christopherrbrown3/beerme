@@ -106,13 +106,24 @@ test.describe('isolated authenticated journeys', () => {
       await customCurrencyDialog.getByRole('button', { name: 'Save unit' }).click();
       await expect(page.getByText('🪙 Tokens', { exact: true })).toBeVisible();
 
-      await memberPage.getByRole('button', { name: 'Leave group' }).click();
-      const leaveDialog = memberPage.getByRole('dialog', { name: 'Leave this group?' });
-      await leaveDialog.getByRole('button', { name: 'Leave group' }).click();
+      await page.getByRole('button', { name: 'People' }).click();
+      await page.getByRole('button', { name: 'Remove member' }).click();
+      const removeDialog = page.getByRole('dialog', {
+        name: `Remove ${memberUsername}?`,
+      });
+      await expect(removeDialog).toContainText(`@${memberUsername} will lose access immediately`);
+      await removeDialog.getByRole('button', { name: 'Remove member' }).click();
+      await expect(page.getByLabel('1 member')).toBeVisible();
+
       await expect(
-        memberPage.getByRole('heading', { name: 'Good friends. Clear tabs.' }),
+        memberPage.getByRole('heading', { name: 'We couldn’t open this group.' }),
       ).toBeVisible();
-      await expect(memberPage.getByRole('link', { name: new RegExp(groupName) })).toHaveCount(0);
+
+      await page.getByRole('link', { name: 'Activity' }).click();
+      await expect(
+        page.getByText(`${ownerUsername} removed ${memberUsername} from ${groupName}`),
+      ).toBeVisible();
+      await page.getByRole('link', { name: groupName }).first().click();
 
       await page.getByRole('button', { name: 'Delete group' }).click();
       const deleteDialog = page.getByRole('dialog', { name: 'Delete this group?' });

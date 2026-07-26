@@ -1,3 +1,20 @@
 {
-  "exceptions": []
+  "exceptions": [
+    {
+      "id": "SEC-2026-002",
+      "tool": "npm-audit",
+      "finding": "GHSA-mh99-v99m-4gvg",
+      "owner": "@christopherrbrown3",
+      "rationale": "Affected brace-expansion versions are reachable only through development-time lint and PWA build tools using repository-controlled glob patterns; BeerMe does not pass user input to Node glob expansion. Remove when those tools accept brace-expansion 5.0.8.",
+      "expires": "2026-08-31"
+    },
+    {
+      "id": "SEC-2026-003",
+      "tool": "npm-audit",
+      "finding": "GHSA-qwww-vcr4-c8h2",
+      "owner": "@christopherrbrown3",
+      "rationale": "The advisory affects only React Router's unstable RSC APIs. BeerMe is a browser-only SPA with no RSC routes or server actions. Remove after a patched React Router release is available.",
+      "expires": "2026-08-31"
+    }
+  ]
 }

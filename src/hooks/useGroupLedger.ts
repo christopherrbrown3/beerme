@@ -4,6 +4,7 @@ import {
   deleteGroup,
   getGroupDetails,
   leaveGroup,
+  removeGroupMember,
   transferGroupOwnership,
   updateGroupCurrency,
 } from '../services/groupService';
@@ -75,6 +76,30 @@ export function useLeaveGroup(groupId: string) {
 
 export function useDeleteGroup(groupId: string) {
   return useRemoveGroupMutation(groupId, deleteGroup);
+}
+
+export function useRemoveGroupMember(groupId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (targetUserId: string) => removeGroupMember(groupId, targetUserId),
+    onSuccess: async (_data, targetUserId) => {
+      queryClient.setQueryData<GroupDetails>(groupQueryKey(groupId), (group) =>
+        group
+          ? {
+              ...group,
+              members: group.members.filter((member) => member.userId !== targetUserId),
+              memberCount: Math.max(0, group.memberCount - 1),
+            }
+          : group,
+      );
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: groupQueryKey(groupId) }),
+        queryClient.invalidateQueries({ queryKey: ['groups'] }),
+        queryClient.invalidateQueries({ queryKey: ['activity'] }),
+      ]);
+    },
+  });
 }
 
 export function useTransferGroupOwnership(groupId: string) {

@@ -31,10 +31,11 @@ export function runAuditGate() {
   const blockingFindings = getBlockingFindings(report);
   const activeExceptions = exceptions.filter((exception) => exception.tool === 'npm-audit');
   const unexceptedFindings = getUnexceptedFindings(blockingFindings, activeExceptions);
+  const findingMap = new Map(blockingFindings);
 
   for (const [packageName, vulnerability] of blockingFindings) {
     const exception = activeExceptions.find((candidate) =>
-      findingAliases(packageName, vulnerability).has(candidate.finding),
+      findingAliases(packageName, vulnerability, findingMap).has(candidate.finding),
     );
 
     if (exception) {
@@ -106,31 +107,43 @@ export function getBlockingFindings(report) {
 }
 
 export function getUnexceptedFindings(blockingFindings, activeExceptions) {
+  const findingMap = new Map(blockingFindings);
+
   return blockingFindings.filter(
     ([packageName, vulnerability]) =>
       !activeExceptions.some((exception) =>
-        findingAliases(packageName, vulnerability).has(exception.finding),
+        findingAliases(packageName, vulnerability, findingMap).has(exception.finding),
       ),
   );
 }
 
-export function findingAliases(packageName, vulnerability) {
-  const aliases = new Set([packageName]);
+export function findingAliases(packageName, vulnerability, findingMap = new Map()) {
+  const aliases = new Set();
+  const visited = new Set();
 
-  for (const cause of vulnerability.via ?? []) {
-    if (typeof cause === 'string') {
-      aliases.add(cause);
-      continue;
-    }
+  function collectAliases(currentPackageName, currentVulnerability) {
+    if (visited.has(currentPackageName)) return;
+    visited.add(currentPackageName);
+    aliases.add(currentPackageName);
 
-    if (cause.source !== undefined) aliases.add(String(cause.source));
-    if (typeof cause.url === 'string') {
-      aliases.add(cause.url);
-      const identifier = cause.url.split('/').filter(Boolean).at(-1);
-      if (identifier) aliases.add(identifier);
+    for (const cause of currentVulnerability.via ?? []) {
+      if (typeof cause === 'string') {
+        aliases.add(cause);
+        const transitiveCause = findingMap.get(cause);
+        if (transitiveCause) collectAliases(cause, transitiveCause);
+        continue;
+      }
+
+      if (cause.source !== undefined) aliases.add(String(cause.source));
+      if (typeof cause.url === 'string') {
+        aliases.add(cause.url);
+        const identifier = cause.url.split('/').filter(Boolean).at(-1);
+        if (identifier) aliases.add(identifier);
+      }
     }
   }
 
+  collectAliases(packageName, vulnerability);
   return aliases;
 }
 

@@ -111,6 +111,12 @@ vi.mock('./hooks/useGroupLedger', () => ({
   }),
   useAddTransaction: () => ({ isPending: false, isError: false, mutateAsync: vi.fn() }),
   useReverseTransaction: () => ({ isPending: false, isError: false, mutateAsync: vi.fn() }),
+  useRemoveGroupMember: () => ({
+    isPending: false,
+    isError: false,
+    error: null,
+    mutateAsync: vi.fn(),
+  }),
 }));
 
 vi.mock('./hooks/useActivity', () => ({
@@ -254,6 +260,18 @@ describe('BeerMe app shell', () => {
     await user.click(screen.getByRole('button', { name: 'History' }));
     expect(screen.getByRole('heading', { name: 'Transaction history' })).toBeInTheDocument();
     expect(screen.getByText(/Trivia night/)).toBeInTheDocument();
+  });
+
+  it('lets owners open a targeted member-removal confirmation', async () => {
+    const user = userEvent.setup();
+    renderApp('/groups/group-1');
+
+    expect(screen.getAllByRole('button', { name: 'Remove member' })).toHaveLength(1);
+    await user.click(screen.getByRole('button', { name: 'Remove member' }));
+
+    const dialog = screen.getByRole('dialog', { name: 'Remove Alex?' });
+    expect(within(dialog).getByText(/@alex will lose access immediately/i)).toBeVisible();
+    expect(within(dialog).getByRole('button', { name: 'Remove member' })).toBeVisible();
   });
 
   it('renders a useful not-found route', () => {

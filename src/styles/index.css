@@ -1812,6 +1812,27 @@ a:active {
   font-size: 0.7rem;
 }
 
+.person-card__remove {
+  min-height: 2.5rem;
+  margin-top: 0.55rem;
+  padding: 0.55rem 0.7rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  color: #8b3026;
+  background: transparent;
+  border: 0;
+  border-radius: 0.7rem;
+  font-size: 0.7rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.person-card__remove:hover {
+  background: rgba(139, 48, 38, 0.07);
+}
+
 .matrix-heading {
   margin-bottom: 0.35rem;
 }
@@ -2047,6 +2068,7 @@ a:active {
 }
 
 .activity-card--member_joined .activity-card__icon,
+.activity-card--member_removed .activity-card__icon,
 .activity-card--group_created .activity-card__icon {
   color: #214c36;
   background: var(--green-soft);

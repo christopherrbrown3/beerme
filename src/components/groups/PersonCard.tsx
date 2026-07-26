@@ -1,4 +1,4 @@
-import { Crown, UserRound } from 'lucide-react';
+import { Crown, UserMinus, UserRound } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 import { type PairBalance } from '../../types/balances';
@@ -12,6 +12,7 @@ type PersonCardProps = {
   currentUserId: string;
   balance: PairBalance | null;
   onAddTransaction: (parties: TransactionParties) => void;
+  onRemove?: () => void;
 };
 
 export function PersonCard({
@@ -20,6 +21,7 @@ export function PersonCard({
   currentUserId,
   balance,
   onAddTransaction,
+  onRemove,
 }: PersonCardProps) {
   const isCurrentUser = member.userId === currentUserId;
   const relationship = getRelationshipCopy(balance, currentUserId, member, group);
@@ -80,6 +82,11 @@ export function PersonCard({
               I owe them
             </button>
           </div>
+          {onRemove && (
+            <button className="person-card__remove" type="button" onClick={onRemove}>
+              <UserMinus size={15} aria-hidden="true" /> Remove member
+            </button>
+          )}
         </>
       )}
     </motion.article>
