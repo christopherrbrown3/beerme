@@ -1,6 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { getTransactions } from './transactionService';
+import {
+  getGroupLedgerBalances,
+  getTransactionsPage,
+  TRANSACTION_PAGE_SIZE,
+} from './transactionService';
 
 type TransactionFixture = {
   id: string;
@@ -17,14 +21,16 @@ type TransactionFixture = {
 
 const database = vi.hoisted(() => ({
   pages: [] as TransactionFixture[][],
+  balances: [] as { debtor_user_id: string; creditor_user_id: string; quantity: number }[],
   limits: [] as number[],
   cursors: [] as string[],
   filters: [] as string[],
+  rpc: vi.fn(),
   from: vi.fn(),
 }));
 
 vi.mock('../lib/supabase', () => ({
-  getSupabaseClient: () => ({ from: database.from }),
+  getSupabaseClient: () => ({ from: database.from, rpc: database.rpc }),
 }));
 
 function transaction(index: number): TransactionFixture {
@@ -46,9 +52,14 @@ function transaction(index: number): TransactionFixture {
 describe('transaction pagination', () => {
   beforeEach(() => {
     database.pages = [];
+    database.balances = [];
     database.limits = [];
     database.cursors = [];
     database.filters = [];
+    database.rpc.mockReset();
+    database.rpc.mockImplementation(() =>
+      Promise.resolve({ data: database.balances, error: null }),
+    );
     database.from.mockReset();
     database.from.mockImplementation(() => {
       const builder = {
@@ -76,20 +87,53 @@ describe('transaction pagination', () => {
     });
   });
 
-  it('keeps requesting deterministic pages until the ledger is exhausted', async () => {
+  it('loads one bounded, deterministically ordered ledger page', async () => {
     database.pages = [
-      Array.from({ length: 1_000 }, (_, index) => transaction(index)),
-      [transaction(1_000)],
+      Array.from({ length: TRANSACTION_PAGE_SIZE + 1 }, (_, index) => transaction(index)),
     ];
 
-    const entries = await getTransactions('group-1');
+    const page = await getTransactionsPage('group-1', null);
 
-    expect(entries).toHaveLength(1_001);
-    expect(entries.at(-1)?.id).toBe('transaction-1000');
-    expect(database.limits).toEqual([1_000, 1_000]);
-    expect(database.filters).toEqual(['group-1', 'group-1']);
+    expect(page.entries).toHaveLength(TRANSACTION_PAGE_SIZE);
+    expect(page.entries.at(-1)?.id).toBe('transaction-0049');
+    expect(page.nextCursor).toEqual({
+      createdAt: '2026-01-01T00:00:49.000Z',
+      id: 'transaction-0049',
+    });
+    expect(database.limits).toEqual([TRANSACTION_PAGE_SIZE + 1]);
+    expect(database.filters).toEqual(['group-1']);
+  });
+
+  it('uses the supplied keyset cursor for the next bounded page', async () => {
+    database.pages = [[transaction(51)]];
+
+    await expect(
+      getTransactionsPage('group-1', {
+        createdAt: '2026-01-01T00:00:49.000Z',
+        id: 'transaction-0049',
+      }),
+    ).resolves.toMatchObject({ nextCursor: null });
+
     expect(database.cursors).toEqual([
-      'created_at.lt.2026-01-01T00:16:39.000Z,and(created_at.eq.2026-01-01T00:16:39.000Z,id.lt.transaction-0999)',
+      'created_at.lt.2026-01-01T00:00:49.000Z,and(created_at.eq.2026-01-01T00:00:49.000Z,id.lt.transaction-0049)',
     ]);
+  });
+});
+
+describe('group ledger balances', () => {
+  it('maps the compact server summary into balance entries', async () => {
+    database.balances = [{ debtor_user_id: 'alex', creditor_user_id: 'chris', quantity: 3 }];
+
+    await expect(getGroupLedgerBalances('group-1')).resolves.toEqual([
+      {
+        debtor: { id: 'alex' },
+        creditor: { id: 'chris' },
+        quantity: 3,
+        reversedAt: null,
+      },
+    ]);
+    expect(database.rpc).toHaveBeenCalledWith('get_group_ledger_balances', {
+      target_group_id: 'group-1',
+    });
   });
 });

@@ -1,4 +1,10 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  type InfiniteData,
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 
 import {
   deleteGroup,
@@ -11,16 +17,20 @@ import {
 } from '../services/groupService';
 import {
   addTransaction,
-  getTransactions,
+  getGroupLedgerBalances,
+  getTransactionsPage,
   reverseTransaction,
+  type TransactionCursor,
+  type TransactionPage,
 } from '../services/transactionService';
 import { type GroupCurrency, type GroupDetails } from '../types/groups';
 import { type CreateTransactionInput, type LedgerEntry } from '../types/transactions';
-import { normalizeTransactionNote } from '../utils/transactionValidation';
 import { useAuth } from './useAuth';
 
 export const groupQueryKey = (groupId: string) => ['group', groupId] as const;
 export const transactionsQueryKey = (groupId: string) => ['transactions', groupId] as const;
+export const groupLedgerBalancesQueryKey = (groupId: string) =>
+  ['group-ledger-balances', groupId] as const;
 
 export function useGroupDetails(groupId: string) {
   const { user } = useAuth();
@@ -32,10 +42,28 @@ export function useGroupDetails(groupId: string) {
   });
 }
 
-export function useTransactions(groupId: string) {
-  return useQuery({
+export function useTransactions(groupId: string, enabled: boolean) {
+  return useInfiniteQuery<
+    TransactionPage,
+    Error,
+    InfiniteData<TransactionPage>,
+    ReturnType<typeof transactionsQueryKey>,
+    TransactionCursor | null
+  >({
     queryKey: transactionsQueryKey(groupId),
-    queryFn: () => getTransactions(groupId),
+    queryFn: ({ pageParam }) => getTransactionsPage(groupId, pageParam),
+    initialPageParam: null as TransactionCursor | null,
+    getNextPageParam: (page) => page.nextCursor ?? undefined,
+    // Keep the browser cache and mounted History cards bounded at two pages.
+    maxPages: 2,
+    enabled: Boolean(groupId) && enabled,
+  });
+}
+
+export function useGroupLedgerBalances(groupId: string) {
+  return useQuery({
+    queryKey: groupLedgerBalancesQueryKey(groupId),
+    queryFn: () => getGroupLedgerBalances(groupId),
     enabled: Boolean(groupId),
   });
 }
@@ -63,6 +91,7 @@ function useRemoveGroupMutation(groupId: string, mutationFn: (groupId: string) =
     onSuccess: async () => {
       queryClient.removeQueries({ queryKey: groupQueryKey(groupId), exact: true });
       queryClient.removeQueries({ queryKey: transactionsQueryKey(groupId), exact: true });
+      queryClient.removeQueries({ queryKey: groupLedgerBalancesQueryKey(groupId), exact: true });
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['groups'] }),
         queryClient.invalidateQueries({ queryKey: ['activity'] }),
@@ -96,6 +125,7 @@ export function useRemoveGroupMember(groupId: string) {
       );
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: groupQueryKey(groupId) }),
+        queryClient.invalidateQueries({ queryKey: groupLedgerBalancesQueryKey(groupId) }),
         queryClient.invalidateQueries({ queryKey: ['groups'] }),
         queryClient.invalidateQueries({ queryKey: ['activity'] }),
       ]);
@@ -125,6 +155,7 @@ export function useTransferGroupOwnership(groupId: string) {
     onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: groupQueryKey(groupId) }),
+        queryClient.invalidateQueries({ queryKey: groupLedgerBalancesQueryKey(groupId) }),
         queryClient.invalidateQueries({ queryKey: ['groups'] }),
         queryClient.invalidateQueries({ queryKey: ['activity'] }),
       ]);
@@ -132,94 +163,32 @@ export function useTransferGroupOwnership(groupId: string) {
   });
 }
 
-type AddTransactionContext = {
-  previous?: LedgerEntry[];
-  optimisticId: string;
-};
-
 export function useAddTransaction(group: GroupDetails) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const queryKey = transactionsQueryKey(group.id);
 
-  return useMutation<LedgerEntry, Error, CreateTransactionInput, AddTransactionContext>({
+  return useMutation<LedgerEntry, Error, CreateTransactionInput>({
     mutationFn: (input) => addTransaction(user!.id, input),
-    onMutate: async (input) => {
-      await queryClient.cancelQueries({ queryKey });
-      const previous = queryClient.getQueryData<LedgerEntry[]>(queryKey);
-      const optimisticId = `optimistic-${crypto.randomUUID()}`;
-      const debtor = group.members.find((member) => member.userId === input.debtorUserId)!;
-      const creditor = group.members.find((member) => member.userId === input.creditorUserId)!;
-      const creator = group.members.find((member) => member.userId === user!.id)!;
-
-      queryClient.setQueryData<LedgerEntry[]>(queryKey, (entries = []) => [
-        {
-          id: optimisticId,
-          groupId: group.id,
-          debtor: { id: debtor.userId, username: debtor.username, displayName: debtor.displayName },
-          creditor: {
-            id: creditor.userId,
-            username: creditor.username,
-            displayName: creditor.displayName,
-          },
-          quantity: input.quantity,
-          note: normalizeTransactionNote(input.note),
-          createdBy: {
-            id: creator.userId,
-            username: creator.username,
-            displayName: creator.displayName,
-          },
-          createdAt: new Date().toISOString(),
-          reversedAt: null,
-          reversedBy: null,
-          isOptimistic: true,
-        },
-        ...entries,
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey }),
+        queryClient.invalidateQueries({ queryKey: groupLedgerBalancesQueryKey(group.id) }),
       ]);
-
-      return { previous, optimisticId };
-    },
-    onError: (_error, _input, context) => queryClient.setQueryData(queryKey, context?.previous),
-    onSuccess: (created, _input, context) => {
-      queryClient.setQueryData<LedgerEntry[]>(queryKey, (entries = []) =>
-        entries.map((entry) => (entry.id === context.optimisticId ? created : entry)),
-      );
       void queryClient.invalidateQueries({ queryKey: ['groups'] });
     },
   });
 }
 
 export function useReverseTransaction(groupId: string) {
-  const { user } = useAuth();
   const queryClient = useQueryClient();
   const queryKey = transactionsQueryKey(groupId);
 
   return useMutation({
     mutationFn: reverseTransaction,
-    onMutate: async (transactionId: string) => {
-      await queryClient.cancelQueries({ queryKey });
-      const previous = queryClient.getQueryData<LedgerEntry[]>(queryKey);
-      queryClient.setQueryData<LedgerEntry[]>(queryKey, (entries = []) =>
-        entries.map((entry) =>
-          entry.id === transactionId
-            ? {
-                ...entry,
-                reversedAt: new Date().toISOString(),
-                reversedBy: {
-                  id: user!.id,
-                  username: 'you',
-                  displayName: 'You',
-                },
-              }
-            : entry,
-        ),
-      );
-      return { previous };
-    },
-    onError: (_error, _transactionId, context) =>
-      queryClient.setQueryData(queryKey, context?.previous),
     onSettled: () => {
       void queryClient.invalidateQueries({ queryKey });
+      void queryClient.invalidateQueries({ queryKey: groupLedgerBalancesQueryKey(groupId) });
       void queryClient.invalidateQueries({ queryKey: ['groups'] });
     },
   });
