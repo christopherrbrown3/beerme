@@ -232,6 +232,14 @@ export type Database = {
         Args: { target_group_id: string };
         Returns: string;
       };
+      get_group_ledger_balances: {
+        Args: { target_group_id: string };
+        Returns: {
+          debtor_user_id: string;
+          creditor_user_id: string;
+          quantity: number;
+        }[];
+      };
       leave_group: {
         Args: { target_group_id: string };
         Returns: undefined;

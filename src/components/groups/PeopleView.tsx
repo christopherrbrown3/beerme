@@ -1,7 +1,7 @@
 import { UsersRound } from 'lucide-react';
 
 import { type GroupDetails, type GroupMember } from '../../types/groups';
-import { type LedgerEntry } from '../../types/transactions';
+import { type BalanceEntry } from '../../types/balances';
 import { type TransactionParties } from '../../types/transactions';
 import { calculatePairBalance } from '../../utils/balances';
 import { EmptyState } from '../ui/EmptyState';
@@ -9,7 +9,7 @@ import { PersonCard } from './PersonCard';
 
 type PeopleViewProps = {
   group: GroupDetails;
-  transactions: LedgerEntry[];
+  entries: BalanceEntry[];
   currentUserId: string;
   onAddTransaction: (parties: TransactionParties) => void;
   onRemoveMember?: (member: GroupMember) => void;
@@ -17,7 +17,7 @@ type PeopleViewProps = {
 
 export function PeopleView({
   group,
-  transactions,
+  entries,
   currentUserId,
   onAddTransaction,
   onRemoveMember,
@@ -51,7 +51,7 @@ export function PeopleView({
             balance={
               member.userId === currentUserId
                 ? null
-                : calculatePairBalance(transactions, currentUserId, member.userId)
+                : calculatePairBalance(entries, currentUserId, member.userId)
             }
             onAddTransaction={onAddTransaction}
             onRemove={

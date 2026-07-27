@@ -15,7 +15,7 @@ import { RelationshipMatrix } from '../components/groups/RelationshipMatrix';
 import { RemoveMemberDialog } from '../components/groups/RemoveMemberDialog';
 import { TransferOwnershipDialog } from '../components/groups/TransferOwnershipDialog';
 import { EmptyState } from '../components/ui/EmptyState';
-import { useGroupDetails, useTransactions } from '../hooks/useGroupLedger';
+import { useGroupDetails, useGroupLedgerBalances, useTransactions } from '../hooks/useGroupLedger';
 import { useAuth } from '../hooks/useAuth';
 import { type GroupDetails, type GroupMember } from '../types/groups';
 import { type LedgerEntry, type TransactionParties } from '../types/transactions';
@@ -26,8 +26,9 @@ export function GroupLedgerPage() {
   const { groupId = '' } = useParams();
   const { user } = useAuth();
   const groupQuery = useGroupDetails(groupId);
-  const transactionsQuery = useTransactions(groupId);
   const [view, setView] = useState<GroupView>('people');
+  const transactionsQuery = useTransactions(groupId, view === 'history');
+  const balancesQuery = useGroupLedgerBalances(groupId);
   const [transactionDialog, setTransactionDialog] = useState<TransactionParties | 'generic' | null>(
     null,
   );
@@ -54,7 +55,11 @@ export function GroupLedgerPage() {
   }
 
   const group = groupQuery.data;
-  const transactions = transactionsQuery.data ?? [];
+  const transactions = transactionsQuery.data?.pages.flatMap((page) => page.entries) ?? [];
+  const balances = balancesQuery.data ?? [];
+  const isLedgerLoading =
+    view === 'history' ? transactionsQuery.isLoading : balancesQuery.isLoading;
+  const isLedgerError = view === 'history' ? transactionsQuery.isError : balancesQuery.isError;
 
   return (
     <div className="page group-ledger-page">
@@ -105,9 +110,9 @@ export function GroupLedgerPage() {
 
       <GroupSummary
         group={group}
-        transactions={transactions}
+        entries={balances}
         currentUserId={user!.id}
-        isLoading={transactionsQuery.isLoading || transactionsQuery.isError}
+        isLoading={balancesQuery.isLoading || balancesQuery.isError}
       />
 
       <div className="group-facts" aria-label="Group details">
@@ -147,26 +152,28 @@ export function GroupLedgerPage() {
         </button>
       </nav>
 
-      {transactionsQuery.isLoading && <TransactionSkeleton />}
+      {isLedgerLoading && <TransactionSkeleton />}
 
-      {transactionsQuery.isError && (
+      {isLedgerError && (
         <section className="groups-error" role="alert">
           <h2>We couldn’t load the ledger.</h2>
           <p>Check your connection, then try again.</p>
           <button
             className="secondary-button"
             type="button"
-            onClick={() => void transactionsQuery.refetch()}
+            onClick={() =>
+              void (view === 'history' ? transactionsQuery.refetch() : balancesQuery.refetch())
+            }
           >
             Try again
           </button>
         </section>
       )}
 
-      {!transactionsQuery.isLoading && !transactionsQuery.isError && view === 'people' && (
+      {!balancesQuery.isLoading && !balancesQuery.isError && view === 'people' && (
         <PeopleView
           group={group}
-          transactions={transactions}
+          entries={balances}
           currentUserId={user!.id}
           onAddTransaction={setTransactionDialog}
           onRemoveMember={setRemovingMember}
@@ -180,13 +187,16 @@ export function GroupLedgerPage() {
           currentUserId={user!.id}
           onAddTransaction={() => setTransactionDialog('generic')}
           onReverse={setReversingEntry}
+          hasMore={transactionsQuery.hasNextPage}
+          isLoadingMore={transactionsQuery.isFetchingNextPage}
+          onLoadMore={() => void transactionsQuery.fetchNextPage()}
         />
       )}
 
-      {!transactionsQuery.isLoading && !transactionsQuery.isError && view === 'matrix' && (
+      {!balancesQuery.isLoading && !balancesQuery.isError && view === 'matrix' && (
         <RelationshipMatrix
           group={group}
-          transactions={transactions}
+          entries={balances}
           currentUserId={user!.id}
           onAddTransaction={setTransactionDialog}
         />
@@ -263,6 +273,9 @@ type HistoryViewProps = {
   currentUserId: string;
   onAddTransaction: () => void;
   onReverse: (entry: LedgerEntry) => void;
+  hasMore: boolean;
+  isLoadingMore: boolean;
+  onLoadMore: () => void;
 };
 
 function HistoryView({
@@ -271,6 +284,9 @@ function HistoryView({
   currentUserId,
   onAddTransaction,
   onReverse,
+  hasMore,
+  isLoadingMore,
+  onLoadMore,
 }: HistoryViewProps) {
   return (
     <>
@@ -279,7 +295,7 @@ function HistoryView({
           <p className="eyebrow">Newest first</p>
           <h2>Transaction history</h2>
         </div>
-        <span className="count-pill" aria-label={`${transactions.length} transactions`}>
+        <span className="count-pill" aria-label={`${transactions.length} loaded transactions`}>
           {transactions.length}
         </span>
       </div>
@@ -292,19 +308,34 @@ function HistoryView({
           </button>
         </EmptyState>
       ) : (
-        <div className="transaction-list">
-          <AnimatePresence initial={false}>
-            {transactions.map((entry) => (
-              <TransactionCard
-                key={entry.id}
-                entry={entry}
-                group={group}
-                currentUserId={currentUserId}
-                onReverse={onReverse}
-              />
-            ))}
-          </AnimatePresence>
-        </div>
+        <>
+          <div className="transaction-list">
+            <AnimatePresence initial={false}>
+              {transactions.map((entry) => (
+                <TransactionCard
+                  key={entry.id}
+                  entry={entry}
+                  group={group}
+                  currentUserId={currentUserId}
+                  onReverse={onReverse}
+                />
+              ))}
+            </AnimatePresence>
+          </div>
+          {hasMore && (
+            <div className="ledger-load-more">
+              <button
+                className="secondary-button"
+                type="button"
+                disabled={isLoadingMore}
+                onClick={onLoadMore}
+              >
+                {isLoadingMore ? 'Loading older transactions…' : 'Load older transactions'}
+              </button>
+              <p>Showing up to 100 recent transactions at a time.</p>
+            </div>
+          )}
+        </>
       )}
     </>
   );

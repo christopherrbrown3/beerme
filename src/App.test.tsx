@@ -104,6 +104,15 @@ vi.mock('./hooks/useGroupLedger', () => ({
     isError: false,
   }),
   useTransactions: () => ({
+    data: { pages: [{ entries: ledgerState.transactions, nextCursor: null }] },
+    isLoading: false,
+    isError: false,
+    hasNextPage: false,
+    isFetchingNextPage: false,
+    fetchNextPage: vi.fn(),
+    refetch: vi.fn(),
+  }),
+  useGroupLedgerBalances: () => ({
     data: ledgerState.transactions,
     isLoading: false,
     isError: false,

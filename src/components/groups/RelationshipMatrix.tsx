@@ -1,21 +1,22 @@
 import { motion } from 'framer-motion';
 
 import { type GroupDetails, type GroupMember } from '../../types/groups';
-import { type LedgerEntry, type TransactionParties } from '../../types/transactions';
+import { type BalanceEntry } from '../../types/balances';
+import { type TransactionParties } from '../../types/transactions';
 import { calculateDirectionalBalance } from '../../utils/balances';
 import { getMatrixHeatTone } from '../../utils/matrix';
 import { formatUnitQuantity, formatUnitSymbols } from '../../utils/unitPresentation';
 
 type RelationshipMatrixProps = {
   group: GroupDetails;
-  transactions: LedgerEntry[];
+  entries: BalanceEntry[];
   currentUserId: string;
   onAddTransaction: (parties: TransactionParties) => void;
 };
 
 export function RelationshipMatrix({
   group,
-  transactions,
+  entries,
   currentUserId,
   onAddTransaction,
 }: RelationshipMatrixProps) {
@@ -72,7 +73,7 @@ export function RelationshipMatrix({
                   }
 
                   const quantity = calculateDirectionalBalance(
-                    transactions,
+                    entries,
                     rowMember.userId,
                     columnMember.userId,
                   );
