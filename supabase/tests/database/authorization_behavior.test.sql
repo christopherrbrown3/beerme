@@ -15,7 +15,7 @@ exception
 end;
 $$;
 
-select plan(67);
+select plan(70);
 
 insert into auth.users (
   id, email, raw_user_meta_data
@@ -111,6 +111,22 @@ select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001
 select is((select count(*) from public.groups), 1::bigint, 'owner reads only their group');
 select is((select count(*) from public.memberships), 4::bigint, 'owner reads current group memberships');
 select is((select count(*) from public.transactions), 2::bigint, 'owner reads current group ledger');
+select is(
+  (
+    select count(*)
+    from public.get_group_ledger_balances('20000000-0000-4000-8000-000000000001')
+  ),
+  2::bigint,
+  'owner receives one compact balance movement per active relationship direction'
+);
+select is(
+  (
+    select sum(quantity)
+    from public.get_group_ledger_balances('20000000-0000-4000-8000-000000000001')
+  ),
+  3::numeric,
+  'the compact balance summary preserves active ledger quantities'
+);
 select is((select count(*) from public.profiles), 4::bigint, 'owner reads only relevant profiles');
 select ok(
   pg_temp.throws_sqlstate(
@@ -525,6 +541,14 @@ select is(
   ),
   0::bigint,
   'a stranger cannot read another ledger'
+);
+select is(
+  (
+    select count(*)
+    from public.get_group_ledger_balances('20000000-0000-4000-8000-000000000001')
+  ),
+  0::bigint,
+  'a stranger cannot aggregate another group ledger'
 );
 select is(
   (

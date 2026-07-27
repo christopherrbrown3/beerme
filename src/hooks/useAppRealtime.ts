@@ -26,6 +26,7 @@ export function useAppRealtime() {
         void queryClient.invalidateQueries({ queryKey: ['groups'] });
         void queryClient.invalidateQueries({ queryKey: ['group'] });
         void queryClient.invalidateQueries({ queryKey: ['transactions'] });
+        void queryClient.invalidateQueries({ queryKey: ['group-ledger-balances'] });
         void queryClient.invalidateQueries({ queryKey: ['activity'] });
       })
       .on(
@@ -47,6 +48,10 @@ export function useAppRealtime() {
           if (payload.eventType === 'DELETE' && changedUserId === currentUserId) {
             void queryClient.resetQueries({ queryKey: ['group', groupId], exact: true });
             void queryClient.resetQueries({ queryKey: ['transactions', groupId], exact: true });
+            void queryClient.resetQueries({
+              queryKey: ['group-ledger-balances', groupId],
+              exact: true,
+            });
             void queryClient.invalidateQueries({ queryKey: ['groups'] });
             void queryClient.invalidateQueries({ queryKey: ['activity'] });
             return;
@@ -54,6 +59,7 @@ export function useAppRealtime() {
 
           void queryClient.invalidateQueries({ queryKey: ['groups'] });
           void queryClient.invalidateQueries({ queryKey: ['group', groupId] });
+          void queryClient.invalidateQueries({ queryKey: ['group-ledger-balances', groupId] });
           void queryClient.invalidateQueries({ queryKey: ['activity'] });
         },
       )

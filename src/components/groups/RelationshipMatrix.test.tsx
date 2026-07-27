@@ -46,7 +46,7 @@ describe('RelationshipMatrix', () => {
     render(
       <RelationshipMatrix
         group={group}
-        transactions={[ledgerEntry('alex', 'chris', 3), ledgerEntry('chris', 'alex', 1)]}
+        entries={[ledgerEntry('alex', 'chris', 3), ledgerEntry('chris', 'alex', 1)]}
         currentUserId="chris"
         onAddTransaction={vi.fn()}
       />,
@@ -65,7 +65,7 @@ describe('RelationshipMatrix', () => {
     render(
       <RelationshipMatrix
         group={group}
-        transactions={[]}
+        entries={[]}
         currentUserId="chris"
         onAddTransaction={onAddTransaction}
       />,
@@ -82,7 +82,7 @@ describe('RelationshipMatrix', () => {
     render(
       <RelationshipMatrix
         group={group}
-        transactions={[ledgerEntry('alex', 'chris', 3)]}
+        entries={[ledgerEntry('alex', 'chris', 3)]}
         currentUserId="chris"
         onAddTransaction={vi.fn()}
       />,

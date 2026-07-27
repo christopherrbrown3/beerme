@@ -1,19 +1,19 @@
 import { ArrowDownLeft, ArrowUpRight } from 'lucide-react';
 
 import { type GroupDetails } from '../../types/groups';
-import { type LedgerEntry } from '../../types/transactions';
+import { type BalanceEntry } from '../../types/balances';
 import { calculateUserBalance } from '../../utils/balances';
 import { formatUnitQuantity } from '../../utils/unitPresentation';
 
 type GroupSummaryProps = {
   group: GroupDetails;
-  transactions: LedgerEntry[];
+  entries: BalanceEntry[];
   currentUserId: string;
   isLoading: boolean;
 };
 
-export function GroupSummary({ group, transactions, currentUserId, isLoading }: GroupSummaryProps) {
-  const balance = calculateUserBalance(transactions, currentUserId);
+export function GroupSummary({ group, entries, currentUserId, isLoading }: GroupSummaryProps) {
+  const balance = calculateUserBalance(entries, currentUserId);
 
   return (
     <section className="balance-summary" aria-label="Your group balance">

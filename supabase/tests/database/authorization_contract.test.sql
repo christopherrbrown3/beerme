@@ -32,6 +32,7 @@ select set_eq(
   array[
     'delete_group(uuid)',
     'get_group_invite_token(uuid)',
+    'get_group_ledger_balances(uuid)',
     'handle_new_user()',
     'is_username_available(text)',
     'join_group(uuid)',
@@ -174,6 +175,7 @@ select set_eq(
   array[
     'delete_group(uuid)',
     'get_group_invite_token(uuid)',
+    'get_group_ledger_balances(uuid)',
     'is_username_available(text)',
     'join_group(uuid)',
     'leave_group(uuid)',
