@@ -3,7 +3,9 @@ import { expect, test } from '@playwright/test';
 test('signed-out visitors can move between login and signup', async ({ page }) => {
   await page.goto('/');
 
-  await expect(page).toHaveURL(/\/auth\/login/);
+  await expect(page).toHaveURL(/\/$/);
+  await expect(page.getByRole('heading', { name: 'Good friends. Clear tabs.' })).toBeVisible();
+  await page.getByRole('link', { name: 'I already have an account' }).click();
   await expect(page.getByRole('heading', { name: 'Sign in to your crew.' })).toBeVisible();
   await expect(page.getByLabel('Username')).toBeVisible();
   await expect(page.locator('input[type="email"]')).toHaveCount(0);
@@ -55,7 +57,7 @@ test('an unsafe stored Pages redirect cannot prevent app startup', async ({ page
   await page.evaluate(() => sessionStorage.setItem('beerme:redirect', '//example.com/steal'));
   await page.reload();
 
-  await expect(page).toHaveURL(/\/auth\/login(?:\?next=%2F)?$/);
-  await expect(page.getByRole('heading', { name: 'Sign in to your crew.' })).toBeVisible();
+  await expect(page).toHaveURL(/\/$/);
+  await expect(page.getByRole('heading', { name: 'Good friends. Clear tabs.' })).toBeVisible();
   expect(await page.evaluate(() => sessionStorage.getItem('beerme:redirect'))).toBeNull();
 });

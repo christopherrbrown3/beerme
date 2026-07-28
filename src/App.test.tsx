@@ -165,6 +165,22 @@ describe('BeerMe app shell', () => {
     expect(screen.getByRole('button', { name: 'Create your first group' })).toBeInTheDocument();
   });
 
+  it('welcomes signed-out visitors before asking them to sign in', () => {
+    authState.user = null;
+    renderApp();
+
+    expect(screen.getByRole('heading', { name: 'Good friends. Clear tabs.' })).toBeInTheDocument();
+    expect(screen.getByText(/BeerMe remembers the beers/i)).toBeInTheDocument();
+    expect(screen.getAllByRole('link', { name: 'Start a group' })[0]).toHaveAttribute(
+      'href',
+      '/auth/signup',
+    );
+    expect(screen.getByRole('link', { name: 'I already have an account' })).toHaveAttribute(
+      'href',
+      '/auth/login',
+    );
+  });
+
   it('moves between primary routes without losing the app shell', async () => {
     const user = userEvent.setup();
     renderApp();

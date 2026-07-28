@@ -47,7 +47,7 @@ async function expectTouchTargetBudget(page: Page) {
   expect(failures).toEqual([]);
 }
 
-for (const route of ['/auth/login', '/auth/signup']) {
+for (const route of ['/', '/auth/login', '/auth/signup']) {
   test(`${route} has no blocking accessibility violations`, async ({ page }) => {
     await page.goto(route);
     await expect(page.locator('h1')).toBeVisible();
