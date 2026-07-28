@@ -1,6 +1,7 @@
 import { Route, Routes } from 'react-router-dom';
 
 import { AuthLayout } from './components/auth/AuthLayout';
+import { HomeRoute } from './components/auth/HomeRoute';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { PublicOnlyRoute } from './components/auth/PublicOnlyRoute';
 import { AppLayout } from './components/layout/AppLayout';
@@ -19,6 +20,11 @@ export function App() {
     <>
       <UpdatePrompt />
       <Routes>
+        <Route element={<HomeRoute />}>
+          <Route element={<AppLayout />}>
+            <Route index element={<GroupsPage />} />
+          </Route>
+        </Route>
         <Route element={<PublicOnlyRoute />}>
           <Route path="auth" element={<AuthLayout />}>
             <Route path="login" element={<LoginPage />} />
@@ -28,7 +34,6 @@ export function App() {
         <Route element={<ProtectedRoute />}>
           <Route path="join/:token" element={<JoinGroupPage />} />
           <Route element={<AppLayout />}>
-            <Route index element={<GroupsPage />} />
             <Route path="groups/:groupId" element={<GroupLedgerPage />} />
             <Route path="activity" element={<ActivityPage />} />
             <Route path="profile" element={<ProfilePage />} />
