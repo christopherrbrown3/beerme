@@ -27,6 +27,7 @@ The first public release is a complete mobile-first group ledger:
 
 - **Shared groups** — create a group, invite friends with a link or on-device QR code, and see updates live
 - **Friendly IOUs** — record who owes whom in a few taps, with optional notes and optimistic feedback
+- **Settle up in kind** — record what you actually returned, reduce your live balance, and celebrate when you are all square
 - **Clear balances** — understand individual, pairwise, and whole-group positions calculated from ledger history
 - **Relationship matrix** — scan every directional balance in one compact, interactive view
 - **Honest history** — reverse mistakes while preserving the original entry and its correction
@@ -42,6 +43,7 @@ Beer is simply the default. Owners can choose a familiar IOU unit in one tap or 
 BeerMe treats the ledger as the source of truth:
 
 - Balances are calculated from transactions, never stored as mutable totals.
+- Settlements are append-only ledger entries validated against the live debt, never silent balance edits.
 - Transactions cannot be edited or individually deleted.
 - Corrections are append-only reversals with an actor and timestamp.
 - Group access is enforced by PostgreSQL Row Level Security, not just hidden in the interface.

@@ -7,6 +7,7 @@ export type ActivityEventType =
   | 'invite_rotated'
   | 'owner_transferred'
   | 'transaction_created'
+  | 'transaction_settled'
   | 'transaction_reversed';
 
 export type ActivityEvent = {

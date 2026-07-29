@@ -4,9 +4,12 @@ export type LedgerProfile = {
   displayName: string;
 };
 
+export type TransactionKind = 'iou' | 'settlement';
+
 export type LedgerEntry = {
   id: string;
   groupId: string;
+  kind: TransactionKind;
   debtor: LedgerProfile;
   creditor: LedgerProfile;
   quantity: number;
@@ -24,6 +27,12 @@ export type CreateTransactionInput = {
   creditorUserId: string;
   quantity: number;
   note: string;
+};
+
+export type SettleUpInput = {
+  groupId: string;
+  creditorUserId: string;
+  quantity: number;
 };
 
 export type TransactionParties = {

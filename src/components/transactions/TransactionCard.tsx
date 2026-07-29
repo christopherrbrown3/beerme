@@ -1,4 +1,4 @@
-import { RotateCcw } from 'lucide-react';
+import { Beer, RotateCcw } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 import { type GroupDetails } from '../../types/groups';
@@ -21,20 +21,25 @@ export function TransactionCard({ entry, group, currentUserId, onReverse }: Tran
 
   return (
     <motion.article
-      className={
-        entry.reversedAt ? 'transaction-card transaction-card--reversed' : 'transaction-card'
-      }
+      className={[
+        'transaction-card',
+        entry.kind === 'settlement' ? 'transaction-card--settlement' : '',
+        entry.reversedAt ? 'transaction-card--reversed' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
       layout
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
     >
       <div className="transaction-card__symbol" aria-hidden="true">
-        {group.currency.symbol}
+        {entry.kind === 'settlement' ? <Beer size={20} /> : group.currency.symbol}
       </div>
       <div className="transaction-card__body">
         <div className="transaction-card__topline">
           <p>
-            <strong>{entry.debtor.displayName}</strong> owes{' '}
+            <strong>{entry.debtor.displayName}</strong>{' '}
+            {entry.kind === 'settlement' ? 'settled up with' : 'owes'}{' '}
             <strong>{entry.creditor.displayName}</strong>{' '}
             <span>
               {entry.quantity} {unit}

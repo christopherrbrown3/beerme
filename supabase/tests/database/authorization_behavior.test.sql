@@ -15,7 +15,7 @@ exception
 end;
 $$;
 
-select plan(70);
+select plan(80);
 
 insert into auth.users (
   id, email, raw_user_meta_data
@@ -431,11 +431,107 @@ select lives_ok(
       '20000000-0000-4000-8000-000000000001',
       '10000000-0000-4000-8000-000000000002',
       '10000000-0000-4000-8000-000000000001',
-      1,
+      2,
       '10000000-0000-4000-8000-000000000002'
     )
   $$,
   'a member can add a valid same-group transaction'
+);
+
+select ok(
+  pg_temp.throws_sqlstate(
+    $$
+      insert into public.transactions (
+        group_id, debtor_user_id, creditor_user_id, quantity, kind, created_by
+      ) values (
+        '20000000-0000-4000-8000-000000000001',
+        '10000000-0000-4000-8000-000000000002',
+        '10000000-0000-4000-8000-000000000001',
+        1,
+        'settlement',
+        '10000000-0000-4000-8000-000000000002'
+      )
+    $$,
+    '42501'
+  ),
+  'a member cannot bypass settlement validation with a direct insert'
+);
+
+select lives_ok(
+  $$select public.settle_up(
+    '20000000-0000-4000-8000-000000000001',
+    '10000000-0000-4000-8000-000000000001',
+    1
+  )$$,
+  'a member can partially settle their own current debt'
+);
+
+select is(
+  (
+    select count(*)
+    from public.transactions
+    where kind = 'settlement'
+      and debtor_user_id = '10000000-0000-4000-8000-000000000002'
+      and creditor_user_id = '10000000-0000-4000-8000-000000000001'
+      and quantity = 1
+  ),
+  1::bigint,
+  'a settlement is retained as a first-class append-only ledger entry'
+);
+
+select is(
+  (
+    select sum(
+      case
+        when debtor_user_id = '10000000-0000-4000-8000-000000000002' then quantity
+        else -quantity
+      end
+    )
+    from public.get_group_ledger_balances('20000000-0000-4000-8000-000000000001')
+    where debtor_user_id in (
+      '10000000-0000-4000-8000-000000000001',
+      '10000000-0000-4000-8000-000000000002'
+    )
+      and creditor_user_id in (
+        '10000000-0000-4000-8000-000000000001',
+        '10000000-0000-4000-8000-000000000002'
+      )
+  ),
+  1::numeric,
+  'a partial settlement reduces the pair balance by its quantity'
+);
+
+select ok(
+  pg_temp.throws_sqlstate(
+    $$select public.settle_up(
+      '20000000-0000-4000-8000-000000000001',
+      '10000000-0000-4000-8000-000000000001',
+      2
+    )$$,
+    '22023'
+  ),
+  'a member cannot settle more than the live outstanding balance'
+);
+
+select lives_ok(
+  $$select public.settle_up(
+    '20000000-0000-4000-8000-000000000001',
+    '10000000-0000-4000-8000-000000000001',
+    1
+  )$$,
+  'a member can finish settling the relationship'
+);
+
+select ok(
+  pg_temp.throws_sqlstate(
+    $$select public.settle_up(
+      '20000000-0000-4000-8000-000000000001',
+      '10000000-0000-4000-8000-000000000001',
+      1
+    )$$,
+    '55000'
+  ),
+  'an all-square relationship cannot be settled again'
 );
 
 select ok(
@@ -550,6 +646,17 @@ select is(
   0::bigint,
   'a stranger cannot aggregate another group ledger'
 );
+select ok(
+  pg_temp.throws_sqlstate(
+    $$select public.settle_up(
+      '20000000-0000-4000-8000-000000000001',
+      '10000000-0000-4000-8000-000000000001',
+      1
+    )$$,
+    '22023'
+  ),
+  'a stranger cannot settle a relationship in another group'
+);
 select is(
   (
     select count(*) from public.memberships
@@ -614,6 +721,17 @@ select ok(
     '42501'
   ),
   'anonymous callers cannot execute invite-rotation RPCs'
+);
+select ok(
+  pg_temp.throws_sqlstate(
+    $$select public.settle_up(
+      '20000000-0000-4000-8000-000000000001',
+      '10000000-0000-4000-8000-000000000001',
+      1
+    )$$,
+    '42501'
+  ),
+  'anonymous callers cannot execute settlement RPCs'
 );
 
 reset role;
@@ -682,6 +800,17 @@ select ok(
       )
     ) > 0,
   'membership lifecycle RPCs lock mutable authorization state'
+);
+select ok(
+  position(
+    'FOR UPDATE' in upper(pg_get_functiondef('public.settle_up(uuid, uuid, numeric)'::regprocedure))
+  ) > 0
+    and position(
+      'FOR UPDATE' in upper(
+        pg_get_functiondef('private.serialize_transaction_insert()'::regprocedure)
+      )
+    ) > 0,
+  'settlement and ledger inserts serialize through the same group row lock'
 );
 
 select * from finish();

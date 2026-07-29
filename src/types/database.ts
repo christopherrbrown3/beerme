@@ -154,6 +154,7 @@ export type Database = {
         Row: {
           id: string;
           group_id: string;
+          kind: Database['public']['Enums']['transaction_kind'];
           debtor_user_id: string;
           creditor_user_id: string;
           quantity: number;
@@ -166,6 +167,7 @@ export type Database = {
         Insert: {
           id?: string;
           group_id: string;
+          kind?: Database['public']['Enums']['transaction_kind'];
           debtor_user_id: string;
           creditor_user_id: string;
           quantity: number;
@@ -176,6 +178,7 @@ export type Database = {
           reversed_by?: string | null;
         };
         Update: {
+          kind?: Database['public']['Enums']['transaction_kind'];
           reversed_at?: string | null;
           reversed_by?: string | null;
         };
@@ -252,6 +255,14 @@ export type Database = {
         Args: { transaction_id: string };
         Returns: Database['public']['Tables']['transactions']['Row'];
       };
+      settle_up: {
+        Args: {
+          target_group_id: string;
+          target_creditor_user_id: string;
+          settlement_quantity: number;
+        };
+        Returns: Database['public']['Tables']['transactions']['Row'];
+      };
       remove_group_member: {
         Args: { target_group_id: string; target_user_id: string };
         Returns: undefined;
@@ -267,6 +278,7 @@ export type Database = {
     };
     Enums: {
       membership_role: 'owner' | 'member';
+      transaction_kind: 'iou' | 'settlement';
     };
     CompositeTypes: Record<string, never>;
   };

@@ -1,4 +1,4 @@
-import { Crown, UserMinus, UserRound } from 'lucide-react';
+import { Beer, Crown, UserMinus, UserRound } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 import { type PairBalance } from '../../types/balances';
@@ -12,6 +12,7 @@ type PersonCardProps = {
   currentUserId: string;
   balance: PairBalance | null;
   onAddTransaction: (parties: TransactionParties) => void;
+  onSettleUp: (balance: PairBalance) => void;
   onRemove?: () => void;
 };
 
@@ -21,6 +22,7 @@ export function PersonCard({
   currentUserId,
   balance,
   onAddTransaction,
+  onSettleUp,
   onRemove,
 }: PersonCardProps) {
   const isCurrentUser = member.userId === currentUserId;
@@ -61,6 +63,15 @@ export function PersonCard({
             {relationship.quantityLabel && <span>{relationship.quantityLabel}</span>}
           </div>
           <div className="person-card__actions">
+            {balance?.debtorUserId === currentUserId && (
+              <button
+                className="primary-button person-card__settle"
+                type="button"
+                onClick={() => onSettleUp(balance)}
+              >
+                <Beer size={16} aria-hidden="true" /> Settle up
+              </button>
+            )}
             <button
               className="secondary-button"
               type="button"

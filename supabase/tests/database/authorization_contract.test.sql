@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(23);
+select plan(24);
 
 select set_eq(
   $$
@@ -40,6 +40,7 @@ select set_eq(
     'remove_group_member(uuid, uuid)',
     'reverse_transaction(uuid)',
     'rotate_group_invite(uuid)',
+    'settle_up(uuid, uuid, numeric)',
     'transfer_group_ownership(uuid, uuid)'
   ],
   'the public function inventory is explicit'
@@ -56,6 +57,7 @@ select set_eq(
     'add_group_owner_membership()',
     'is_group_member(uuid, uuid)',
     'protect_transaction_history()',
+    'serialize_transaction_insert()',
     'shares_group_with(uuid)',
     'shares_invite_rotation_history_with(uuid)',
     'shares_member_removal_history_with(uuid)',
@@ -154,6 +156,19 @@ select set_eq(
 
 select set_eq(
   $$
+    select column_name::text
+    from information_schema.column_privileges
+    where table_schema = 'public'
+      and table_name = 'transactions'
+      and grantee = 'authenticated'
+      and privilege_type = 'INSERT'
+  $$,
+  array['created_by', 'creditor_user_id', 'debtor_user_id', 'group_id', 'note', 'quantity'],
+  'clients can add IOUs but cannot directly label rows as settlements'
+);
+
+select set_eq(
+  $$
     select p.proname || '(' || oidvectortypes(p.proargtypes) || ')'
     from pg_proc p
     join pg_namespace n on n.oid = p.pronamespace
@@ -182,6 +197,7 @@ select set_eq(
     'remove_group_member(uuid, uuid)',
     'reverse_transaction(uuid)',
     'rotate_group_invite(uuid)',
+    'settle_up(uuid, uuid, numeric)',
     'transfer_group_ownership(uuid, uuid)'
   ],
   'authenticated can execute only intended public RPCs'
@@ -213,7 +229,7 @@ select is(
     join pg_namespace n on n.oid = p.pronamespace
     where n.nspname in ('public', 'private') and p.prosecdef
   ),
-  17::bigint,
+  19::bigint,
   'the security-definer inventory is explicit'
 );
 
@@ -265,7 +281,12 @@ select set_eq(
       and n.nspname in ('auth', 'public')
       and function_namespace.nspname in ('public', 'private')
   $$,
-  array['on_auth_user_created', 'on_group_created', 'protect_transaction_history'],
+  array[
+    'on_auth_user_created',
+    'on_group_created',
+    'protect_transaction_history',
+    'serialize_transaction_insert'
+  ],
   'the security trigger inventory is explicit'
 );
 

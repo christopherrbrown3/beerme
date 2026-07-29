@@ -5,6 +5,8 @@ import { Link, useParams } from 'react-router-dom';
 
 import { AddTransactionDialog } from '../components/transactions/AddTransactionDialog';
 import { ReverseTransactionDialog } from '../components/transactions/ReverseTransactionDialog';
+import { SettleUpDialog, type SettlementResult } from '../components/transactions/SettleUpDialog';
+import { SettlementCelebration } from '../components/transactions/SettlementCelebration';
 import { TransactionCard } from '../components/transactions/TransactionCard';
 import { GroupSummary } from '../components/groups/GroupSummary';
 import { GroupCurrencyDialog } from '../components/groups/GroupCurrencyDialog';
@@ -18,7 +20,9 @@ import { EmptyState } from '../components/ui/EmptyState';
 import { useGroupDetails, useGroupLedgerBalances, useTransactions } from '../hooks/useGroupLedger';
 import { useAuth } from '../hooks/useAuth';
 import { type GroupDetails, type GroupMember } from '../types/groups';
+import { type PairBalance } from '../types/balances';
 import { type LedgerEntry, type TransactionParties } from '../types/transactions';
+import { formatUnitQuantity } from '../utils/unitPresentation';
 
 type GroupView = 'people' | 'matrix' | 'history';
 
@@ -33,6 +37,11 @@ export function GroupLedgerPage() {
     null,
   );
   const [reversingEntry, setReversingEntry] = useState<LedgerEntry | null>(null);
+  const [settlingWith, setSettlingWith] = useState<{
+    member: GroupMember;
+    balance: PairBalance;
+  } | null>(null);
+  const [celebration, setCelebration] = useState<SettlementResult | null>(null);
   const [isInviting, setIsInviting] = useState(false);
   const [isEditingCurrency, setIsEditingCurrency] = useState(false);
   const [isManagingMembership, setIsManagingMembership] = useState(false);
@@ -176,6 +185,7 @@ export function GroupLedgerPage() {
           entries={balances}
           currentUserId={user!.id}
           onAddTransaction={setTransactionDialog}
+          onSettleUp={(member, balance) => setSettlingWith({ member, balance })}
           onRemoveMember={setRemovingMember}
         />
       )}
@@ -242,6 +252,18 @@ export function GroupLedgerPage() {
           onClose={() => setReversingEntry(null)}
         />
       )}
+      {settlingWith && (
+        <SettleUpDialog
+          group={group}
+          member={settlingWith.member}
+          balance={settlingWith.balance}
+          onClose={() => setSettlingWith(null)}
+          onSettled={(result) => {
+            setSettlingWith(null);
+            if (result.isFullySettled) setCelebration(result);
+          }}
+        />
+      )}
       {isInviting && <InviteGroupDialog group={group} onClose={() => setIsInviting(false)} />}
       {isEditingCurrency && (
         <GroupCurrencyDialog group={group} onClose={() => setIsEditingCurrency(false)} />
@@ -263,6 +285,15 @@ export function GroupLedgerPage() {
           onClose={() => setRemovingMember(null)}
         />
       )}
+      <AnimatePresence>
+        {celebration && (
+          <SettlementCelebration
+            friendName={celebration.friendName}
+            quantityLabel={formatUnitQuantity(celebration.quantity, group.currency)}
+            onComplete={() => setCelebration(null)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

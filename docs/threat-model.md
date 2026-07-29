@@ -120,7 +120,9 @@ release boundaries.
    previous-user profile, group, ledger, and activity data inaccessible in memory and UI.
 10. Routine reads and writes are bounded independently of lifetime ledger size. Realtime events
     coalesce invalidation rather than amplify exhaustive refetches.
-11. User-controlled text is rendered as text, constrained at both client and database boundaries,
+11. A settlement can reduce only the authenticated caller's current debt to another active member;
+    PostgreSQL serializes the live-balance check and rejects over-settlement.
+12. User-controlled text is rendered as text, constrained at both client and database boundaries,
     and excluded from operational telemetry unless safely redacted.
 
 ### Input ownership

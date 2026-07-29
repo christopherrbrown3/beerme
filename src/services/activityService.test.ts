@@ -48,6 +48,7 @@ const memberships = [
 const transaction: LedgerEntry = {
   id: 'transaction-1',
   groupId: 'group-1',
+  kind: 'iou',
   debtor: { id: 'alex', username: 'alex', displayName: 'Alex' },
   creditor: { id: 'chris', username: 'chris', displayName: 'Chris' },
   quantity: 2,
@@ -137,6 +138,31 @@ describe('buildActivityFeed', () => {
 
     expect(events).toHaveLength(2);
     expect(events.map((event) => event.type)).toEqual(['member_joined', 'group_created']);
+  });
+
+  it('describes settlements as returns instead of new IOUs', () => {
+    const events = buildActivityFeed(
+      groups,
+      memberships,
+      [],
+      [
+        {
+          ...transaction,
+          id: 'settlement-1',
+          kind: 'settlement',
+          debtor: { id: 'chris', username: 'chris', displayName: 'Chris' },
+          creditor: { id: 'alex', username: 'alex', displayName: 'Alex' },
+          createdAt: '2026-07-17T14:00:00.000Z',
+          reversedAt: null,
+          reversedBy: null,
+        },
+      ],
+    );
+
+    expect(events[0]).toMatchObject({
+      type: 'transaction_settled',
+      title: 'Chris settled up with Alex — 2 Beers',
+    });
   });
 
   it('skips ownership transfers whose related profiles are hidden by row-level security', () => {
