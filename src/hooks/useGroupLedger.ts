@@ -13,6 +13,7 @@ import {
   removeGroupMember,
   rotateGroupInvite,
   transferGroupOwnership,
+  updateGroupDetails,
   updateGroupCurrency,
 } from '../services/groupService';
 import {
@@ -81,6 +82,22 @@ export function useUpdateGroupCurrency(groupId: string) {
     onSuccess: (currency) => {
       queryClient.setQueryData<GroupDetails>(groupQueryKey(groupId), (group) =>
         group ? { ...group, currency } : group,
+      );
+      void queryClient.invalidateQueries({ queryKey: ['groups'] });
+      void queryClient.invalidateQueries({ queryKey: ['activity'] });
+    },
+  });
+}
+
+export function useUpdateGroupDetails(groupId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: { name: string; description: string }) =>
+      updateGroupDetails(groupId, input),
+    onSuccess: (details) => {
+      queryClient.setQueryData<GroupDetails>(groupQueryKey(groupId), (group) =>
+        group ? { ...group, ...details } : group,
       );
       void queryClient.invalidateQueries({ queryKey: ['groups'] });
       void queryClient.invalidateQueries({ queryKey: ['activity'] });

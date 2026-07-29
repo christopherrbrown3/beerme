@@ -1792,6 +1792,43 @@ a:active {
   outline: none;
 }
 
+.group-settings-actions {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 1.25rem;
+}
+
+.settings-row {
+  align-items: center;
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border);
+  border-radius: 0.8rem;
+  color: inherit;
+  display: flex;
+  font: inherit;
+  justify-content: space-between;
+  padding: 0.85rem 0.9rem;
+  text-align: left;
+}
+
+.settings-row:hover,
+.settings-row:focus-visible {
+  border-color: var(--color-accent);
+}
+
+.settings-row span {
+  display: grid;
+  gap: 0.18rem;
+}
+
+.settings-row small {
+  color: var(--color-text-muted);
+}
+
+.settings-row--danger {
+  color: var(--color-danger);
+}
+
 .form-field textarea:focus {
   border-color: var(--amber-dark);
   box-shadow: 0 0 0 3px rgba(230, 161, 31, 0.16);

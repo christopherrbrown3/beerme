@@ -260,6 +260,22 @@ export type Database = {
           last_activity_at: string | null;
         }[];
       };
+      get_activity_feed: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          event_id: string;
+          event_type: string;
+          group_id: string;
+          group_name: string;
+          group_symbol: string;
+          actor_id: string;
+          actor_username: string;
+          actor_display_name: string | null;
+          occurred_at: string;
+          title: string;
+          detail: string | null;
+        }[];
+      };
       leave_group: {
         Args: { target_group_id: string };
         Returns: undefined;

@@ -55,13 +55,19 @@ test.describe('isolated authenticated journeys', () => {
         page.getByRole('heading', { name: groupName, exact: true, level: 1 }),
       ).toBeVisible();
 
-      await page.getByRole('button', { name: 'IOU unit' }).click();
+      await page.getByRole('button', { name: 'Group settings' }).click();
+      const settingsDialog = page.getByRole('dialog', { name: 'Group settings' });
+      await settingsDialog.getByRole('button', { name: /Ledger unit/ }).click();
       const currencyDialog = page.getByRole('dialog', { name: 'Ledger unit' });
       await currencyDialog.getByRole('button', { name: 'Coffee' }).click();
       await currencyDialog.getByRole('button', { name: 'Save unit' }).click();
       await expect(page.getByText('☕ Coffees', { exact: true })).toBeVisible();
 
-      await page.getByRole('button', { name: 'Invite' }).click();
+      await page.getByRole('button', { name: 'Group settings' }).click();
+      await page
+        .getByRole('dialog', { name: 'Group settings' })
+        .getByRole('button', { name: /Invite links/ })
+        .click();
       const inviteDialog = page.getByRole('dialog', {
         name: `Invite friends to ${groupName}`,
       });
@@ -134,7 +140,11 @@ test.describe('isolated authenticated journeys', () => {
         }),
       ).toBeVisible();
 
-      await page.getByRole('button', { name: 'IOU unit' }).click();
+      await page.getByRole('button', { name: 'Group settings' }).click();
+      await page
+        .getByRole('dialog', { name: 'Group settings' })
+        .getByRole('button', { name: /Ledger unit/ })
+        .click();
       const customCurrencyDialog = page.getByRole('dialog', { name: 'Ledger unit' });
       await customCurrencyDialog.getByRole('button', { name: 'Custom' }).click();
       await customCurrencyDialog.getByLabel('Singular').fill('Token');
@@ -165,7 +175,11 @@ test.describe('isolated authenticated journeys', () => {
       ).toBeVisible();
       await page.getByRole('link', { name: groupName }).first().click();
 
-      await page.getByRole('button', { name: 'Delete group' }).click();
+      await page.getByRole('button', { name: 'Group settings' }).click();
+      await page
+        .getByRole('dialog', { name: 'Group settings' })
+        .getByRole('button', { name: /Delete group/ })
+        .click();
       const deleteDialog = page.getByRole('dialog', { name: 'Delete this group?' });
       await deleteDialog.getByLabel(`Enter “${groupName}” to confirm`).fill(groupName);
       await deleteDialog.getByRole('button', { name: 'Delete group' }).click();

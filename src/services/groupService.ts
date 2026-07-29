@@ -231,6 +231,25 @@ export async function updateGroupCurrency(groupId: string, currency: GroupCurren
   } satisfies GroupCurrency;
 }
 
+export async function updateGroupDetails(
+  groupId: string,
+  input: Pick<CreateGroupInput, 'name' | 'description'>,
+) {
+  const { data, error } = await getSupabaseClient()
+    .from('groups')
+    .update({
+      name: normalizeGroupName(input.name),
+      description: normalizeGroupDescription(input.description),
+    })
+    .eq('id', groupId)
+    .select('name, description')
+    .single();
+
+  if (error) throw error;
+
+  return { name: data.name, description: data.description };
+}
+
 export async function leaveGroup(groupId: string) {
   const { error } = await getSupabaseClient().rpc('leave_group', { target_group_id: groupId });
   if (error) throw error;
