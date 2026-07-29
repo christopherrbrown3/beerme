@@ -2309,6 +2309,7 @@ a:active {
   grid-template-columns: 1fr auto;
   align-items: center;
   gap: 0.1rem 0.8rem;
+  overflow: hidden;
   border-radius: 0.9rem;
 }
 
@@ -2352,6 +2353,43 @@ a:active {
   opacity: 0.75;
 }
 
+.person-card__settle {
+  min-height: 2.75rem;
+  margin: 0.65rem -0.85rem -0.85rem;
+  padding: 0.65rem 0.85rem;
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  color: inherit;
+  background: rgba(255, 255, 255, 0.3);
+  border: 0;
+  border-top: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+  font: inherit;
+  font-size: 0.7rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    background-color 160ms ease-out,
+    color 160ms ease-out;
+}
+
+.person-card__settle > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  opacity: 1;
+}
+
+.person-card__settle:hover {
+  background: rgba(255, 255, 255, 0.52);
+}
+
+.person-card__settle:active {
+  background: rgba(255, 255, 255, 0.68);
+}
+
 .person-card__actions {
   margin-top: 0.75rem;
   display: grid;
@@ -2365,12 +2403,6 @@ a:active {
   padding-inline: 0.55rem;
   background: rgba(255, 255, 255, 0.45);
   font-size: 0.7rem;
-}
-
-.person-card__actions .person-card__settle {
-  grid-column: 1 / -1;
-  min-height: 2.9rem;
-  font-size: 0.75rem;
 }
 
 .settle-up-form {
@@ -2444,7 +2476,7 @@ a:active {
 }
 
 .person-card__remove {
-  min-height: 2.5rem;
+  min-height: 2.75rem;
   margin-top: 0.55rem;
   padding: 0.55rem 0.7rem;
   display: inline-flex;

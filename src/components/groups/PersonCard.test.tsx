@@ -47,7 +47,7 @@ describe('PersonCard settle-up action', () => {
       />,
     );
 
-    await user.click(screen.getByRole('button', { name: 'Settle up' }));
+    await user.click(screen.getByRole('button', { name: 'Settle up with Alex' }));
     expect(onSettleUp).toHaveBeenCalledWith(currentUserOwes);
 
     rerender(
@@ -61,6 +61,6 @@ describe('PersonCard settle-up action', () => {
       />,
     );
 
-    expect(screen.queryByRole('button', { name: 'Settle up' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Settle up with Alex' })).not.toBeInTheDocument();
   });
 });
