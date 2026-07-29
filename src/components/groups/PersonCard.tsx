@@ -1,4 +1,4 @@
-import { Beer, Crown, UserMinus, UserRound } from 'lucide-react';
+import { ArrowRight, Beer, Crown, UserMinus, UserRound } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 import { type PairBalance } from '../../types/balances';
@@ -61,17 +61,21 @@ export function PersonCard({
               {relationship.symbols}
             </strong>
             {relationship.quantityLabel && <span>{relationship.quantityLabel}</span>}
-          </div>
-          <div className="person-card__actions">
             {balance?.debtorUserId === currentUserId && (
               <button
-                className="primary-button person-card__settle"
+                className="person-card__settle"
                 type="button"
+                aria-label={`Settle up with ${member.displayName}`}
                 onClick={() => onSettleUp(balance)}
               >
-                <Beer size={16} aria-hidden="true" /> Settle up
+                <span>
+                  <Beer size={16} aria-hidden="true" /> Settle up
+                </span>
+                <ArrowRight size={16} aria-hidden="true" />
               </button>
             )}
+          </div>
+          <div className="person-card__actions">
             <button
               className="secondary-button"
               type="button"
