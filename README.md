@@ -25,7 +25,7 @@ That is the whole idea: record an IOU in a few taps, understand where everyone s
 
 The first public release is a complete mobile-first group ledger:
 
-- **Shared groups** — create a group, invite friends with a link or on-device QR code, and see updates live
+- **Shared groups** — create a group, let members share a link or on-device QR code, and let the owner limit inviting when needed
 - **Friendly IOUs** — record who owes whom in a few taps, with optional notes and optimistic feedback
 - **Settle up in kind** — record what you actually returned, reduce your live balance, and celebrate when you are all square
 - **Clear balances** — understand individual, pairwise, and whole-group positions calculated from ledger history

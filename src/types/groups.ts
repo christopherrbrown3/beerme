@@ -37,5 +37,6 @@ export type GroupMember = {
 };
 
 export type GroupDetails = GroupBase & {
+  canMembersInvite: boolean;
   members: GroupMember[];
 };

@@ -15,7 +15,7 @@ exception
 end;
 $$;
 
-select plan(93);
+select plan(98);
 
 insert into auth.users (
   id, email, raw_user_meta_data
@@ -476,13 +476,68 @@ select ok(
   ),
   'a non-owner cannot remove another member'
 );
+select is(
+  public.get_group_invite_token('20000000-0000-4000-8000-000000000001'),
+  '30000000-0000-4000-8000-000000000001'::uuid,
+  'members can retrieve the current invite token by default'
+);
+savepoint member_invite_permission_test;
+select ok(
+  pg_temp.throws_sqlstate(
+    $$
+      update public.groups
+      set members_can_invite = false
+      where id = '20000000-0000-4000-8000-000000000001'
+    $$,
+    '42501'
+  ),
+  'members have no direct write grant for the group invite permission'
+);
+select ok(
+  pg_temp.throws_sqlstate(
+    $$
+      select *
+      from public.update_group_settings(
+        '20000000-0000-4000-8000-000000000001',
+        'Audit Group One',
+        null,
+        false
+      )
+    $$,
+    '42501'
+  ),
+  'a non-owner cannot change the group invite permission through the settings RPC'
+);
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true);
+select is(
+  (
+    select updated_members_can_invite
+    from public.update_group_settings(
+      '20000000-0000-4000-8000-000000000001',
+      'Audit Group One',
+      null,
+      false
+    )
+  ),
+  false,
+  'the owner can limit invitations to themselves'
+);
+select isnt(
+  public.get_group_invite_token('20000000-0000-4000-8000-000000000001'),
+  '30000000-0000-4000-8000-000000000001'::uuid,
+  'limiting invitations replaces the member-known token while returning a fresh one to the owner'
+);
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000002', true);
 select ok(
   pg_temp.throws_sqlstate(
     $$select public.get_group_invite_token('20000000-0000-4000-8000-000000000001')$$,
     '42501'
   ),
-  'a non-owner cannot retrieve a group invite token'
+  'a member cannot retrieve the invite token after the owner disables member sharing'
 );
+rollback to savepoint member_invite_permission_test;
+release savepoint member_invite_permission_test;
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000002', true);
 select ok(
   pg_temp.throws_sqlstate(
     $$select public.rotate_group_invite('20000000-0000-4000-8000-000000000001')$$,

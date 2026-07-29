@@ -30,6 +30,7 @@ export type Database = {
           currency_name: string;
           currency_plural: string;
           currency_symbol: string;
+          members_can_invite: boolean;
           created_at: string;
         };
         Insert: {
@@ -40,6 +41,7 @@ export type Database = {
           currency_name?: string;
           currency_plural?: string;
           currency_symbol?: string;
+          members_can_invite?: boolean;
           created_at?: string;
         };
         Update: {
@@ -48,6 +50,7 @@ export type Database = {
           currency_name?: string;
           currency_plural?: string;
           currency_symbol?: string;
+          members_can_invite?: boolean;
         };
         Relationships: [
           {
@@ -303,6 +306,20 @@ export type Database = {
       rotate_group_invite: {
         Args: { target_group_id: string };
         Returns: string;
+      };
+      update_group_settings: {
+        Args: {
+          target_group_id: string;
+          next_name: string;
+          next_description: string | null;
+          members_may_invite: boolean;
+        };
+        Returns: {
+          updated_name: string;
+          updated_description: string | null;
+          updated_members_can_invite: boolean;
+          updated_invite_token: string;
+        }[];
       };
       transfer_group_ownership: {
         Args: { target_group_id: string; target_user_id: string };

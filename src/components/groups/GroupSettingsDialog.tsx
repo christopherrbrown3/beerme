@@ -27,6 +27,7 @@ export function GroupSettingsDialog({
   const updateDetails = useUpdateGroupDetails(group.id);
   const [name, setName] = useState(group.name);
   const [description, setDescription] = useState(group.description ?? '');
+  const [canMembersInvite, setCanMembersInvite] = useState(group.canMembersInvite);
   const [errors, setErrors] = useState<{ name?: string | null; description?: string | null }>({});
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -39,7 +40,7 @@ export function GroupSettingsDialog({
     if (nextErrors.name || nextErrors.description) return;
 
     try {
-      await updateDetails.mutateAsync({ name, description });
+      await updateDetails.mutateAsync({ name, description, canMembersInvite });
     } catch {
       // The mutation error is rendered below.
     }
@@ -88,9 +89,28 @@ export function GroupSettingsDialog({
             </span>
           )}
         </label>
+        <div className="form-field">
+          <label className="form-field__label" htmlFor="group-invite-permission">
+            Who can invite
+          </label>
+          <select
+            id="group-invite-permission"
+            aria-describedby="group-invite-permission-help"
+            value={canMembersInvite ? 'members' : 'owner'}
+            onChange={(event) => setCanMembersInvite(event.target.value === 'members')}
+          >
+            <option value="members">All members</option>
+            <option value="owner">Only me</option>
+          </select>
+          <span id="group-invite-permission-help" className="form-field__message">
+            {canMembersInvite
+              ? 'Everyone in this group can share the current invite link.'
+              : 'Switching to this replaces the current link so only you can share the new one.'}
+          </span>
+        </div>
         {updateDetails.isError && (
           <div className="form-alert form-alert--error" role="alert">
-            We couldn’t save those group details. Check your connection and try again.
+            We couldn’t save those group settings. Check your connection and try again.
           </div>
         )}
         <button
@@ -99,7 +119,7 @@ export function GroupSettingsDialog({
           disabled={updateDetails.isPending}
         >
           <Save size={17} aria-hidden="true" />{' '}
-          {updateDetails.isPending ? 'Saving…' : 'Save details'}
+          {updateDetails.isPending ? 'Saving…' : 'Save settings'}
         </button>
       </form>
 

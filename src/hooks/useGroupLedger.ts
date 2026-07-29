@@ -93,7 +93,7 @@ export function useUpdateGroupDetails(groupId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (input: { name: string; description: string }) =>
+    mutationFn: (input: { name: string; description: string; canMembersInvite: boolean }) =>
       updateGroupDetails(groupId, input),
     onSuccess: (details) => {
       queryClient.setQueryData<GroupDetails>(groupQueryKey(groupId), (group) =>

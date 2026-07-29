@@ -1,5 +1,5 @@
 import { AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Clock3, LogOut, Plus, Settings2, UsersRound } from 'lucide-react';
+import { ArrowLeft, Clock3, LogOut, Plus, Settings2, Share2, UsersRound } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 
@@ -92,6 +92,11 @@ export function GroupLedgerPage() {
               onClick={() => setIsManagingSettings(true)}
             >
               <Settings2 size={16} aria-hidden="true" /> Group settings
+            </button>
+          )}
+          {(group.role === 'owner' || group.canMembersInvite) && group.inviteToken && (
+            <button className="secondary-button" type="button" onClick={() => setIsInviting(true)}>
+              <Share2 size={16} aria-hidden="true" /> Invite friends
             </button>
           )}
           <button
