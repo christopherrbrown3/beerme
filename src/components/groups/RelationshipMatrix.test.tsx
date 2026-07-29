@@ -30,6 +30,7 @@ function ledgerEntry(debtorId: string, creditorId: string, quantity: number): Le
   return {
     id: `${debtorId}-${creditorId}-${quantity}`,
     groupId: group.id,
+    kind: 'iou',
     debtor: profile(debtorId),
     creditor: profile(creditorId),
     quantity,

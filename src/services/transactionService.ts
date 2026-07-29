@@ -1,11 +1,16 @@
 import { getSupabaseClient } from '../lib/supabase';
 import { type BalanceEntry } from '../types/balances';
 import { getDisplayName } from '../utils/profileValidation';
-import { type CreateTransactionInput, type LedgerEntry } from '../types/transactions';
+import {
+  type CreateTransactionInput,
+  type LedgerEntry,
+  type SettleUpInput,
+  type TransactionKind,
+} from '../types/transactions';
 import { normalizeTransactionNote } from '../utils/transactionValidation';
 
 const TRANSACTION_SELECT = `
-  id, group_id, debtor_user_id, creditor_user_id, quantity, note,
+  id, group_id, kind, debtor_user_id, creditor_user_id, quantity, note,
   created_by, created_at, reversed_at, reversed_by,
   debtor:profiles!transactions_debtor_user_id_fkey (id, username, display_name),
   creditor:profiles!transactions_creditor_user_id_fkey (id, username, display_name),
@@ -28,6 +33,7 @@ export type TransactionPage = {
 type TransactionRow = {
   id: string;
   group_id: string;
+  kind: TransactionKind;
   quantity: number;
   note: string | null;
   created_at: string;
@@ -48,6 +54,7 @@ function mapTransaction(row: TransactionRow): LedgerEntry {
   return {
     id: row.id,
     groupId: row.group_id,
+    kind: row.kind,
     debtor: {
       id: row.debtor.id,
       username: row.debtor.username,
@@ -177,6 +184,17 @@ export async function addTransaction(userId: string, input: CreateTransactionInp
 export async function reverseTransaction(transactionId: string) {
   const { data, error } = await getSupabaseClient().rpc('reverse_transaction', {
     transaction_id: transactionId,
+  });
+
+  if (error) throw error;
+  return data;
+}
+
+export async function settleUp(input: SettleUpInput) {
+  const { data, error } = await getSupabaseClient().rpc('settle_up', {
+    target_group_id: input.groupId,
+    target_creditor_user_id: input.creditorUserId,
+    settlement_quantity: input.quantity,
   });
 
   if (error) throw error;

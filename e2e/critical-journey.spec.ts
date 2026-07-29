@@ -110,6 +110,30 @@ test.describe('isolated authenticated journeys', () => {
       await reverseDialog.getByRole('button', { name: 'Reverse transaction' }).click();
       await expect(transaction.getByText('Reversed')).toBeVisible();
 
+      await page.getByRole('button', { name: 'People' }).click();
+      const memberCard = page.locator('.person-card').filter({ hasText: memberUsername });
+      await memberCard.getByRole('button', { name: `I owe ${memberUsername}` }).click();
+      const returnableTransactionDialog = page.getByRole('dialog', { name: 'Add to the ledger' });
+      await returnableTransactionDialog.getByRole('spinbutton', { name: 'Quantity' }).fill('2');
+      await returnableTransactionDialog.getByRole('button', { name: 'Add transaction' }).click();
+      await memberCard.getByRole('button', { name: 'Settle up' }).click();
+      const settleDialog = page.getByRole('dialog', { name: `Settle up with ${memberUsername}` });
+      await expect(
+        settleDialog.getByText(`You and ${memberUsername} will be all square.`),
+      ).toBeVisible();
+      await settleDialog.getByRole('button', { name: 'Settle all' }).click();
+      await expect(
+        page.getByRole('status').getByRole('heading', { name: 'All square!' }),
+      ).toBeVisible();
+      await expect(page.getByRole('status')).toHaveCount(0);
+
+      await page.getByRole('button', { name: 'History' }).click();
+      await expect(
+        page.locator('.transaction-card--settlement').filter({
+          hasText: `${ownerUsername} settled up with ${memberUsername} 2 Coffees`,
+        }),
+      ).toBeVisible();
+
       await page.getByRole('button', { name: 'IOU unit' }).click();
       const customCurrencyDialog = page.getByRole('dialog', { name: 'Ledger unit' });
       await customCurrencyDialog.getByRole('button', { name: 'Custom' }).click();

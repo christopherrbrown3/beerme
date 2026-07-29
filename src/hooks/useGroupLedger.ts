@@ -20,11 +20,16 @@ import {
   getGroupLedgerBalances,
   getTransactionsPage,
   reverseTransaction,
+  settleUp,
   type TransactionCursor,
   type TransactionPage,
 } from '../services/transactionService';
 import { type GroupCurrency, type GroupDetails } from '../types/groups';
-import { type CreateTransactionInput, type LedgerEntry } from '../types/transactions';
+import {
+  type CreateTransactionInput,
+  type LedgerEntry,
+  type SettleUpInput,
+} from '../types/transactions';
 import { useAuth } from './useAuth';
 
 export const groupQueryKey = (groupId: string) => ['group', groupId] as const;
@@ -190,6 +195,23 @@ export function useReverseTransaction(groupId: string) {
       void queryClient.invalidateQueries({ queryKey });
       void queryClient.invalidateQueries({ queryKey: groupLedgerBalancesQueryKey(groupId) });
       void queryClient.invalidateQueries({ queryKey: ['groups'] });
+    },
+  });
+}
+
+export function useSettleUp(groupId: string) {
+  const queryClient = useQueryClient();
+  const queryKey = transactionsQueryKey(groupId);
+
+  return useMutation<unknown, Error, SettleUpInput>({
+    mutationFn: settleUp,
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey }),
+        queryClient.invalidateQueries({ queryKey: groupLedgerBalancesQueryKey(groupId) }),
+      ]);
+      void queryClient.invalidateQueries({ queryKey: ['groups'] });
+      void queryClient.invalidateQueries({ queryKey: ['activity'] });
     },
   });
 }

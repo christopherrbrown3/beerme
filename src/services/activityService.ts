@@ -273,11 +273,17 @@ export function buildActivityFeed(
       plural: group.currency_plural,
       symbol: group.currency_symbol,
     };
-    const relationship = `${transaction.debtor.displayName} owes ${transaction.creditor.displayName} ${formatUnitQuantity(transaction.quantity, currency)}`;
+    const relationship =
+      transaction.kind === 'settlement'
+        ? `${transaction.debtor.displayName} settled up with ${transaction.creditor.displayName} — ${formatUnitQuantity(transaction.quantity, currency)}`
+        : `${transaction.debtor.displayName} owes ${transaction.creditor.displayName} ${formatUnitQuantity(transaction.quantity, currency)}`;
 
     events.push({
-      id: `transaction-created:${transaction.id}`,
-      type: 'transaction_created',
+      id:
+        transaction.kind === 'settlement'
+          ? `transaction-settled:${transaction.id}`
+          : `transaction-created:${transaction.id}`,
+      type: transaction.kind === 'settlement' ? 'transaction_settled' : 'transaction_created',
       groupId: group.id,
       groupName: group.name,
       groupSymbol: group.currency_symbol,

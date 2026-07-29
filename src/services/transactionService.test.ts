@@ -3,12 +3,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   getGroupLedgerBalances,
   getTransactionsPage,
+  settleUp,
   TRANSACTION_PAGE_SIZE,
 } from './transactionService';
 
 type TransactionFixture = {
   id: string;
   group_id: string;
+  kind: 'iou';
   quantity: number;
   note: null;
   created_at: string;
@@ -38,6 +40,7 @@ function transaction(index: number): TransactionFixture {
   return {
     id: `transaction-${index.toString().padStart(4, '0')}`,
     group_id: 'group-1',
+    kind: 'iou',
     quantity: 1,
     note: null,
     created_at: new Date(Date.UTC(2026, 0, 1, 0, 0, index)).toISOString(),
@@ -134,6 +137,22 @@ describe('group ledger balances', () => {
     ]);
     expect(database.rpc).toHaveBeenCalledWith('get_group_ledger_balances', {
       target_group_id: 'group-1',
+    });
+  });
+});
+
+describe('settle up', () => {
+  it('calls the atomic settlement RPC with the current relationship and quantity', async () => {
+    database.rpc.mockResolvedValueOnce({ data: { id: 'settlement-1' }, error: null });
+
+    await expect(
+      settleUp({ groupId: 'group-1', creditorUserId: 'alex', quantity: 2 }),
+    ).resolves.toEqual({ id: 'settlement-1' });
+
+    expect(database.rpc).toHaveBeenCalledWith('settle_up', {
+      target_group_id: 'group-1',
+      target_creditor_user_id: 'alex',
+      settlement_quantity: 2,
     });
   });
 });

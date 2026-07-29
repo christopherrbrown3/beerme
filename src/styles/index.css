@@ -2367,6 +2367,82 @@ a:active {
   font-size: 0.7rem;
 }
 
+.person-card__actions .person-card__settle {
+  grid-column: 1 / -1;
+  min-height: 2.9rem;
+  font-size: 0.75rem;
+}
+
+.settle-up-form {
+  gap: 1.15rem;
+}
+
+.settle-up-summary {
+  padding: 0.9rem;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.75rem;
+  color: #70410b;
+  background: var(--amber-soft);
+  border-radius: 0.9rem;
+}
+
+.settle-up-summary__icon {
+  width: 2.7rem;
+  height: 2.7rem;
+  display: grid;
+  place-items: center;
+  color: #70410b;
+  background: rgba(255, 255, 255, 0.52);
+  border-radius: 0.8rem;
+}
+
+.settle-up-summary p,
+.settle-up-summary strong {
+  margin: 0;
+}
+
+.settle-up-summary p {
+  font-size: 0.68rem;
+}
+
+.settle-up-summary strong {
+  margin-top: 0.1rem;
+  display: block;
+  color: var(--ink);
+  font-size: 0.9rem;
+}
+
+.settle-up-summary b {
+  color: #70410b;
+  font-size: 0.8rem;
+  text-align: right;
+}
+
+.settle-up-outcome {
+  min-height: 3rem;
+  padding: 0.7rem 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: #70410b;
+  background: rgba(230, 161, 31, 0.12);
+  border-radius: 0.8rem;
+  font-size: 0.74rem;
+  font-weight: 750;
+  line-height: 1.45;
+}
+
+.settle-up-outcome--square {
+  color: #214c36;
+  background: var(--green-soft);
+}
+
+.settle-up-submit {
+  margin-top: 0;
+}
+
 .person-card__remove {
   min-height: 2.5rem;
   margin-top: 0.55rem;
@@ -2725,6 +2801,15 @@ a:active {
   border-radius: 0.85rem 0.85rem 0.85rem 0.32rem;
 }
 
+.transaction-card--settlement .transaction-card__symbol {
+  color: #214c36;
+  background: var(--green-soft);
+}
+
+.transaction-card--settlement .transaction-card__topline p > span {
+  color: var(--green);
+}
+
 .transaction-card--reversed .transaction-card__symbol {
   filter: grayscale(1);
 }
@@ -2801,6 +2886,81 @@ a:active {
   font-size: 0.66rem;
   font-weight: 800;
   cursor: pointer;
+}
+
+.settlement-celebration {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  padding: 1.25rem;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  background: rgba(23, 21, 18, 0.2);
+}
+
+.settlement-celebration__card {
+  position: relative;
+  width: min(100%, 21rem);
+  padding: 2rem 1.5rem 1.6rem;
+  overflow: hidden;
+  color: white;
+  background:
+    radial-gradient(circle at 50% 10%, rgba(185, 223, 195, 0.2), transparent 9rem),
+    var(--charcoal-soft);
+  border-radius: 1rem;
+  box-shadow: 0 8px 0 var(--green);
+  text-align: center;
+}
+
+.settlement-celebration__clink {
+  position: relative;
+  width: 8rem;
+  height: 5rem;
+  margin: 0 auto 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--amber);
+}
+
+.settlement-celebration__clink > span {
+  display: grid;
+  place-items: center;
+}
+
+.settlement-celebration__clink i {
+  position: absolute;
+  top: 55%;
+  left: 50%;
+  display: block;
+  background: #ffe5a6;
+  border-radius: 999px;
+}
+
+.settlement-celebration__check {
+  width: 2rem;
+  height: 2rem;
+  margin: -0.65rem auto 0.75rem;
+  display: grid;
+  place-items: center;
+  color: #173b29;
+  background: #b9dfc3;
+  border-radius: 999px;
+}
+
+.settlement-celebration h2 {
+  margin: 0;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 2rem;
+  letter-spacing: -0.04em;
+}
+
+.settlement-celebration p {
+  margin: 0.5rem auto 0;
+  color: rgba(255, 255, 255, 0.76);
+  font-size: 0.8rem;
+  line-height: 1.5;
 }
 
 .transaction-list--loading span,
