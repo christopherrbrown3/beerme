@@ -7,16 +7,14 @@ import {
   type GroupMember,
   type GroupSummary,
 } from '../types/groups';
-import { calculateUserBalance } from '../utils/balances';
 import {
   normalizeCurrencyValue,
   normalizeGroupDescription,
   normalizeGroupName,
 } from '../utils/groupValidation';
 import { fetchAllPages } from './pagination';
-import { getAllTransactions } from './transactionService';
 
-type GroupWithCount = {
+type DashboardGroupSummaryRow = {
   id: string;
   name: string;
   description: string | null;
@@ -25,10 +23,23 @@ type GroupWithCount = {
   currency_plural: string;
   currency_symbol: string;
   created_at: string;
-  memberships: { count: number }[];
+  member_count: number;
+  role: GroupMember['role'];
+  current_user_balance: number;
+  last_activity_at: string | null;
 };
 
-type GroupDetailsRow = Omit<GroupWithCount, 'memberships'>;
+type GroupDetailsRow = Pick<
+  DashboardGroupSummaryRow,
+  | 'id'
+  | 'name'
+  | 'description'
+  | 'owner_id'
+  | 'currency_name'
+  | 'currency_plural'
+  | 'currency_symbol'
+  | 'created_at'
+>;
 
 type GroupMembershipRow = {
   user_id: string;
@@ -40,73 +51,27 @@ type GroupMembershipRow = {
   };
 };
 
-export async function getGroups(userId: string): Promise<GroupSummary[]> {
-  const supabase = getSupabaseClient();
-  const [groups, memberships, transactions] = await Promise.all([
-    fetchAllPages<GroupWithCount>(async (from, to) => {
-      const { data, error } = await supabase
-        .from('groups')
-        .select(
-          `
-            id, name, description, owner_id,
-            currency_name, currency_plural, currency_symbol, created_at,
-            memberships(count)
-          `,
-        )
-        .order('created_at', { ascending: false })
-        .order('id', { ascending: false })
-        .range(from, to);
-      return { data: data as unknown as GroupWithCount[], error };
-    }),
-    fetchAllPages<{ group_id: string; role: GroupMember['role'] }>(async (from, to) => {
-      const { data, error } = await supabase
-        .from('memberships')
-        .select('group_id, role')
-        .eq('user_id', userId)
-        .order('group_id')
-        .range(from, to);
-      return { data, error };
-    }),
-    getAllTransactions(),
-  ]);
+export async function getGroups(): Promise<GroupSummary[]> {
+  const { data, error } = await getSupabaseClient().rpc('get_dashboard_group_summaries');
+  if (error) throw error;
 
-  const roles = new Map(memberships.map((membership) => [membership.group_id, membership.role]));
-  const transactionsByGroup = new Map<string, typeof transactions>();
-  for (const transaction of transactions) {
-    const entries = transactionsByGroup.get(transaction.groupId) ?? [];
-    entries.push(transaction);
-    transactionsByGroup.set(transaction.groupId, entries);
-  }
-
-  return groups.map((group) => {
-    const groupTransactions = transactionsByGroup.get(group.id) ?? [];
-    const activityDates = groupTransactions.flatMap((transaction) =>
-      transaction.reversedAt
-        ? [transaction.createdAt, transaction.reversedAt]
-        : [transaction.createdAt],
-    );
-
-    return {
-      id: group.id,
-      name: group.name,
-      description: group.description,
-      ownerId: group.owner_id,
-      inviteToken: '',
-      createdAt: group.created_at,
-      memberCount: group.memberships[0]?.count ?? 0,
-      role: roles.get(group.id) ?? 'member',
-      currentUserBalance: calculateUserBalance(groupTransactions, userId).net,
-      lastActivityAt:
-        activityDates.length > 0
-          ? activityDates.reduce((latest, current) => (current > latest ? current : latest))
-          : null,
-      currency: {
-        name: group.currency_name,
-        plural: group.currency_plural,
-        symbol: group.currency_symbol,
-      },
-    };
-  });
+  return ((data ?? []) as DashboardGroupSummaryRow[]).map((group) => ({
+    id: group.id,
+    name: group.name,
+    description: group.description,
+    ownerId: group.owner_id,
+    inviteToken: '',
+    createdAt: group.created_at,
+    memberCount: Number(group.member_count),
+    role: group.role,
+    currentUserBalance: Number(group.current_user_balance),
+    lastActivityAt: group.last_activity_at,
+    currency: {
+      name: group.currency_name,
+      plural: group.currency_plural,
+      symbol: group.currency_symbol,
+    },
+  }));
 }
 
 export async function createGroup(userId: string, input: CreateGroupInput): Promise<GroupSummary> {

@@ -31,6 +31,7 @@ select set_eq(
   $$,
   array[
     'delete_group(uuid)',
+    'get_dashboard_group_summaries()',
     'get_group_invite_token(uuid)',
     'get_group_ledger_balances(uuid)',
     'handle_new_user()',
@@ -189,6 +190,7 @@ select set_eq(
   $$,
   array[
     'delete_group(uuid)',
+    'get_dashboard_group_summaries()',
     'get_group_invite_token(uuid)',
     'get_group_ledger_balances(uuid)',
     'is_username_available(text)',
