@@ -15,7 +15,7 @@ exception
 end;
 $$;
 
-select plan(87);
+select plan(93);
 
 insert into auth.users (
   id, email, raw_user_meta_data
@@ -434,6 +434,29 @@ select is(
   ),
   'dashboard summary reports a reversal as the latest ledger activity'
 );
+select is(
+  (select count(*) from public.get_activity_feed()),
+  7::bigint,
+  'activity returns only the current group events as one compact feed'
+);
+select is(
+  (select event_type from public.get_activity_feed() limit 1),
+  'transaction_reversed',
+  'activity orders the newest reversal before older event types'
+);
+select is(
+  (
+    select detail
+    from public.get_activity_feed()
+    where event_id = 'transaction-reversed:40000000-0000-4000-8000-000000000002'
+  ),
+  'Audit Owner owes Audit Member 1 Favor',
+  'activity preserves the transaction context needed to explain a reversal'
+);
+select ok(
+  (select count(*) from public.get_activity_feed()) <= 100,
+  'activity hard caps the server result before it reaches the browser'
+);
 
 reset role;
 set local role authenticated;
@@ -696,6 +719,11 @@ select is(
   1::bigint,
   'a stranger cannot receive dashboard summaries for another group'
 );
+select is(
+  (select count(*) from public.get_activity_feed()),
+  1::bigint,
+  'a stranger receives only activity from their own group'
+);
 select ok(
   pg_temp.throws_sqlstate(
     $$select public.settle_up(
@@ -840,6 +868,14 @@ select ok(
     where oid = 'public.get_dashboard_group_summaries()'::regprocedure
   ),
   'dashboard summaries execute with caller RLS rather than definer privileges'
+);
+select ok(
+  not (
+    select prosecdef
+    from pg_proc
+    where oid = 'public.get_activity_feed()'::regprocedure
+  ),
+  'activity feed executes with caller RLS rather than definer privileges'
 );
 
 select ok(
