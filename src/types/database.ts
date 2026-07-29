@@ -243,6 +243,23 @@ export type Database = {
           quantity: number;
         }[];
       };
+      get_dashboard_group_summaries: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          id: string;
+          name: string;
+          description: string | null;
+          owner_id: string;
+          currency_name: string;
+          currency_plural: string;
+          currency_symbol: string;
+          created_at: string;
+          member_count: number;
+          role: Database['public']['Enums']['membership_role'];
+          current_user_balance: number;
+          last_activity_at: string | null;
+        }[];
+      };
       leave_group: {
         Args: { target_group_id: string };
         Returns: undefined;

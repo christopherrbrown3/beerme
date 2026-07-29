@@ -15,7 +15,7 @@ exception
 end;
 $$;
 
-select plan(80);
+select plan(87);
 
 insert into auth.users (
   id, email, raw_user_meta_data
@@ -111,6 +111,29 @@ select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001
 select is((select count(*) from public.groups), 1::bigint, 'owner reads only their group');
 select is((select count(*) from public.memberships), 4::bigint, 'owner reads current group memberships');
 select is((select count(*) from public.transactions), 2::bigint, 'owner reads current group ledger');
+select is(
+  (select count(*) from public.get_dashboard_group_summaries()),
+  1::bigint,
+  'owner receives one bounded dashboard summary per accessible group'
+);
+select is(
+  (
+    select current_user_balance
+    from public.get_dashboard_group_summaries()
+    where id = '20000000-0000-4000-8000-000000000001'
+  ),
+  1::numeric,
+  'dashboard summary preserves the owner net balance without raw ledger rows'
+);
+select is(
+  (
+    select member_count
+    from public.get_dashboard_group_summaries()
+    where id = '20000000-0000-4000-8000-000000000001'
+  ),
+  4,
+  'dashboard summary retains the visible group member count'
+);
 select is(
   (
     select count(*)
@@ -389,6 +412,28 @@ select lives_ok(
   $$select public.reverse_transaction('40000000-0000-4000-8000-000000000002')$$,
   'a group owner can reverse a member-created transaction'
 );
+select is(
+  (
+    select current_user_balance
+    from public.get_dashboard_group_summaries()
+    where id = '20000000-0000-4000-8000-000000000001'
+  ),
+  2::numeric,
+  'dashboard summary excludes reversed movements from the current balance'
+);
+select is(
+  (
+    select last_activity_at
+    from public.get_dashboard_group_summaries()
+    where id = '20000000-0000-4000-8000-000000000001'
+  ),
+  (
+    select reversed_at
+    from public.transactions
+    where id = '40000000-0000-4000-8000-000000000002'
+  ),
+  'dashboard summary reports a reversal as the latest ledger activity'
+);
 
 reset role;
 set local role authenticated;
@@ -646,6 +691,11 @@ select is(
   0::bigint,
   'a stranger cannot aggregate another group ledger'
 );
+select is(
+  (select count(*) from public.get_dashboard_group_summaries()),
+  1::bigint,
+  'a stranger cannot receive dashboard summaries for another group'
+);
 select ok(
   pg_temp.throws_sqlstate(
     $$select public.settle_up(
@@ -782,6 +832,15 @@ select ok(
 );
 
 reset role;
+
+select ok(
+  not (
+    select prosecdef
+    from pg_proc
+    where oid = 'public.get_dashboard_group_summaries()'::regprocedure
+  ),
+  'dashboard summaries execute with caller RLS rather than definer privileges'
+);
 
 select ok(
   position(

@@ -11,7 +11,7 @@ export function useGroups() {
 
   return useQuery({
     queryKey: groupsQueryKey(user!.id),
-    queryFn: () => getGroups(user!.id),
+    queryFn: getGroups,
   });
 }
 
