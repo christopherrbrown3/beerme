@@ -23,6 +23,7 @@ const group: GroupDetails = {
   description: 'The regulars.',
   ownerId: 'user-1',
   inviteToken: 'invite',
+  canMembersInvite: true,
   createdAt: '',
   memberCount: 2,
   role: 'owner',
@@ -60,12 +61,31 @@ describe('GroupSettingsDialog', () => {
     await user.type(screen.getByLabelText('Group name'), 'Saturday Crew');
     await user.clear(screen.getByLabelText('Description'));
     await user.type(screen.getByLabelText('Description'), 'A new round.');
-    await user.click(screen.getByRole('button', { name: 'Save details' }));
+    await user.selectOptions(screen.getByLabelText('Who can invite'), 'owner');
+    await user.click(screen.getByRole('button', { name: 'Save settings' }));
 
     expect(updateDetails.mutateAsync).toHaveBeenCalledWith({
       name: 'Saturday Crew',
       description: 'A new round.',
+      canMembersInvite: false,
     });
+  });
+
+  it('explains the selected invite permission', async () => {
+    const user = userEvent.setup();
+    renderDialog();
+
+    expect(
+      screen.getByText('Everyone in this group can share the current invite link.'),
+    ).toBeVisible();
+
+    await user.selectOptions(screen.getByLabelText('Who can invite'), 'owner');
+
+    expect(
+      screen.getByText(
+        'Switching to this replaces the current link so only you can share the new one.',
+      ),
+    ).toBeVisible();
   });
 
   it('routes owner controls through this settings surface', async () => {

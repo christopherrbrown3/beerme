@@ -22,7 +22,7 @@ export function InviteGroupDialog({ group, onClose }: InviteGroupDialogProps) {
   const [isConfirmingRotation, setIsConfirmingRotation] = useState(false);
   const linkInput = useRef<HTMLInputElement>(null);
   const canShare = typeof navigator.share === 'function';
-  const inviteUrl = `${window.location.origin}/join/${inviteToken}`;
+  const inviteUrl = `${window.location.origin}/?invite=${encodeURIComponent(inviteToken)}`;
 
   useEffect(() => {
     let active = true;
@@ -67,8 +67,8 @@ export function InviteGroupDialog({ group, onClose }: InviteGroupDialogProps) {
 
     try {
       await navigator.share({
-        title: `Join ${group.name} on BeerMe`,
-        text: `Join my ${group.name} group on BeerMe.`,
+        title: 'Join my group on BeerMe',
+        text: 'Join my group on BeerMe.',
         url: inviteUrl,
       });
       setStatus('shared');
@@ -147,53 +147,56 @@ export function InviteGroupDialog({ group, onClose }: InviteGroupDialogProps) {
             'Copy wasn’t available. Select the link above and copy it manually.'}
         </p>
 
-        <section className="invite-rotation" aria-labelledby="invite-rotation-heading">
-          <div>
-            <h3 id="invite-rotation-heading">Need a fresh link?</h3>
-            <p>
-              Rotating turns off the current link immediately. Anyone joining will need the new one.
-            </p>
-          </div>
-
-          {rotateInvite.isError && (
-            <div className="form-alert form-alert--error" role="alert">
-              {getFriendlyRotateInviteError(rotateInvite.error)}
+        {group.role === 'owner' && (
+          <section className="invite-rotation" aria-labelledby="invite-rotation-heading">
+            <div>
+              <h3 id="invite-rotation-heading">Need a fresh link?</h3>
+              <p>
+                Rotating turns off the current link immediately. Anyone joining will need the new
+                one.
+              </p>
             </div>
-          )}
 
-          {isConfirmingRotation ? (
-            <div className="invite-rotation__confirm">
-              <p>People with the current link will no longer be able to join.</p>
-              <div className="dialog-actions">
-                <button
-                  className="secondary-button"
-                  type="button"
-                  onClick={() => setIsConfirmingRotation(false)}
-                  disabled={rotateInvite.isPending}
-                >
-                  Keep current link
-                </button>
-                <button
-                  className="danger-button"
-                  type="button"
-                  onClick={() => void rotateInviteLink()}
-                  disabled={rotateInvite.isPending}
-                >
-                  <RefreshCw size={17} aria-hidden="true" />
-                  {rotateInvite.isPending ? 'Rotating…' : 'Rotate link'}
-                </button>
+            {rotateInvite.isError && (
+              <div className="form-alert form-alert--error" role="alert">
+                {getFriendlyRotateInviteError(rotateInvite.error)}
               </div>
-            </div>
-          ) : (
-            <button
-              className="secondary-button"
-              type="button"
-              onClick={() => setIsConfirmingRotation(true)}
-            >
-              <RefreshCw size={17} aria-hidden="true" /> Rotate invite
-            </button>
-          )}
-        </section>
+            )}
+
+            {isConfirmingRotation ? (
+              <div className="invite-rotation__confirm">
+                <p>People with the current link will no longer be able to join.</p>
+                <div className="dialog-actions">
+                  <button
+                    className="secondary-button"
+                    type="button"
+                    onClick={() => setIsConfirmingRotation(false)}
+                    disabled={rotateInvite.isPending}
+                  >
+                    Keep current link
+                  </button>
+                  <button
+                    className="danger-button"
+                    type="button"
+                    onClick={() => void rotateInviteLink()}
+                    disabled={rotateInvite.isPending}
+                  >
+                    <RefreshCw size={17} aria-hidden="true" />
+                    {rotateInvite.isPending ? 'Rotating…' : 'Rotate link'}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                className="secondary-button"
+                type="button"
+                onClick={() => setIsConfirmingRotation(true)}
+              >
+                <RefreshCw size={17} aria-hidden="true" /> Rotate invite
+              </button>
+            )}
+          </section>
+        )}
       </div>
     </Dialog>
   );

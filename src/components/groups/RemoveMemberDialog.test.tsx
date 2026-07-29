@@ -22,6 +22,7 @@ const group: GroupDetails = {
   description: null,
   ownerId: 'user-1',
   inviteToken: 'invite',
+  canMembersInvite: true,
   createdAt: '2026-07-17T10:00:00.000Z',
   memberCount: 2,
   role: 'owner',

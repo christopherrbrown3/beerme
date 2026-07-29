@@ -7,6 +7,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { App } from './App';
 import { AppProviders } from './lib/AppProviders';
 
+const testInviteToken = ['123e4567', 'e89b', '42d3', 'a456', '426614174000'].join('-');
+
 const authState = vi.hoisted(() => ({
   user: { id: 'user-1' } as { id: string } | null,
   isConfigured: true,
@@ -27,9 +29,10 @@ const ledgerState = vi.hoisted(() => ({
     description: 'Neighborhood regulars',
     ownerId: 'user-1',
     inviteToken: '123e4567-e89b-42d3-a456-426614174000',
+    canMembersInvite: true,
     createdAt: '2026-07-17T00:00:00.000Z',
     memberCount: 2,
-    role: 'owner' as const,
+    role: 'owner' as 'owner' | 'member',
     currency: { name: 'Beer', plural: 'Beers', symbol: '🍺' },
     members: [
       {
@@ -155,6 +158,10 @@ describe('BeerMe app shell', () => {
     authState.isConfigured = true;
     groupsState.data = [];
     activityState.data = [];
+    ledgerState.group.role = 'owner';
+    ledgerState.group.ownerId = 'user-1';
+    ledgerState.group.inviteToken = testInviteToken;
+    ledgerState.group.canMembersInvite = true;
   });
 
   it('renders the groups home as the default route', () => {
@@ -264,6 +271,7 @@ describe('BeerMe app shell', () => {
     expect(within(summary).getByText('2 Beers')).toBeInTheDocument();
     expect(screen.getByText('Alex owes you')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Add transaction' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Invite friends' })).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'I owe Alex' }));
     const dialog = screen.getByRole('dialog', { name: 'Add to the ledger' });
@@ -285,6 +293,26 @@ describe('BeerMe app shell', () => {
     await user.click(screen.getByRole('button', { name: 'History' }));
     expect(screen.getByRole('heading', { name: 'Transaction history' })).toBeInTheDocument();
     expect(screen.getByText(/Trivia night/)).toBeInTheDocument();
+  });
+
+  it('accepts preview-friendly invite URLs from the site root', async () => {
+    renderApp(`/?invite=${testInviteToken}`);
+
+    expect(
+      await screen.findByRole('heading', { name: 'Confirm your invite.' }),
+    ).toBeInTheDocument();
+  });
+
+  it('shows member invite access only while the owner allows it', () => {
+    ledgerState.group.role = 'member';
+    ledgerState.group.ownerId = 'user-2';
+    ledgerState.group.canMembersInvite = false;
+    ledgerState.group.inviteToken = '';
+
+    renderApp('/groups/group-1');
+
+    expect(screen.queryByRole('button', { name: 'Invite friends' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Group settings' })).not.toBeInTheDocument();
   });
 
   it('lets owners open a targeted member-removal confirmation', async () => {

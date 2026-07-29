@@ -98,6 +98,32 @@ test.describe('isolated authenticated journeys', () => {
         memberPage.getByRole('heading', { name: groupName, exact: true, level: 1 }),
       ).toBeVisible();
 
+      await expect(memberPage.getByRole('button', { name: 'Invite friends' })).toBeVisible();
+      await memberPage.getByRole('button', { name: 'Invite friends' }).click();
+      const memberInviteDialog = memberPage.getByRole('dialog', {
+        name: `Invite friends to ${groupName}`,
+      });
+      await expect(memberInviteDialog.getByLabel('Invite link')).toHaveValue(inviteUrl);
+      await expect(memberInviteDialog.getByRole('button', { name: 'Rotate invite' })).toHaveCount(
+        0,
+      );
+      await memberInviteDialog.getByRole('button', { name: 'Close dialog' }).click();
+
+      await page.getByRole('button', { name: 'Group settings' }).click();
+      const invitePermissionSettings = page.getByRole('dialog', { name: 'Group settings' });
+      await invitePermissionSettings.getByLabel('Who can invite').selectOption('owner');
+      await Promise.all([
+        page.waitForResponse(
+          (response) =>
+            response.url().includes('/rest/v1/rpc/update_group_settings') && response.ok(),
+        ),
+        invitePermissionSettings.getByRole('button', { name: 'Save settings' }).click(),
+      ]);
+      await invitePermissionSettings.getByRole('button', { name: 'Close dialog' }).click();
+
+      await memberPage.reload();
+      await expect(memberPage.getByRole('button', { name: 'Invite friends' })).toHaveCount(0);
+
       await page.reload();
       await expect(page.getByLabel('2 members')).toBeVisible();
       await page.getByRole('button', { name: 'Add transaction' }).click();

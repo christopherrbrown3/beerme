@@ -24,6 +24,7 @@ const group: GroupDetails = {
   description: null,
   ownerId: 'user-1',
   inviteToken: '123e4567-e89b-42d3-a456-426614174000',
+  canMembersInvite: true,
   createdAt: '',
   memberCount: 1,
   role: 'owner',
@@ -54,7 +55,7 @@ describe('InviteGroupDialog', () => {
     ).toHaveAttribute('src', 'data:image/png;base64,invite');
     await user.click(screen.getByRole('button', { name: 'Copy link' }));
     expect(writeText).toHaveBeenCalledWith(
-      'http://localhost:3000/join/123e4567-e89b-42d3-a456-426614174000',
+      'http://localhost:3000/?invite=123e4567-e89b-42d3-a456-426614174000',
     );
     expect(screen.getByRole('button', { name: 'Copied' })).toBeInTheDocument();
   });
@@ -68,9 +69,9 @@ describe('InviteGroupDialog', () => {
     await user.click(screen.getByRole('button', { name: 'Share invite' }));
 
     expect(share).toHaveBeenCalledWith({
-      title: 'Join Friday Crew on BeerMe',
-      text: 'Join my Friday Crew group on BeerMe.',
-      url: 'http://localhost:3000/join/123e4567-e89b-42d3-a456-426614174000',
+      title: 'Join my group on BeerMe',
+      text: 'Join my group on BeerMe.',
+      url: 'http://localhost:3000/?invite=123e4567-e89b-42d3-a456-426614174000',
     });
     await waitFor(() => expect(screen.getByText('Share sheet opened.')).toBeInTheDocument());
   });
@@ -111,7 +112,19 @@ describe('InviteGroupDialog', () => {
     await user.click(screen.getByRole('button', { name: 'Rotate link' }));
     await waitFor(() => expect(rotateInvite).toHaveBeenCalledOnce());
     expect(screen.getByLabelText('Invite link')).toHaveValue(
-      'http://localhost:3000/join/223e4567-e89b-42d3-a456-426614174000',
+      'http://localhost:3000/?invite=223e4567-e89b-42d3-a456-426614174000',
     );
+  });
+
+  it('lets members share without exposing owner-only link rotation', () => {
+    render(
+      <InviteGroupDialog
+        group={{ ...group, role: 'member', ownerId: 'user-2' }}
+        onClose={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Copy link' })).toBeVisible();
+    expect(screen.queryByRole('button', { name: 'Rotate invite' })).not.toBeInTheDocument();
   });
 });

@@ -43,7 +43,8 @@ select set_eq(
     'reverse_transaction(uuid)',
     'rotate_group_invite(uuid)',
     'settle_up(uuid, uuid, numeric)',
-    'transfer_group_ownership(uuid, uuid)'
+    'transfer_group_ownership(uuid, uuid)',
+    'update_group_settings(uuid, text, text, boolean)'
   ],
   'the public function inventory is explicit'
 );
@@ -152,7 +153,13 @@ select set_eq(
       and grantee = 'authenticated'
       and privilege_type = 'UPDATE'
   $$,
-  array['currency_name', 'currency_plural', 'currency_symbol', 'description', 'name'],
+  array[
+    'currency_name',
+    'currency_plural',
+    'currency_symbol',
+    'description',
+    'name'
+  ],
   'group updates are limited to owner-editable fields'
 );
 
@@ -202,7 +209,8 @@ select set_eq(
     'reverse_transaction(uuid)',
     'rotate_group_invite(uuid)',
     'settle_up(uuid, uuid, numeric)',
-    'transfer_group_ownership(uuid, uuid)'
+    'transfer_group_ownership(uuid, uuid)',
+    'update_group_settings(uuid, text, text, boolean)'
   ],
   'authenticated can execute only intended public RPCs'
 );
@@ -233,7 +241,7 @@ select is(
     join pg_namespace n on n.oid = p.pronamespace
     where n.nspname in ('public', 'private') and p.prosecdef
   ),
-  19::bigint,
+  20::bigint,
   'the security-definer inventory is explicit'
 );
 

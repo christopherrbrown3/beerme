@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { getGroups } from './groupService';
+import { getGroups, updateGroupDetails } from './groupService';
 
 const database = vi.hoisted(() => ({
   rpc: vi.fn(),
@@ -59,5 +59,45 @@ describe('dashboard group summaries', () => {
     database.rpc.mockResolvedValue({ data: null, error });
 
     await expect(getGroups()).rejects.toThrow('summary unavailable');
+  });
+});
+
+describe('group settings', () => {
+  beforeEach(() => {
+    database.rpc.mockReset();
+  });
+
+  it('updates identity and invite permissions through the owner-checked RPC', async () => {
+    database.rpc.mockResolvedValue({
+      data: [
+        {
+          updated_name: 'Saturday Crew',
+          updated_description: 'A new round.',
+          updated_members_can_invite: false,
+          updated_invite_token: 'fresh-invite',
+        },
+      ],
+      error: null,
+    });
+
+    await expect(
+      updateGroupDetails('group-1', {
+        name: '  Saturday Crew  ',
+        description: '  A new round.  ',
+        canMembersInvite: false,
+      }),
+    ).resolves.toEqual({
+      name: 'Saturday Crew',
+      description: 'A new round.',
+      canMembersInvite: false,
+      inviteToken: 'fresh-invite',
+    });
+
+    expect(database.rpc).toHaveBeenCalledWith('update_group_settings', {
+      target_group_id: 'group-1',
+      next_name: 'Saturday Crew',
+      next_description: 'A new round.',
+      members_may_invite: false,
+    });
   });
 });

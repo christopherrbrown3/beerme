@@ -151,7 +151,21 @@ export async function getGroupDetails(groupId: string, userId: string): Promise<
       return a.displayName.localeCompare(b.displayName);
     });
 
-  const inviteToken = group.owner_id === userId ? await getGroupInviteToken(groupId) : '';
+  const role = members.find((member) => member.userId === userId)?.role ?? 'member';
+  let canMembersInvite = await getCanMembersInvite(groupId);
+  let inviteToken = '';
+  if (role === 'owner' || canMembersInvite) {
+    try {
+      inviteToken = await getGroupInviteToken(groupId);
+    } catch (error) {
+      if (role === 'member' && getErrorCode(error) === '42501') {
+        // The owner may have disabled member invitations between the group read and token RPC.
+        canMembersInvite = false;
+      } else {
+        throw error;
+      }
+    }
+  }
 
   return {
     id: group.id,
@@ -161,7 +175,8 @@ export async function getGroupDetails(groupId: string, userId: string): Promise<
     inviteToken,
     createdAt: group.created_at,
     memberCount: members.length,
-    role: members.find((member) => member.userId === userId)?.role ?? 'member',
+    role,
+    canMembersInvite,
     currency: {
       name: group.currency_name,
       plural: group.currency_plural,
@@ -169,6 +184,21 @@ export async function getGroupDetails(groupId: string, userId: string): Promise<
     },
     members,
   };
+}
+
+async function getCanMembersInvite(groupId: string) {
+  const { data, error } = await getSupabaseClient()
+    .from('groups')
+    .select('members_can_invite')
+    .eq('id', groupId)
+    .single();
+
+  if (!error) return data.members_can_invite;
+
+  // During the short web-before-migration interval, preserve the previous owner-only behavior.
+  if (error.code === 'PGRST204' || error.code === '42703') return false;
+
+  throw error;
 }
 
 export async function joinGroup(token: string) {
@@ -233,21 +263,25 @@ export async function updateGroupCurrency(groupId: string, currency: GroupCurren
 
 export async function updateGroupDetails(
   groupId: string,
-  input: Pick<CreateGroupInput, 'name' | 'description'>,
+  input: Pick<CreateGroupInput, 'name' | 'description'> & { canMembersInvite: boolean },
 ) {
-  const { data, error } = await getSupabaseClient()
-    .from('groups')
-    .update({
-      name: normalizeGroupName(input.name),
-      description: normalizeGroupDescription(input.description),
-    })
-    .eq('id', groupId)
-    .select('name, description')
-    .single();
+  const { data, error } = await getSupabaseClient().rpc('update_group_settings', {
+    target_group_id: groupId,
+    next_name: normalizeGroupName(input.name),
+    next_description: normalizeGroupDescription(input.description),
+    members_may_invite: input.canMembersInvite,
+  });
 
   if (error) throw error;
+  const settings = data[0];
+  if (!settings) throw new Error('The group settings update returned no result.');
 
-  return { name: data.name, description: data.description };
+  return {
+    name: settings.updated_name,
+    description: settings.updated_description,
+    canMembersInvite: settings.updated_members_can_invite,
+    inviteToken: settings.updated_invite_token,
+  };
 }
 
 export async function leaveGroup(groupId: string) {
@@ -274,6 +308,11 @@ function getErrorMessage(error: unknown) {
   if (typeof error !== 'object' || error === null || !('message' in error)) return '';
 
   return typeof error.message === 'string' ? error.message : '';
+}
+
+function getErrorCode(error: unknown) {
+  if (typeof error !== 'object' || error === null || !('code' in error)) return '';
+  return typeof error.code === 'string' ? error.code : '';
 }
 
 export function getFriendlyTransferOwnershipError(error: unknown) {

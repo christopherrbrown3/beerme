@@ -1,4 +1,4 @@
-import { Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 
 import { AuthLayout } from './components/auth/AuthLayout';
 import { HomeRoute } from './components/auth/HomeRoute';
@@ -14,8 +14,17 @@ import { NotFoundPage } from './pages/NotFoundPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { LoginPage } from './pages/auth/LoginPage';
 import { SignupPage } from './pages/auth/SignupPage';
+import { isUuid } from './utils/groupValidation';
 
 export function App() {
+  const location = useLocation();
+  const inviteToken =
+    location.pathname === '/' ? new URLSearchParams(location.search).get('invite') : null;
+
+  if (inviteToken && isUuid(inviteToken)) {
+    return <Navigate to={`/join/${inviteToken}`} replace />;
+  }
+
   return (
     <>
       <UpdatePrompt />
