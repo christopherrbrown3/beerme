@@ -195,7 +195,7 @@ test.describe('isolated authenticated journeys', () => {
       await page.getByRole('link', { name: 'Activity' }).click();
       await expect(
         page.getByText(`${ownerUsername} rotated the invite link for ${groupName}`),
-      ).toBeVisible();
+      ).toHaveCount(2);
       await expect(
         page.getByText(`${ownerUsername} removed ${memberUsername} from ${groupName}`),
       ).toBeVisible();
