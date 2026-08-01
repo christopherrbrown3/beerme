@@ -40,8 +40,8 @@ turn it is.
 
 ## Everything your group needs
 
-- **Shared groups** — invite friends with a link or on-device QR code. By default, every member can
-  invite; owners can turn member invitations off.
+- **Shared groups** — invite friends with a link or on-device QR code, and see updates live. By
+  default, every member can invite; owners can turn member invitations off.
 - **Friendly IOUs** — record who owes whom without turning friendship into accounting.
 - **Clear balances** — see individual, pairwise, and whole-group positions calculated from the
   ledger history.
