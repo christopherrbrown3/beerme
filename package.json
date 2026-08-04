@@ -6,6 +6,9 @@
   "engines": {
     "node": ">=22.0.0"
   },
+  "overrides": {
+    "fast-uri": "3.1.5"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
