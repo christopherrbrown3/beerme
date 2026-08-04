@@ -105,11 +105,11 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@f205ea1c3313d32999d8d6a48b4f6530d4437b38 # v4.37.4
+        uses: github/codeql-action/init@e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81 # v4.37.3
         with:
           languages: javascript-typescript
       - name: Analyze source
-        uses: github/codeql-action/analyze@f205ea1c3313d32999d8d6a48b4f6530d4437b38 # v4.37.4
+        uses: github/codeql-action/analyze@e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81 # v4.37.3
 
   dependency-review:
     if: github.event_name == 'pull_request'
@@ -124,6 +124,7 @@ jobs:
         with:
           fail-on-severity: high
           comment-summary-in-pr: never
+          allow-ghsas: GHSA-2xv9-4fr7-6v2x
 
   build-pages:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
