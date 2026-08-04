@@ -15,6 +15,14 @@
       "owner": "@christopherrbrown3",
       "rationale": "The advisory affects only React Router's unstable RSC APIs. BeerMe is a browser-only SPA with no RSC routes or server actions. Remove after a patched React Router release is available.",
       "expires": "2026-08-31"
+    },
+    {
+      "id": "SEC-2026-004",
+      "tool": "npm-audit",
+      "finding": "GHSA-2xv9-4fr7-6v2x",
+      "owner": "@christopherrbrown3",
+      "rationale": "The advisory affects fast-uri, which is currently pulled transitively by a dependency in the existing toolchain and is not exercised by BeerMe's runtime paths. Remove once a patched release is available and the transitive chain no longer resolves to the vulnerable package.",
+      "expires": "2026-08-31"
     }
   ]
 }
