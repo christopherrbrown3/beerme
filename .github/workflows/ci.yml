@@ -124,7 +124,6 @@ jobs:
         with:
           fail-on-severity: high
           comment-summary-in-pr: never
-          warn-only: true
 
   build-pages:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
