@@ -1468,11 +1468,14 @@ a:active {
   display: flex;
   gap: 0.65rem;
   align-items: center;
+  flex-shrink: 0;
 }
 
 .groups-actions .primary-button,
 .groups-actions .secondary-button {
   margin: 0;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .groups-grid {
