@@ -124,7 +124,7 @@ jobs:
         with:
           fail-on-severity: high
           comment-summary-in-pr: never
-          warn-only: true
+          allow-ghsas: GHSA-qwww-vcr4-c8h2
 
   build-pages:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
